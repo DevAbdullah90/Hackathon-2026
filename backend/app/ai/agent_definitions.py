@@ -2,7 +2,7 @@
 app/ai/agent_definitions.py
 ───────────────────────────
 Definitions of all CIRO Agents and their handoff relationships.
-Cleaned version: Prompts are now imported from .prompts
+Integrated with Tool Stubs for Quratulain.
 """
 
 from agents import Agent
@@ -15,6 +15,12 @@ from .prompts import (
     TRIAGE_AGENT_INSTRUCTIONS
 )
 
+# Import Tool Stubs
+from .tools.geo import reverse_geocode
+from .tools.weather import get_weather_alerts
+from .tools.traffic import get_traffic_matrix
+from .tools.news import search_local_news
+
 # ===========================================================================
 # 1. SPECIALIST AGENTS
 # ===========================================================================
@@ -22,21 +28,25 @@ from .prompts import (
 signal_agent = Agent(
     name="Signal Agent",
     instructions=SIGNAL_AGENT_INSTRUCTIONS,
+    tools=[reverse_geocode]
 )
 
 detection_agent = Agent(
     name="Detection Agent",
     instructions=DETECTION_AGENT_INSTRUCTIONS,
+    tools=[search_local_news, get_traffic_matrix]
 )
 
 severity_agent = Agent(
     name="Severity Agent",
     instructions=SEVERITY_AGENT_INSTRUCTIONS,
+    tools=[get_weather_alerts, get_traffic_matrix]
 )
 
 verification_agent = Agent(
     name="Verification Agent",
     instructions=VERIFICATION_AGENT_INSTRUCTIONS,
+    tools=[search_local_news, get_traffic_matrix]
 )
 
 logging_agent = Agent(
