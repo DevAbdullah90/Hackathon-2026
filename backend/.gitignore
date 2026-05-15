@@ -1,0 +1,35 @@
+# .gitignore for CIRO backend
+
+# Environment variables — NEVER commit real keys
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Alembic (keep versions, but ignore generated temp files)
+alembic/versions/*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

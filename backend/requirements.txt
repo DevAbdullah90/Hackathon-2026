@@ -1,0 +1,28 @@
+# ===========================================================================
+# CIRO — Urban Flood Response Orchestrator
+# Backend Dependencies
+# ===========================================================================
+
+# Web Framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.0
+
+# Settings & Environment
+pydantic-settings==2.6.1
+
+# Async HTTP client (used by all tool functions for external API calls)
+httpx==0.28.0
+
+# OpenAI Agents SDK (Gemini via OpenAI-compatible layer)
+openai-agents==0.0.19
+
+# Database (PostgreSQL — Quratulain will configure in Phase 1)
+asyncpg==0.30.0
+sqlmodel==0.0.22
+alembic==1.14.0
+
+# WebSocket support (built into FastAPI, but python-multipart needed for forms)
+python-multipart==0.0.20
+
+# Utilities
+python-dotenv==1.0.1
