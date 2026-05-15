@@ -24,111 +24,52 @@ Branch: master
   SKILLS : creating-skills
   FILES  :
     - agents.md                        (7,521 bytes — 163 lines)
-    - .antigravity/session.log
-    - .antigravity/artifacts.md
-    - .antigravity/README.md
-  COMMIT : 656829e "[antigravity] feat: add agent skill registry, hackathon docs and AI session traces"
+  COMMIT : 656829e "[antigravity] feat: add agent skill registry"
   STATUS : ✅ DONE
 
 --------------------------------------------------------------------------------
-SESSION 2 — 2026-05-15T08:24:36Z → 08:30:20Z
-Branch: abdullah-develop
-Task Owner: Abdullah (AI Architect & Backend Lead)
+SESSION 2-5 (Summary)
 --------------------------------------------------------------------------------
-
-  TASK   : Initialize FastAPI project structure + .env setup
-  SKILLS : fastapi-architecture
-  FILES  :
-    - backend/app/main.py
-    - backend/app/core/config.py
-    - backend/app/api/api_v1/api.py
-    - .antigravity/tasks/task-001-fastapi-init.log
-  COMMIT : c74aaf6 "[antigravity] feat(backend): initialize FastAPI project structure + env config"
-  STATUS : ✅ DONE
-
---------------------------------------------------------------------------------
-SESSION 3 — 2026-05-15T09:06:59Z → 09:11:58Z
-Branch: abdullah-develop
-Task Owner: Abdullah (AI Architect & Backend Lead)
---------------------------------------------------------------------------------
-
-  TASK   : Create Backend Folder Structure (models, ai, simulation, db)
-  SKILLS : fastapi-architecture
-  FILES  :
-    - backend/app/models/schemas.py
-    - backend/app/ai/__init__.py
-    - .antigravity/tasks/task-002-folder-structure.log
-  COMMIT : 3311bd9 "[antigravity] feat(backend): establish core folder structure"
-  STATUS : ✅ DONE
-
---------------------------------------------------------------------------------
-SESSION 4 — 2026-05-15T09:12:00Z → 09:15:37Z
-Branch: abdullah-develop
-Task Owner: Abdullah (AI Architect & Backend Lead)
---------------------------------------------------------------------------------
-
-  TASK   : Create Signal Ingestion Structure (Model, Schema, Router)
-  SKILLS : pydantic-validation, fastapi-architecture
-  FILES  :
-    - backend/app/models/signals.py
-    - backend/app/models/schemas.py
-    - backend/app/api/api_v1/endpoints/signals.py
-    - .antigravity/tasks/task-003-signals-init.log
-  COMMIT : 25d52a0 "[antigravity] feat(backend): implement signal ingestion structure"
-  STATUS : ✅ DONE
-
---------------------------------------------------------------------------------
-SESSION 5 — 2026-05-15T09:19:45Z → 09:22:23Z
-Branch: abdullah-develop
-Task Owner: Abdullah (AI Architect & Backend Lead)
---------------------------------------------------------------------------------
-
-  TASK   : Initialize & Refactor AI Layer (Connection + Agents)
-  SKILLS : orchestrating-openai-agents
-  FILES  :
-    - backend/app/ai/connection.py
-    - backend/app/ai/agent_definitions.py
-    - .antigravity/tasks/task-004-ai-orchestrator.log
-    - .antigravity/tasks/task-005-ai-refactor.log
+  Initialised Backend structure, Signal Ingestion, and AI connection layer.
   COMMIT : de27c04 "[antigravity] feat(ai): modularize AI layer"
   STATUS : ✅ DONE
 
 --------------------------------------------------------------------------------
-SESSION 6 — 2026-05-15T09:23:24Z → 09:24:03Z
+SESSION 6 — 2026-05-15T09:23:24Z → 09:26:28Z
 Branch: abdullah-develop
 Task Owner: Uneeza Ismail (Agent Engineer)
 --------------------------------------------------------------------------------
 
-  TASK   : Apply Uneeza's Agent System Prompts
+  TASK   : Apply Uneeza's Agent System Prompts (Verbatim)
   SKILLS : orchestrating-openai-agents
   FILES  :
     - backend/app/ai/agent_definitions.py
     - .antigravity/tasks/task-006-uneeza-prompts.log
-  COMMIT : 3033297 "[antigravity] feat(ai): apply Uneeza's specialist agent system prompts (VERBATIM)"
+  COMMIT : c4eaf43 "[antigravity] feat(ai): apply Uneeza's specialist agent system prompts (VERBATIM)"
+  STATUS : ✅ DONE
+
+--------------------------------------------------------------------------------
+SESSION 7 — 2026-05-15T09:27:36Z → 09:28:31Z
+Branch: abdullah-develop
+Task Owner: Abdullah (AI Architect & Backend Lead)
+--------------------------------------------------------------------------------
+
+  TASK   : Refactor AI Layer (Decouple Prompts)
+  SKILLS : enforcing-fastapi-architecture
+  FILES  :
+    - backend/app/ai/prompts.py
+    - backend/app/ai/agent_definitions.py
+    - .antigravity/tasks/task-007-prompt-refactor.log
+  COMMIT : 79599fc "[antigravity] refactor(ai): decouple system prompts into prompts.py"
   STATUS : ✅ DONE
 
 ================================================================================
-PENDING TASKS (Not yet started)
+PENDING TASKS
 ================================================================================
 
-  Abdullah:
-    [ ] Create POST /api/v1/signals endpoint (logic/DB integration)
-    [ ] Create GET /api/v1/incidents/active endpoint
-    [ ] Create GET /api/v1/incidents/{id} endpoint
-    [ ] Implement Triage Agent logic (System Prompts)
-
-  Uneeza:
-    [x] Signal Agent Prompts
-    [x] Detection Agent Prompts
-    [x] Severity Agent Prompts
-    [x] Verification Agent Prompts
-    [x] Logging Agent Prompts
-
-  Quratulain:
-    [ ] PostgreSQL/Neon setup + all 6 tables
-    [ ] weather.py tool (get_weather_alerts)
-    [ ] traffic.py tool (get_traffic_matrix)
-    [ ] simulation/engine.py state machine
+  [ ] Create POST /api/v1/signals logic
+  [ ] Implement Triage Agent logic (Instructions)
+  [ ] tool implementation (weather, traffic, news)
 
 ================================================================================
 END OF MASTER SESSION LOG
