@@ -42,7 +42,6 @@ Task Owner: Abdullah (AI Architect & Backend Lead)
     - backend/app/main.py
     - backend/app/core/config.py
     - backend/app/api/api_v1/api.py
-    - backend/app/api/api_v1/endpoints/__init__.py
     - .antigravity/tasks/task-001-fastapi-init.log
   COMMIT : c74aaf6 "[antigravity] feat(backend): initialize FastAPI project structure + env config"
   STATUS : ✅ DONE
@@ -58,8 +57,6 @@ Task Owner: Abdullah (AI Architect & Backend Lead)
   FILES  :
     - backend/app/models/schemas.py
     - backend/app/ai/__init__.py
-    - backend/app/ai/agents/__init__.py
-    - backend/app/ai/tools/__init__.py
     - .antigravity/tasks/task-002-folder-structure.log
   COMMIT : 3311bd9 "[antigravity] feat(backend): establish core folder structure"
   STATUS : ✅ DONE
@@ -81,7 +78,7 @@ Task Owner: Abdullah (AI Architect & Backend Lead)
   STATUS : ✅ DONE
 
 --------------------------------------------------------------------------------
-SESSION 5 — 2026-05-15T09:19:45Z → 09:21:42Z
+SESSION 5 — 2026-05-15T09:19:45Z → 09:22:23Z
 Branch: abdullah-develop
 Task Owner: Abdullah (AI Architect & Backend Lead)
 --------------------------------------------------------------------------------
@@ -93,7 +90,21 @@ Task Owner: Abdullah (AI Architect & Backend Lead)
     - backend/app/ai/agent_definitions.py
     - .antigravity/tasks/task-004-ai-orchestrator.log
     - .antigravity/tasks/task-005-ai-refactor.log
-  COMMIT : 32102b2 "[antigravity] feat(ai): modularize AI layer into connection.py and agent_definitions.py"
+  COMMIT : de27c04 "[antigravity] feat(ai): modularize AI layer"
+  STATUS : ✅ DONE
+
+--------------------------------------------------------------------------------
+SESSION 6 — 2026-05-15T09:23:24Z → 09:24:03Z
+Branch: abdullah-develop
+Task Owner: Uneeza Ismail (Agent Engineer)
+--------------------------------------------------------------------------------
+
+  TASK   : Apply Uneeza's Agent System Prompts
+  SKILLS : orchestrating-openai-agents
+  FILES  :
+    - backend/app/ai/agent_definitions.py
+    - .antigravity/tasks/task-006-uneeza-prompts.log
+  COMMIT : 3033297 "[antigravity] feat(ai): apply Uneeza's specialist agent system prompts (VERBATIM)"
   STATUS : ✅ DONE
 
 ================================================================================
@@ -105,29 +116,19 @@ PENDING TASKS (Not yet started)
     [ ] Create GET /api/v1/incidents/active endpoint
     [ ] Create GET /api/v1/incidents/{id} endpoint
     [ ] Implement Triage Agent logic (System Prompts)
-    [ ] Implement Resource Allocation Agent
-    [ ] Implement Planning Agent
 
   Uneeza:
-    [ ] Signal Agent + credibility scoring
-    [ ] Detection Agent + GPS clustering
-    [ ] Severity Agent + risk rubric
-    [ ] Verification Agent + false alarm handling
-    [ ] Logging Agent + trace emission
+    [x] Signal Agent Prompts
+    [x] Detection Agent Prompts
+    [x] Severity Agent Prompts
+    [x] Verification Agent Prompts
+    [x] Logging Agent Prompts
 
   Quratulain:
     [ ] PostgreSQL/Neon setup + all 6 tables
     [ ] weather.py tool (get_weather_alerts)
     [ ] traffic.py tool (get_traffic_matrix)
     [ ] simulation/engine.py state machine
-    [ ] dispatch.py tool (generate_ticket)
-
-  Ayesha:
-    [ ] Expo project init + Google Maps config
-    [ ] Dashboard.tsx
-    [ ] FloodMap.tsx
-    [ ] ReasoningCenter.tsx
-    [ ] SimView.tsx + ExecutionTimeline.tsx
 
 ================================================================================
 END OF MASTER SESSION LOG
