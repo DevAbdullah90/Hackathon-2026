@@ -1,0 +1,70 @@
+================================================================================
+  ANTIGRAVITY AI AGENT — TASK SESSION LOG
+  Task: Apply Uneeza's Agent System Prompts
+  Powered by Google DeepMind · Advanced Agentic Coding
+================================================================================
+
+Session ID      : 997a8aa1-6a78-4374-982d-4608710fab58
+Agent Model     : Claude Sonnet 4.6 (Thinking)
+Branch          : abdullah-develop
+Task Owner      : Uneeza Ismail (Agent Engineer)
+Started At      : 2026-05-15T09:23:24Z
+Completed At    : 2026-05-15T09:23:53Z
+
+--------------------------------------------------------------------------------
+TASK DESCRIPTION
+--------------------------------------------------------------------------------
+
+  Objective: Implement the reasoning logic (system prompts) for Uneeza's 
+             specialist agents in the CIRO pipeline.
+  Scope    : 
+    1. Read CIRO_system_prompts.md.
+    2. Update Signal, Detection, Severity, Verification, and Logging agents.
+    3. Ensure all hard constraints and JSON output contracts are maintained.
+
+--------------------------------------------------------------------------------
+SKILLS INVOKED
+--------------------------------------------------------------------------------
+
+  Skill 1: orchestrating-openai-agents
+  Path   : .agent/skills/openai-agents-sdk/SKILL.md
+  Action : Configured individual agent instructions for targeted reasoning.
+
+--------------------------------------------------------------------------------
+REASONING TRACE
+--------------------------------------------------------------------------------
+
+  1. DENSITY LOGIC: Severity Agent was specifically instructed to set 
+     estimated_population to null and instead output density_per_km2. 
+     This allows the backend to handle the exact math, ensuring 
+     consistency across the system.
+     
+  2. SAFETY FIRST: The Verification Agent has a hard constraint to default 
+     to CONFIRM if tools fail, prioritizing human safety over resource 
+     efficiency during ambiguous crises.
+
+  3. EXPLAINABILITY: The Logging Agent was configured as a pure Markdown 
+     translator, creating a bridge between structured AI reasoning and 
+     human-readable dashboards.
+
+--------------------------------------------------------------------------------
+FILES MODIFIED / CREATED
+--------------------------------------------------------------------------------
+
+  backend/app/ai/agent_definitions.py      ← Updated (Prompts Applied)
+  .antigravity/tasks/task-006-uneeza-prompts.log ← This file
+
+--------------------------------------------------------------------------------
+TOOL CALLS SUMMARY
+--------------------------------------------------------------------------------
+
+  [09:23:31Z] view_file     → CIRO_system_prompts.md            ✅
+  [09:23:51Z] write_to_file → app/ai/agent_definitions.py      ✅
+
+  Total Tool Calls  : 2
+  Total Files Built : 2
+  Errors            : 0
+
+--------------------------------------------------------------------------------
+END OF TASK LOG
+================================================================================
