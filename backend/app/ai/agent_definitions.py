@@ -12,7 +12,8 @@ from .prompts import (
     SEVERITY_AGENT_INSTRUCTIONS,
     VERIFICATION_AGENT_INSTRUCTIONS,
     LOGGING_AGENT_INSTRUCTIONS,
-    TRIAGE_AGENT_INSTRUCTIONS
+    TRIAGE_AGENT_INSTRUCTIONS,
+    NOTIFICATION_AGENT_INSTRUCTIONS
 )
 
 # Import Tool Stubs
@@ -20,6 +21,7 @@ from .tools.geo import reverse_geocode
 from .tools.weather import get_weather_alerts
 from .tools.traffic import get_traffic_matrix
 from .tools.news import search_local_news
+from .tools.notify import send_notification
 
 # ===========================================================================
 # 1. SPECIALIST AGENTS
@@ -70,7 +72,8 @@ planning_agent = Agent(
 
 notification_agent = Agent(
     name="Notification Agent",
-    instructions="Instructions pending...",
+    instructions=NOTIFICATION_AGENT_INSTRUCTIONS,
+    tools=[send_notification]
 )
 
 # ===========================================================================
