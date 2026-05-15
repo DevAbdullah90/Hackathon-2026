@@ -35,6 +35,6 @@ This document tracks the progress of the backend infrastructure for the **Urban 
 - [ ] Finalize WebSocket broadcasts for frontend telemetry.
 
 ---
-**Current Branch**: `quratulain-shah-db-foundation`
+**Current Branch**: `quratulain_shah`
 **Verification Status**: All foundational tests passed.
 **Lead**: Quratulain

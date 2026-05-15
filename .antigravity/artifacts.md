@@ -13,7 +13,7 @@
 | **Agent** | Antigravity (Gemini 2.0 Flash) |
 | **Platform** | Google DeepMind · Advanced Agentic Coding |
 | **Date** | 2026-05-15 |
-| **Branch** | `quratulain-shah-db-foundation` |
+| **Branch** | `quratulain_shah` |
 | **Repository** | [DevAbdullah90/Hackathon-2026](https://github.com/DevAbdullah90/Hackathon-2026) |
 
 ---
