@@ -1,144 +1,31 @@
 """
 app/models/schemas.py
 ──────────────────────
-Pydantic V2 request/response schemas for all CIRO data models.
-Skill: validating-data-pydantic
-
-Every schema used by API endpoints and agent tools is defined here.
+Pydantic V2 schemas for API requests and responses.
 """
 
-import uuid
-from datetime import datetime
-from typing import Any, List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, Dict, Any
+from pydantic import BaseModel, Field
 
-
-# ===========================================================================
-# SIGNALS — Incoming raw data from all sources
-# ===========================================================================
 
 class SignalCreate(BaseModel):
-    """Payload sent by the mobile app or background services to report a signal."""
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    lat: float = Field(..., ge=-90, le=90, description="Latitude of the signal origin")
-    lng: float = Field(..., ge=-180, le=180, description="Longitude of the signal origin")
-    type: str = Field(..., description="Signal type: 'flood', 'traffic', 'weather'")
-    source: str = Field(
-        ...,
-        description="Origin: 'user_gps', 'weather_api', 'traffic_api', 'social_mock'"
-    )
-    raw_payload: Optional[dict[str, Any]] = Field(
-        default=None,
-        description="Optional raw JSON payload from the source API"
-    )
+    """Payload for POST /api/v1/signals"""
+    source: str = Field(..., example="user_gps")
+    lat: float = Field(..., example=33.6844)
+    lng: float = Field(..., example=73.0479)
+    type: str = Field(..., example="flood")
+    raw_payload: Optional[Dict[str, Any]] = None
 
 
-class SignalResponse(BaseModel):
-    """Full signal record returned from the database."""
-    id: uuid.UUID
+class SignalRead(BaseModel):
+    """Response schema for signal data"""
+    id: Any
     source: str
     lat: float
     lng: float
-    location: Optional[str] = None          # Reverse-geocoded area name
+    location: Optional[str] = None
     credibility_score: Optional[float] = None
-    conflict_flag: bool = False
-    structured_json: Optional[dict[str, Any]] = None
-    created_at: datetime
+    created_at: Any
 
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ===========================================================================
-# INCIDENTS — Confirmed flood clusters
-# ===========================================================================
-
-class IncidentResponse(BaseModel):
-    """Confirmed flood incident as returned by /api/v1/incidents."""
-    id: uuid.UUID
-    location: str
-    lat: float
-    lng: float
-    severity_score: Optional[float] = None
-    confidence: Optional[float] = None
-    affected_radius_km: Optional[float] = None
-    estimated_population: Optional[int] = None
-    peak_impact_eta: Optional[str] = None
-    status: str                              # 'monitoring', 'confirmed', 'resolved', 'retracted'
-    risk_factors: Optional[List[str]] = None
-    created_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ===========================================================================
-# ACTIONS — Response tasks per incident
-# ===========================================================================
-
-class ActionResponse(BaseModel):
-    """A single response action produced by the Planning Agent."""
-    id: uuid.UUID
-    incident_id: uuid.UUID
-    type: str                                # 'ALERT_CITIZENS', 'REROUTE_TRAFFIC', etc.
-    status: str                              # 'PENDING', 'SENT', 'ACTIVE', 'ON_SITE', 'COMPLETED'
-    predicted_side_effects: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
-    updated_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ===========================================================================
-# SIMULATION
-# ===========================================================================
-
-class SimulationTriggerResponse(BaseModel):
-    """Returned when a simulation is manually triggered."""
-    incident_id: uuid.UUID
-    message: str
-    actions_queued: int
-
-
-class SimulationStateResponse(BaseModel):
-    """Current state of all actions in a simulation."""
-    incident_id: uuid.UUID
-    actions: List[ActionResponse]
-
-
-# ===========================================================================
-# AGENT REASONING LOGS (WebSocket + DB)
-# ===========================================================================
-
-class ReasoningLogEntry(BaseModel):
-    """A single log entry emitted by any agent — streamed via WebSocket."""
-    id: uuid.UUID
-    incident_id: uuid.UUID
-    agent_name: str
-    log_text: str
-    created_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ===========================================================================
-# NOTIFICATIONS
-# ===========================================================================
-
-class NotificationResponse(BaseModel):
-    """Stakeholder notification generated by the Notification Agent."""
-    id: uuid.UUID
-    incident_id: uuid.UUID
-    stakeholder: str     # 'public', 'hospital', 'utility', 'traffic_auth', 'emergency_services'
-    message: str
-    sent_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ===========================================================================
-# GENERIC API RESPONSES
-# ===========================================================================
-
-class HealthResponse(BaseModel):
-    status: str
-    message: Optional[str] = None
+    class Config:
+        from_attributes = True
