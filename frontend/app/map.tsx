@@ -4,7 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Text,
-  SafeAreaView,
   ScrollView,
   Dimensions,
   Animated,
@@ -12,8 +11,13 @@ import {
   Alert,
   StatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker, Polygon, Polyline, Callout } from "react-native-maps";
-import { CONFIG } from "./constants/config";
+import { router } from "expo-router";
+import { CONFIG } from "../constants/config";
+import ReasoningCenter from "../components/ReasoningCenter";
+import ExecutionTimeline from "../components/ExecutionTimeline";
+import SimulationView from "../components/SimulationView";
 
 // --- Types ---
 
@@ -38,9 +42,6 @@ interface Resource {
   assigned: string;
 }
 
-interface FloodMapProps {
-  navigation?: any;
-}
 
 // --- Mock Data (Karachi Focused) ---
 // TODO: Replace MOCK_INCIDENTS with GET /api/v1/incidents/active
@@ -62,7 +63,7 @@ const MOCK_INCIDENTS: Incident[] = [
       { latitude: 24.9100, longitude: 67.0980 },
     ],
   },
-  {
+  {  
     id: "INC-002",
     location: "North Nazimabad, Karachi",
     severity: 6.0,
@@ -98,10 +99,13 @@ const { width, height } = Dimensions.get("window");
 
 const AnimatedPolygon = Animated.createAnimatedComponent(Polygon);
 
-export default function FloodMap({ navigation }: FloodMapProps) {
+export default function FloodMap() {
   const mapRef = useRef<MapView>(null);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isReasoningVisible, setIsReasoningVisible] = useState(false);
+  const [isTimelineVisible, setIsTimelineVisible] = useState(false);
+  const [isSimulationVisible, setIsSimulationVisible] = useState(false);
 
   // Animations
   const polygonOpacity = useRef(new Animated.Value(0)).current;
@@ -160,8 +164,8 @@ export default function FloodMap({ navigation }: FloodMapProps) {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Incident Details</Text>
-              <TouchableOpacity onPress={() => setIsModalVisible(false)}>
-                <Text style={styles.closeEmoji}>\u2716\ufe0f</Text>
+              <TouchableOpacity onPress={() => setIsModalVisible(false)} activeOpacity={0.7}>
+                <Text style={styles.closeEmoji}>✕</Text>
               </TouchableOpacity>
             </View>
 
@@ -169,7 +173,7 @@ export default function FloodMap({ navigation }: FloodMapProps) {
               <Text style={styles.modalId}>ID: {selectedIncident.id}</Text>
               <Text style={styles.modalLabel}>Location: <Text style={styles.modalValue}>{selectedIncident.location}</Text></Text>
               <Text style={styles.modalLabel}>Severity: <Text style={[styles.modalValue, { color: selectedIncident.severity >= 7 ? "#DC2626" : "#F59E0B" }]}>{selectedIncident.severity.toFixed(1)}</Text></Text>
-              
+
               <Text style={styles.modalLabel}>Confidence Level:</Text>
               <View style={styles.confidenceBarBg}>
                 <View style={[styles.confidenceBarFill, { width: `${selectedIncident.confidence * 100}%` }]} />
@@ -191,7 +195,32 @@ export default function FloodMap({ navigation }: FloodMapProps) {
             </View>
 
             <TouchableOpacity
+              style={[styles.modalCloseButton, { backgroundColor: "#2563EB", marginBottom: 10 }]}
+              activeOpacity={0.7}
+              onPress={() => setIsReasoningVisible(true)}
+            >
+              <Text style={styles.modalCloseButtonText}>View AI Reasoning</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalCloseButton, { backgroundColor: "#DB2777", marginBottom: 10 }]}
+              activeOpacity={0.7}
+              onPress={() => setIsTimelineVisible(true)}
+            >
+              <Text style={styles.modalCloseButtonText}>View Execution Timeline</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalCloseButton, { backgroundColor: "#059669", marginBottom: 10 }]}
+              activeOpacity={0.7}
+              onPress={() => setIsSimulationVisible(true)}
+            >
+              <Text style={styles.modalCloseButtonText}>View Live Simulation</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={styles.modalCloseButton}
+              activeOpacity={0.7}
               onPress={() => setIsModalVisible(false)}
             >
               <Text style={styles.modalCloseButtonText}>Close</Text>
@@ -235,7 +264,7 @@ export default function FloodMap({ navigation }: FloodMapProps) {
             key={`marker-${incident.id}`}
             coordinate={{ latitude: incident.lat, longitude: incident.lng }}
           >
-            <Text style={styles.markerEmoji}>\ud83d\udea8</Text>
+            <Text style={styles.markerEmoji}>🚨</Text>
             <Callout
               onPress={() => {
                 setSelectedIncident(incident);
@@ -248,7 +277,7 @@ export default function FloodMap({ navigation }: FloodMapProps) {
                 <Text style={styles.calloutSub}>Severity: {incident.severity.toFixed(1)}</Text>
                 <Text style={styles.calloutSub}>Pop: {incident.affected_population}</Text>
                 <Text style={styles.calloutStatus}>Status: {incident.status}</Text>
-                <Text style={styles.tapDetail}>Tap for details \u2192</Text>
+                <Text style={styles.tapDetail}>Tap for details →</Text>
               </View>
             </Callout>
           </Marker>
@@ -274,12 +303,12 @@ export default function FloodMap({ navigation }: FloodMapProps) {
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation?.goBack()}
+            onPress={() => router.back()}
           >
-            <Text style={styles.headerText}>\u2190</Text>
+            <Text style={styles.headerText}>←</Text>
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitleText}>\ud83c\udf0a CIRO Live Map</Text>
+            <Text style={styles.headerTitleText}>🌊 CIRO Live Map</Text>
             <Text style={styles.headerStatusText}>2 Active Incidents</Text>
           </View>
         </View>
@@ -291,7 +320,7 @@ export default function FloodMap({ navigation }: FloodMapProps) {
           activeOpacity={0.8}
           onPress={handleReportPress}
         >
-          <Text style={styles.reportButtonText}>\ud83d\udea8 Report Flood</Text>
+          <Text style={styles.reportButtonText}>🚨 Report Flood</Text>
         </TouchableOpacity>
       </View>
 
@@ -335,6 +364,65 @@ export default function FloodMap({ navigation }: FloodMapProps) {
       </Animated.View>
 
       {renderIncidentDetail()}
+
+      <Modal
+        visible={isReasoningVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsReasoningVisible(false)}
+      >
+        <View style={styles.reasoningModalOverlay}>
+          <View style={styles.reasoningModalContent}>
+            <ReasoningCenter />
+            <TouchableOpacity
+              style={styles.closeReasoningButton}
+              activeOpacity={0.7}
+              onPress={() => setIsReasoningVisible(false)}
+            >
+              <Text style={styles.closeReasoningButtonText}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={isTimelineVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsTimelineVisible(false)}
+      >
+        <View style={styles.reasoningModalOverlay}>
+          <View style={styles.reasoningModalContent}>
+            <ExecutionTimeline />
+            <TouchableOpacity
+              style={styles.closeReasoningButton}
+              activeOpacity={0.7}
+              onPress={() => setIsTimelineVisible(false)}
+            >
+              <Text style={styles.closeReasoningButtonText}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={isSimulationVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsSimulationVisible(false)}
+      >
+        <View style={styles.reasoningModalOverlay}>
+          <View style={styles.reasoningModalContent}>
+            <SimulationView />
+            <TouchableOpacity
+              style={styles.closeReasoningButton}
+              activeOpacity={0.7}
+              onPress={() => setIsSimulationVisible(false)}
+            >
+              <Text style={styles.closeReasoningButtonText}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -586,6 +674,38 @@ const styles = StyleSheet.create({
   modalCloseButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  reasoningModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.92)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reasoningModalContent: {
+    width: "92%",
+  height: "82%",
+  backgroundColor: "#111827",
+  borderRadius: 30,
+  overflow: "hidden",
+  borderWidth: 1,
+  borderColor: "#374151",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.6,
+  shadowRadius: 20,
+  elevation: 20,
+  },
+  closeReasoningButton: {
+    backgroundColor: "rgba(255,255,255,0.1)",
+    paddingVertical: 15,
+    alignItems: "center",
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  closeReasoningButtonText: {
+    color: "#9CA3AF",
+    fontSize: 14,
     fontWeight: "600",
   },
 });
