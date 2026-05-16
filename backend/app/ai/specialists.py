@@ -19,6 +19,7 @@ from .tools.geo import reverse_geocode
 from .tools.weather import get_weather_alerts
 from .tools.traffic import get_traffic_matrix
 from .tools.news import search_local_news
+from .tools.tracer import emit_log
 
 # ===========================================================================
 # SPECIALIST AGENTS
@@ -51,6 +52,7 @@ verification_agent = Agent(
 logging_agent = Agent(
     name="Logging Agent",
     instructions=LOGGING_AGENT_INSTRUCTIONS,
+    tools=[emit_log]
 )
 
 # ── Placeholder Agents (For future implementation) ─────────────────────────
