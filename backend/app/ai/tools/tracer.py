@@ -9,7 +9,7 @@ from datetime import datetime
 from uuid import UUID
 from typing import Optional
 
-from app.db.session import SessionLocal
+from app.db.session import async_session_factory
 from app.models.reasoning_logs import ReasoningLog
 from app.api.api_v1.endpoints.websocket import manager
 
@@ -29,15 +29,24 @@ async def emit_log(
         log_level: 'INFO', 'WARNING', or 'CRITICAL'
     """
     
+    # Try to convert to UUID for database, otherwise use None
+    db_incident_id = None
+    if incident_id:
+        try:
+            db_incident_id = UUID(incident_id)
+        except ValueError:
+            # Not a valid UUID (e.g. 'triage' or malformed string)
+            db_incident_id = None
+
     log_entry = ReasoningLog(
-        incident_id=UUID(incident_id) if incident_id else None,
+        incident_id=db_incident_id,
         agent_name=agent_name,
         log_text=log_text,
         log_level=log_level
     )
     
     # 1. Save to Database
-    async with SessionLocal() as session:
+    async with async_session_factory() as session:
         session.add(log_entry)
         await session.commit()
         await session.refresh(log_entry)

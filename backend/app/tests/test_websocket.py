@@ -13,7 +13,7 @@ import json
 from app.ai.tools.tracer import emit_log
 
 async def test_websocket():
-    uri = "ws://localhost:8000/api/v1/ws/test-incident"
+    uri = "ws://localhost:8000/api/v1/ws/550e8400-e29b-41d5-a716-446655440000"
     print(f"🔗 Connecting to {uri}...")
     
     try:
@@ -27,7 +27,7 @@ async def test_websocket():
                 await emit_log(
                     agent_name="test_agent",
                     log_text="### Test Log\nThis is a real-time message via WebSocket.",
-                    incident_id="test-incident",
+                    incident_id="550e8400-e29b-41d5-a716-446655440000",
                     log_level="INFO"
                 )
             
