@@ -18,7 +18,7 @@ const SeverityBadge: React.FC<SeverityBadgeProps> = ({ score }) => {
   }
 
   return (
-    <View style={[styles.badge, { backgroundColor }]}>
+    <View style={[styles.badge, { backgroundColor, borderColor: backgroundColor + '40' }]}>
       <Text style={styles.text}>{label}</Text>
     </View>
   );
@@ -26,16 +26,23 @@ const SeverityBadge: React.FC<SeverityBadgeProps> = ({ score }) => {
 
 const styles = StyleSheet.create({
   badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
     alignSelf: "flex-start",
+    borderWidth: 1.5,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   text: {
     color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "bold",
+    fontSize: 11,
+    fontWeight: "900",
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
 });
 
