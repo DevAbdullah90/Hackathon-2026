@@ -1,33 +1,41 @@
+"""
+app/models/reasoning_logs.py
+----------------------------
+SQLModel ORM model for the reasoning_logs table.
+"""
+
 import uuid
 from datetime import datetime
 from typing import Optional
-from sqlmodel import SQLModel, Field
+
+from sqlmodel import Field, SQLModel
 
 
 class ReasoningLog(SQLModel, table=True):
-    """
-    Table 6: Agent reasoning logs
-    """
     __tablename__ = "reasoning_logs"
 
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         primary_key=True,
         index=True,
-        nullable=False
+        nullable=False,
     )
-    incident_id: uuid.UUID = Field(
-        foreign_key="incidents.id",
+    incident_id: Optional[uuid.UUID] = Field(
+        default=None,
         index=True,
-        nullable=False
+        description="FK to incidents.id; null until an incident is confirmed",
     )
-    
-    agent_name: str = Field(index=True)
-    phase: Optional[str] = Field(default=None, description="OBSERVE, REASON, DECIDE, ACT, EVALUATE")
-    log_text: str
-    
+    agent_name: str = Field(description="Originating agent name")
+    phase: Optional[str] = Field(
+        default=None,
+        description="OBSERVE | REASON | DECIDE | ACT | EVALUATE",
+    )
+    log_text: str = Field(description="Markdown log entry from the Logging Agent")
+    log_level: str = Field(
+        default="INFO",
+        description="'INFO' | 'WARNING' | 'CRITICAL'",
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        index=True,
-        nullable=False
+        nullable=False,
     )

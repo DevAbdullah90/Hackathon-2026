@@ -3,6 +3,10 @@ app/models/signals.py
 ──────────────────────
 SQLModel ORM model for the 'signals' table.
 Captures all incoming data from GPS, Weather, and Traffic APIs.
+
+Fixes (Uneeza — Phase 2):
+  - lat/lng made Optional[float] — Weather/Traffic signals have no GPS coords.
+  - type column added — was silently dropped on every insert.
 """
 
 import uuid
@@ -24,8 +28,13 @@ class Signal(SQLModel, table=True):
         nullable=False
     )
     source: str = Field(description="'user_gps', 'weather_api', 'traffic_api', 'social_mock'")
-    lat: float
-    lng: float
+    type: Optional[str] = Field(
+        default=None,
+        description="flood | flood_risk | traffic_blockage | non_flood | UNKNOWN"
+    )
+    # Bug Fix: Optional — Weather/Traffic signals carry no GPS coordinates.
+    lat: Optional[float] = Field(default=None)
+    lng: Optional[float] = Field(default=None)
     location: Optional[str] = Field(default=None, description="Reverse-geocoded area name")
     
     # Store the raw incoming JSON for audit/debug

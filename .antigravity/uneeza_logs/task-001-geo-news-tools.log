@@ -1,0 +1,218 @@
+================================================================================
+  ANTIGRAVITY AI AGENT — TASK SESSION LOG
+  Task: Implement geo.py (reverse_geocode) + news.py (search_local_news)
+  Powered by Google DeepMind · Advanced Agentic Coding
+================================================================================
+
+Session ID      : 50f1f56c-3ff4-421a-968f-c4f87e5c1b06
+Agent Model     : Claude Sonnet 4.6 (Thinking)
+Platform        : Antigravity (Google DeepMind)
+Branch          : uneeza-develop
+Task Owner      : Uneeza Ismail (Agent Engineer & Prompt Tuning)
+Started At      : 2026-05-15T17:19:33Z
+Completed At    : 2026-05-15T17:27:24Z
+
+--------------------------------------------------------------------------------
+TASK CHECKLIST
+--------------------------------------------------------------------------------
+
+  [x] TASK A1 — Implement reverse_geocode(lat, lng) in backend/app/ai/tools/geo.py
+        API: Google Geocoding API (maps.googleapis.com/maps/api/geocode/json)
+        Key: settings.GOOGLE_MAPS_SERVER_KEY
+        Extracts: results[0]["formatted_address"]
+        On fail:  returns "UNKNOWN — manual review required"
+        Decorated with @function_tool (OpenAI Agents SDK)
+
+  [x] TASK A2 — Implement search_local_news(query) in backend/app/ai/tools/news.py
+        API: SerpApi (serpapi.com/search.json)
+        Key: settings.SERP_API_KEY
+        Params: num=5, hl=en, gl=pk
+        Extracts: organic_results → [{title, snippet, link}]
+        On fail:  returns [] (empty list)
+        Decorated with @function_tool (OpenAI Agents SDK)
+
+--------------------------------------------------------------------------------
+SKILL INVOKED
+--------------------------------------------------------------------------------
+
+  Skill    : sdk-function-tool-integration
+  Path     : .agent/skills/sdk-function-tool-integration/SKILL.md
+  Reason   : Both functions are exposed to OpenAI Agents SDK agents as tool
+             calls — exact use case defined in the skill's "When to use" section.
+
+  Workflow checklist followed:
+    [x] Write the Function  → Async functions with real httpx.AsyncClient calls
+    [x] Write the Docstring → Action-verb opener + "when to call" + Args: block
+                              (SDK extracts name, description, and param schema)
+    [x] Decorate            → @function_tool applied to both functions
+    [x] Pass Context        → No RunContextWrapper needed; keys read from settings
+    [x] Register on Agent   → Already registered in agent_definitions.py (Abdullah)
+                              signal_agent → [reverse_geocode]
+                              detection_agent, verification_agent → [search_local_news]
+    [x] Validate Schema     → Docstring Args: blocks match all typed parameters
+
+--------------------------------------------------------------------------------
+CONTEXT7 MCP — RESEARCH TRACE
+--------------------------------------------------------------------------------
+
+  Query 1  : resolve-library-id → "httpx async client HTTP requests Python"
+  Result   : /encode/httpx  (208 snippets, High reputation, score 87.85) ✅
+
+  Query 2  : query-docs → /encode/httpx
+             "AsyncClient GET request with params timeout error handling"
+  Key findings applied:
+    - Pattern: async with httpx.AsyncClient(timeout=10.0) as client:
+    - Pattern: response = await client.get(url, params=params)
+    - Pattern: response.raise_for_status() before parsing .json()
+    - Exception root: httpx.TimeoutException / httpx.NetworkError → caught by
+      broad except Exception block per spec (never raise)
+    - timeout=10.0 → positional float accepted directly by AsyncClient() ✅
+
+--------------------------------------------------------------------------------
+AGENT REASONING TRACE
+--------------------------------------------------------------------------------
+
+[STEP 1] READ SPEC
+  Tools Called :
+    - view_file → .antigravity/uneeza_logs/implementation_plan.md  (full file)
+    - view_file → .agent/skills/sdk-function-tool-integration/SKILL.md
+    - view_file → .antigravity/tasks/task-001-fastapi-init.log      (log format)
+  Findings     :
+    - TASK A1: reverse_geocode — Google Geocoding URL, key, extract path, timeout
+    - TASK A2: search_local_news — SerpApi URL, key, params, extract path, timeout
+    - Skill mandates: @function_tool decorator, action-verb docstring, Args: block
+    - Log format: header block + checklist + skill + reasoning + file list + tools
+
+[STEP 2] READ EXISTING STUBS
+  Tools Called :
+    - view_file → backend/app/ai/tools/geo.py   (3 lines — async def + pass)
+    - view_file → backend/app/ai/tools/news.py  (4 lines — async def + pass)
+    - view_file → backend/app/core/config.py    (61 lines — confirmed key names)
+  Findings     :
+    - settings.GOOGLE_MAPS_SERVER_KEY ✅ (line 42 of config.py)
+    - settings.SERP_API_KEY           ✅ (line 52 of config.py)
+    - Both stubs have no imports — full rewrites needed
+
+[STEP 3] RESEARCH HTTPX PATTERNS
+  Tool Called  : mcp_context7_resolve-library-id → "httpx" → /encode/httpx
+  Tool Called  : mcp_context7_query-docs → async GET, params, timeout, errors
+  Decision     :
+    - Use async with httpx.AsyncClient(timeout=10.0) as client:
+      → context-manager form ensures connection pool is always closed
+    - Pass params={} dict to client.get() — httpx URL-encodes automatically
+    - raise_for_status() surfaces 4xx/5xx before .json() parse
+    - Wrap entire body in try/except Exception to satisfy "never raise" spec
+
+[STEP 4] IMPLEMENT geo.py
+  Tool Called  : write_to_file → backend/app/ai/tools/geo.py   (Overwrite=true)
+  Key decisions:
+    - Module-level constant _GEOCODING_URL — not inlined in function body
+    - @function_tool from `agents` package (OpenAI Agents SDK)
+    - Docstring: "Convert GPS coordinates to…" (action verb) + when to call +
+      Args: lat + Args: lng with example values
+    - Extract: data.get("results", []) → results[0]["formatted_address"]
+    - Fallback: "UNKNOWN — manual review required" for both empty results
+      AND any exception path — single sentinel per spec
+  Result       : ✅ Created
+
+[STEP 5] IMPLEMENT news.py
+  Tool Called  : write_to_file → backend/app/ai/tools/news.py  (Overwrite=true)
+  Key decisions:
+    - Module-level constant _SERPAPI_URL
+    - @function_tool decorator applied
+    - Docstring: "Search for local news…" (action verb) + when to call +
+      Args: query with concrete examples for Pakistan flood context
+    - params: q, api_key, num=5, hl=en, gl=pk — matches spec exactly
+    - Extract: data.get("organic_results", []) → list comprehension
+      keeping only {title, snippet, link} — strips noisy SerpApi fields
+    - Fallback: return [] on any exception — never propagates
+  Result       : ✅ Created
+
+[STEP 6] WRITE TASK LOG
+  Tool Called  : write_to_file → .antigravity/uneeza_logs/task-001-geo-news-tools.log
+  Result       : ✅ Created (this file)
+
+[STEP 7] UPDATE IMPLEMENTATION PLAN
+  Tool Called  : multi_replace_file_content →
+                 .antigravity/uneeza_logs/implementation_plan.md
+  Changes      : Workstream A STATUS → [x] Done
+                 TASK A1 checkbox   → [x]
+                 TASK A2 checkbox   → [x]
+                 FILE CHECKLIST geo.py → [x]
+                 FILE CHECKLIST news.py → [x]
+  Result       : ✅ Updated
+
+--------------------------------------------------------------------------------
+FILES MODIFIED BY AGENT (This Task)
+--------------------------------------------------------------------------------
+
+  backend/app/ai/tools/geo.py                             ← TASK A1 (full rewrite)
+  backend/app/ai/tools/news.py                            ← TASK A2 (full rewrite)
+  .antigravity/uneeza_logs/implementation_plan.md         ← checkboxes updated
+  .antigravity/uneeza_logs/task-001-geo-news-tools.log    ← this file
+
+--------------------------------------------------------------------------------
+TOOL CALLS SUMMARY
+--------------------------------------------------------------------------------
+
+  [17:19:33Z] view_file          → uneeza_logs/implementation_plan.md    ✅
+  [17:19:33Z] view_file          → sdk-function-tool-integration/SKILL.md ✅
+  [17:19:33Z] view_file          → tasks/task-001-fastapi-init.log        ✅
+  [17:19:45Z] view_file          → backend/app/ai/tools/geo.py            ✅
+  [17:19:46Z] view_file          → backend/app/ai/tools/news.py           ✅
+  [17:19:46Z] view_file          → backend/app/core/config.py             ✅
+  [17:25:12Z] resolve-library-id → httpx → /encode/httpx                  ✅
+  [17:26:08Z] query-docs         → /encode/httpx async patterns            ✅
+  [17:27:22Z] write_to_file      → backend/app/ai/tools/geo.py            ✅
+  [17:27:24Z] write_to_file      → backend/app/ai/tools/news.py           ✅
+  [17:27:xx Z] write_to_file     → uneeza_logs/task-001-geo-news-tools.log ✅
+  [17:27:xx Z] multi_replace     → uneeza_logs/implementation_plan.md     ✅
+
+  Total Tool Calls  : 12
+  Total Files Built : 2 (code) + 1 (log) + 1 (plan updated) = 4
+  Errors            : 0
+
+--------------------------------------------------------------------------------
+DESIGN DECISIONS & NOTES FOR REVIEWERS
+--------------------------------------------------------------------------------
+
+  1. NEVER RAISE policy
+     Both tools wrap the entire body in `except Exception`. This is intentional
+     per spec. The agent pipeline must never crash due to a geocoder or news
+     API being down. Sentinel values allow agents to degrade gracefully.
+
+  2. No RunContextWrapper needed
+     The tools read credentials from `settings` (Pydantic BaseSettings singleton)
+     rather than a runtime DB session or injected context. This is the correct
+     pattern when the only shared resource is a config object.
+
+  3. @function_tool auto-generates JSON schema
+     The OpenAI Agents SDK reads the function signature + Args: docstring to
+     produce the JSON schema shown to the LLM. Types float/str are mapped to
+     number/string. No manual schema definition required.
+
+  4. list return type on search_local_news
+     SDK serialises Python lists to JSON arrays automatically. Each dict item
+     {title, snippet, link} maps to a JSON object the LLM can read naturally.
+
+  5. Agents already registered (Abdullah's work — untouched)
+     signal_agent.tools       = [reverse_geocode, ...]
+     detection_agent.tools     = [search_local_news, ...]
+     verification_agent.tools  = [search_local_news, ...]
+     These registrations in agent_definitions.py are correct and were NOT
+     modified. Uneeza's scope is the tool implementations only.
+
+--------------------------------------------------------------------------------
+NEXT TASKS (Uneeza — Remaining Workstreams)
+--------------------------------------------------------------------------------
+
+  [ ] TASK B1 — backend/app/models/incidents.py   (Workstream B)
+  [ ] TASK B2 — backend/app/models/reasoning_logs.py
+  [ ] TASK B3 — backend/app/models/actions.py
+  [ ] TASK C1 — Fix backend/app/models/signals.py (2 bugs)
+  [ ] TASK C2 — Fix backend/app/models/schemas.py (type safety)
+  [ ] Phase 2 — Pipeline wiring (Workstream A of Phase 2)
+
+--------------------------------------------------------------------------------
+END OF TASK LOG
+================================================================================

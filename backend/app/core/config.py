@@ -14,12 +14,15 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
+        extra="ignore",
     )
 
     # ------------------------------------------------------------------
     # Project Info
     # ------------------------------------------------------------------
     PROJECT_NAME: str = "CIRO — Urban Flood Response Orchestrator"
+    APP_NAME: str = "CIRO_Backend"
+    DEBUG: bool = True
     API_V1_STR: str = "/api/v1"
 
     # ------------------------------------------------------------------
@@ -35,11 +38,13 @@ class Settings(BaseSettings):
     # AI — Gemini 2.0 Flash (via OpenAI-compatible layer)
     # ------------------------------------------------------------------
     GEMINI_API_KEY: str = ""
+    MODEL_NAME: str = "gemini-flash-lite-latest"
 
     # ------------------------------------------------------------------
     # Google Maps — Server-side (Distance Matrix, Geocoding)
     # ------------------------------------------------------------------
     GOOGLE_MAPS_SERVER_KEY: str = ""
+    GOOGLE_MAPS_API_KEY: str = ""
 
     # ------------------------------------------------------------------
     # OpenWeatherMap

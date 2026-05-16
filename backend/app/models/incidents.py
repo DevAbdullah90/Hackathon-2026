@@ -1,43 +1,49 @@
+"""
+app/models/incidents.py
+-----------------------
+SQLModel ORM model for the incidents table.
+"""
+
 import uuid
 from datetime import datetime
-from typing import Optional, Dict, Any, List
-from sqlmodel import SQLModel, Field, Column, JSON
+from typing import Any, Dict, Optional
+
+from sqlmodel import Column, Field, JSON, SQLModel
 
 
 class Incident(SQLModel, table=True):
-    """
-    Table 2: Confirmed flood incidents
-    """
     __tablename__ = "incidents"
 
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         primary_key=True,
         index=True,
-        nullable=False
+        nullable=False,
     )
-    location: str = Field(description="Human-readable area name (e.g. G-10 Sector)")
+    location: str = Field(description="Human-readable area name, e.g. G-10 Sector")
     lat: float
     lng: float
-    severity_score: float = Field(description="Scored 1-10 by Severity Agent")
-    confidence: float = Field(description="Confidence score from Detection Agent")
-    
-    affected_radius_km: float = Field(default=0.0, description="Predicted by Severity Agent")
-    estimated_population: int = Field(default=0, description="Predicted by Severity Agent")
+    severity_score: float = Field(description="Scored 1-10 by the Severity Agent")
+    confidence: float = Field(description="Confidence score from the Detection Agent")
+    affected_radius_km: float = Field(
+        default=0.0,
+        description="Predicted by the Severity Agent",
+    )
+    estimated_population: int = Field(
+        default=0,
+        description="Predicted by the Severity Agent",
+    )
     peak_impact_eta: Optional[str] = Field(default=None, description="e.g. '45 mins'")
-    
     status: str = Field(
         default="monitoring",
-        description="'monitoring', 'confirmed', 'resolved', 'retracted'"
+        description="'monitoring' | 'confirmed' | 'resolved' | 'retracted'",
     )
-    
-    risk_factors: Optional[List[str]] = Field(
-        default_factory=list,
-        sa_column=Column(JSON)
+    risk_factors: Optional[Dict[str, Any]] = Field(
+        default=None,
+        sa_column=Column(JSON),
     )
-    
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         index=True,
-        nullable=False
+        nullable=False,
     )
