@@ -1,8 +1,8 @@
 """
-app/ai/agent_definitions.py
-───────────────────────────
-Definitions of all CIRO Agents and their handoff relationships.
-Integrated with Tool Stubs for Quratulain.
+app/ai/agents.py
+────────────────
+Definitions of all CIRO Specialist Agents.
+These agents are experts in specific domains (Signals, Detection, Severity, etc.).
 """
 
 from agents import Agent
@@ -11,8 +11,7 @@ from .prompts import (
     DETECTION_AGENT_INSTRUCTIONS,
     SEVERITY_AGENT_INSTRUCTIONS,
     VERIFICATION_AGENT_INSTRUCTIONS,
-    LOGGING_AGENT_INSTRUCTIONS,
-    TRIAGE_AGENT_INSTRUCTIONS
+    LOGGING_AGENT_INSTRUCTIONS
 )
 
 # Import Tool Stubs
@@ -22,7 +21,7 @@ from .tools.traffic import get_traffic_matrix
 from .tools.news import search_local_news
 
 # ===========================================================================
-# 1. SPECIALIST AGENTS
+# SPECIALIST AGENTS
 # ===========================================================================
 
 signal_agent = Agent(
@@ -54,9 +53,7 @@ logging_agent = Agent(
     instructions=LOGGING_AGENT_INSTRUCTIONS,
 )
 
-# ===========================================================================
-# 2. ADDITIONAL AGENTS (Stubs)
-# ===========================================================================
+# ── Placeholder Agents (For future implementation) ─────────────────────────
 
 resource_agent = Agent(
     name="Resource Allocation Agent",
@@ -71,23 +68,4 @@ planning_agent = Agent(
 notification_agent = Agent(
     name="Notification Agent",
     instructions="Instructions pending...",
-)
-
-# ===========================================================================
-# 3. TRIAGE AGENT (The Orchestrator)
-# ===========================================================================
-
-triage_agent = Agent(
-    name="Triage Agent",
-    instructions=TRIAGE_AGENT_INSTRUCTIONS,
-    handoffs=[
-        signal_agent,
-        detection_agent,
-        severity_agent,
-        resource_agent,
-        planning_agent,
-        verification_agent,
-        notification_agent,
-        logging_agent
-    ]
 )
