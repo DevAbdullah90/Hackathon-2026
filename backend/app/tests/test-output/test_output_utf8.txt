@@ -1,0 +1,81 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.0.3, pluggy-1.6.0 -- D:\Hackathon-2026\backend\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\Hackathon-2026\backend
+configfile: pyproject.toml
+plugins: anyio-4.13.0, asyncio-1.3.0, mock-3.15.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+app/tests/test_pipeline_end_to_end.py::test_intelligence_pipeline 
+--- 1. DIRECT DB INJECTION ---
+2026-05-16 20:26:12,980 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2026-05-16 20:26:12,982 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-05-16 20:26:15,139 INFO sqlalchemy.engine.Engine select current_schema()
+2026-05-16 20:26:15,139 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-05-16 20:26:16,773 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2026-05-16 20:26:16,774 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-05-16 20:26:17,783 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-16 20:26:17,800 INFO sqlalchemy.engine.Engine INSERT INTO signals (id, source, type, lat, lng, location, raw_payload, credibility_score, conflict_flag, structured_json, created_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::FLOAT, $5::FLOAT, $6::VARCHAR, $7::JSON, $8::FLOAT, $9::BOOLEAN, $10::JSON, $11::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-16 20:26:17,801 INFO sqlalchemy.engine.Engine [generated in 0.00160s] (UUID('5a2fe11c-a2ac-4b00-9fbc-f64f4f5869a7'), 'user_gps', 'flood', 33.6844, 73.0479, None, '{"comment": "Water entering shops in G-10 Markaz"}', None, False, '{}', datetime.datetime(2026, 5, 16, 15, 26, 9, 357485))
+2026-05-16 20:26:18,769 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-16 20:26:19,145 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-16 20:26:19,163 INFO sqlalchemy.engine.Engine SELECT signals.id, signals.source, signals.type, signals.lat, signals.lng, signals.location, signals.raw_payload, signals.credibility_score, signals.conflict_flag, signals.structured_json, signals.created_at 
+FROM signals 
+WHERE signals.id = $1::UUID
+2026-05-16 20:26:19,164 INFO sqlalchemy.engine.Engine [generated in 0.00088s] (UUID('5a2fe11c-a2ac-4b00-9fbc-f64f4f5869a7'),)
+2026-05-16 20:26:19,975 INFO sqlalchemy.engine.Engine INSERT INTO signals (id, source, type, lat, lng, location, raw_payload, credibility_score, conflict_flag, structured_json, created_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::FLOAT, $5::FLOAT, $6::VARCHAR, $7::JSON, $8::FLOAT, $9::BOOLEAN, $10::JSON, $11::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-16 20:26:19,976 INFO sqlalchemy.engine.Engine [cached since 2.176s ago] (UUID('48165633-8405-49e4-8296-a203440b2307'), 'user_gps', 'flood', 33.685, 73.0485, None, '{"comment": "Heavy water accumulation on main road"}', None, False, '{}', datetime.datetime(2026, 5, 16, 15, 26, 19, 972808))
+2026-05-16 20:26:20,248 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-16 20:26:20,555 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-16 20:26:20,556 INFO sqlalchemy.engine.Engine SELECT signals.id, signals.source, signals.type, signals.lat, signals.lng, signals.location, signals.raw_payload, signals.credibility_score, signals.conflict_flag, signals.structured_json, signals.created_at 
+FROM signals 
+WHERE signals.id = $1::UUID
+2026-05-16 20:26:20,557 INFO sqlalchemy.engine.Engine [cached since 1.394s ago] (UUID('48165633-8405-49e4-8296-a203440b2307'),)
+2026-05-16 20:26:21,184 INFO sqlalchemy.engine.Engine INSERT INTO signals (id, source, type, lat, lng, location, raw_payload, credibility_score, conflict_flag, structured_json, created_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::FLOAT, $5::FLOAT, $6::VARCHAR, $7::JSON, $8::FLOAT, $9::BOOLEAN, $10::JSON, $11::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-16 20:26:21,184 INFO sqlalchemy.engine.Engine [cached since 3.385s ago] (UUID('b3757db3-043b-4103-a2b1-c9c768c715ae'), 'user_gps', 'flood', 33.684, 73.047, None, '{"comment": "Drainage blocked, roads underwater"}', None, False, '{}', datetime.datetime(2026, 5, 16, 15, 26, 21, 182208))
+2026-05-16 20:26:21,481 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-16 20:26:21,834 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-16 20:26:21,834 INFO sqlalchemy.engine.Engine SELECT signals.id, signals.source, signals.type, signals.lat, signals.lng, signals.location, signals.raw_payload, signals.credibility_score, signals.conflict_flag, signals.structured_json, signals.created_at 
+FROM signals 
+WHERE signals.id = $1::UUID
+2026-05-16 20:26:21,835 INFO sqlalchemy.engine.Engine [cached since 2.672s ago] (UUID('b3757db3-043b-4103-a2b1-c9c768c715ae'),)
+Success: Injected 3 signals for Islamabad G-10 into DB.
+
+--- 2. MANUAL ORCHESTRATION ---
+Invoking pipeline sequentially [LIVE]...
+
+[Agent: Signal Agent]
+Processed 3 signals.
+
+[Agent: Detection Agent]
+Detection Result: {'detection_id': '87d6b824-67dd-4c90-bb8b-5cdeckb3a94c', 'confirmed': False, 'confidence': 0.0, 'signal_count': 0, 'incident_center_lat': 0.0, 'incident_center_lng': 0.0, 'incident_location': '', 'cluster_radius_m': 0.0, 'conflict_detected': False, 'status': 'UNCONFIRMED_VERIFY', 'supporting_evidence': ['Water entering shops in G-10 Markaz', 'Heavy water accumulation on main road', 'Drainage blocked, roads underwater'], 'news_corroboration': False, 'traffic_corroboration': False, 'processed_at': '2023-10-01T10:00:00Z', 'agent': 'detection_agent'}
+Incident not confirmed. Skipping severity assessment.
+
+--- 3. VERIFICATION & TRACES ---
+Pipeline completed sequentially.
+
+--- 4. PERSISTENCE CHECK ---
+No final output data to persist.
+2026-05-16 20:26:55,005 INFO sqlalchemy.engine.Engine SELECT incidents.id, incidents.location, incidents.lat, incidents.lng, incidents.severity_score, incidents.confidence, incidents.affected_radius_km, incidents.estimated_population, incidents.peak_impact_eta, incidents.status, incidents.risk_factors, incidents.created_at 
+FROM incidents
+2026-05-16 20:26:55,006 INFO sqlalchemy.engine.Engine [generated in 0.00106s] ()
+Total Incidents in DB: 1
+2026-05-16 20:26:55,892 INFO sqlalchemy.engine.Engine SELECT reasoning_logs.id, reasoning_logs.incident_id, reasoning_logs.agent_name, reasoning_logs.phase, reasoning_logs.log_text, reasoning_logs.log_level, reasoning_logs.created_at 
+FROM reasoning_logs
+2026-05-16 20:26:55,893 INFO sqlalchemy.engine.Engine [generated in 0.00040s] ()
+Total Reasoning Logs in DB: 2
+
+Success: Verification complete. DB Persisted successfully.
+2026-05-16 20:26:56,403 INFO sqlalchemy.engine.Engine ROLLBACK
+PASSED
+
+============================== warnings summary ===============================
+app/tests/test_pipeline_end_to_end.py::test_intelligence_pipeline
+app/tests/test_pipeline_end_to_end.py::test_intelligence_pipeline
+app/tests/test_pipeline_end_to_end.py::test_intelligence_pipeline
+  D:\Hackathon-2026\backend\venv\Lib\site-packages\pydantic\_internal\_fields.py:727: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return fac()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 1 passed, 3 warnings in 52.86s ========================

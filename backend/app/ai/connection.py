@@ -1,7 +1,7 @@
 """
 app/ai/connection.py
 ────────────────────
-Gemini 2.0 Flash configuration via the OpenAI Agents SDK.
+OpenAI configuration via the OpenAI Agents SDK.
 """
 
 import os
@@ -14,19 +14,29 @@ from agents import (
 
 load_dotenv()
 
-gemini_api_key = os.getenv("GEMINI_API_KEY")
+# gemini_api_key = os.getenv("GEMINI_API_KEY")
+# if not gemini_api_key:
+#     raise ValueError("GEMINI_API_KEY is not set in the .env file.")
+# external_client = AsyncOpenAI(
+#     api_key=gemini_api_key,
+#     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
+# )
+# model = OpenAIChatCompletionsModel(
+#     model="gemini-1.5-pro",
+#     openai_client=external_client,
+# )
 
-if not gemini_api_key:
-    raise ValueError("GEMINI_API_KEY is not set in the .env file.")
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
-# Reference: https://ai.google.dev/gemini-api/docs/openai
+if not openai_api_key:
+    raise ValueError("OPENAI_API_KEY is not set in the .env file. Please add it.")
+
 external_client = AsyncOpenAI(
-    api_key=gemini_api_key,
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    api_key=openai_api_key,
 )
 
 model = OpenAIChatCompletionsModel(
-    model="gemini-flash-lite-latest",
+    model="gpt-4o-mini",
     openai_client=external_client,
 )
 

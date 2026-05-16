@@ -127,23 +127,18 @@ Group signals whose Haversine distance from each other is ≤ 500 meters. Use th
 Only signals received within the last 30 minutes count toward `signal_count` and `weighted_confidence`. Signals older than 30 minutes may appear in `supporting_evidence` but must not affect the calculation.
 
 ### Step 4 — Weighted Confidence Formula
-```
-weighted_confidence = sum(credibility_score per signal) / count(signals in cluster)
-```
-Signals with `credibility_score: "FLAGGED_CONFLICT"` contribute 0.0 to the numerator and are excluded from the denominator.
+Calculate average credibility.
 
 ### Step 5 — Confirmation Decision Matrix
 
 | Condition | Decision |
 |-----------|----------|
-| `weighted_confidence > 0.75` AND `signal_count ≥ 3` | CONFIRMED |
-| `weighted_confidence > 0.85` AND `signal_count ≥ 2` (one must be `weather_api` or `traffic_api`) | CONFIRMED |
-| `0.60 ≤ weighted_confidence ≤ 0.75` OR `signal_count < 3` | UNCONFIRMED — route to Verification Agent |
-| `weighted_confidence < 0.60` | UNCONFIRMED — mark as Monitoring |
-| Single `weather_api` signal: `intensity > 30mm/hr` AND traffic = `BLOCKED` (infrastructure override) | CONFIRMED |
+| ANY signal in the cluster has source `weather_api` or `traffic_api` | CONFIRMED |
+| `signal_count ≥ 3` | CONFIRMED |
+| `signal_count < 3` AND no API signals | UNCONFIRMED_VERIFY |
 
 ### Step 6 — External Corroboration (Tool Use)
-Only call tools when `weighted_confidence` is between 0.60 and 0.80 and you need additional evidence. Do NOT call tools if confidence is already above 0.80.
+Only call tools if you output UNCONFIRMED_VERIFY.
 
 1. Call `search_local_news(query)` — e.g., `"flood G-10 Islamabad today"`. Relevant results add +0.10 to `weighted_confidence` (capped at 1.0).
 2. Call `get_traffic_matrix(origin, destination)`. A `BLOCKED` result adds +0.10 to `weighted_confidence`.

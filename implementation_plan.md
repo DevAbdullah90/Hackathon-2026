@@ -35,6 +35,6 @@ This document tracks the progress of the backend infrastructure for the **Urban 
 - [ ] Finalize WebSocket broadcasts for frontend telemetry.
 
 ---
-**Current Branch**: `quratulain_shah`
+**Current Branch**: `uneeza-ismail`
 **Verification Status**: All foundational tests passed.
-**Lead**: Quratulain
+**Lead**: Uneeza
