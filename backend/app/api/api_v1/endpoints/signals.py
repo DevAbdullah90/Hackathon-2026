@@ -24,7 +24,7 @@ from agents import Runner
 from app.models.signals import Signal
 from app.models.schemas import SignalCreate, SignalRead
 from app.db.session import get_session
-from app.ai.agent_definitions import triage_agent
+from app.ai.orchestrator import triage_agent
 from app.ai.connection import config
 
 router = APIRouter()
