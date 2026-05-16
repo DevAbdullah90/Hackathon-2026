@@ -13,6 +13,8 @@ from .prompts import (
     SEVERITY_AGENT_INSTRUCTIONS,
     SIGNAL_AGENT_INSTRUCTIONS,
     VERIFICATION_AGENT_INSTRUCTIONS,
+    RESOURCE_AGENT_INSTRUCTIONS,
+    PLANNING_AGENT_INSTRUCTIONS,
 )
 from .tools import (
     reverse_geocode,
@@ -21,6 +23,8 @@ from .tools import (
     get_traffic_matrix,
     get_weather_alerts,
     get_nearby_signals,
+    allocate_resource,
+    create_action,
 )
 from .tools.tracer import emit_log
 
@@ -57,12 +61,14 @@ logging_agent = Agent(
 
 resource_agent = Agent(
     name="Resource Allocation Agent",
-    instructions="Instructions pending...",
+    instructions=RESOURCE_AGENT_INSTRUCTIONS,
+    tools=[allocate_resource],
 )
 
 planning_agent = Agent(
     name="Planning Agent",
-    instructions="Instructions pending...",
+    instructions=PLANNING_AGENT_INSTRUCTIONS,
+    tools=[create_action],
 )
 
 notification_agent = Agent(

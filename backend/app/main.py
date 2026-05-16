@@ -48,9 +48,9 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.on_event("startup")
 async def on_startup():
     """Execute startup tasks: DB initialization, etc."""
-    print("🚀 Initializing CIRO Database...")
+    print("Initializing CIRO Database...")
     await init_db()
-    print("✅ Database ready.")
+    print("Database ready.")
 
 
 # ---------------------------------------------------------------------------
