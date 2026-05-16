@@ -10,6 +10,8 @@ from .notify import send_notification
 from .traffic import get_traffic_matrix
 from .weather import get_weather_alerts
 from .nearby_signals import get_nearby_signals
+from .resource_manager import allocate_resource
+from .planner import create_action
 
 __all__ = [
     "reverse_geocode",
@@ -18,4 +20,6 @@ __all__ = [
     "get_traffic_matrix",
     "get_weather_alerts",
     "get_nearby_signals",
+    "allocate_resource",
+    "create_action",
 ]
