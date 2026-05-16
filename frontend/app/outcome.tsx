@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   View, 
   Text, 
@@ -7,9 +7,17 @@ import {
   SafeAreaView, 
   StatusBar, 
   ScrollView, 
-  Animated,
   Dimensions
 } from "react-native";
+import Animated, { 
+  FadeInDown, 
+  FadeInUp, 
+  ZoomIn,
+  useSharedValue, 
+  withTiming, 
+  withDelay,
+  useAnimatedStyle 
+} from "react-native-reanimated";
 import { api, Incident } from "../lib/api";
 import { THEME } from "../lib/theme";
 import { 
@@ -21,7 +29,6 @@ import {
   Car, 
   MapPin, 
   Activity,
-  CheckCircle2,
   BarChart2
 } from "lucide-react-native";
 
@@ -31,31 +38,25 @@ export default function OutcomeScreen({ route, navigation }: any) {
   const { incidentId, location } = route.params || { incidentId: "INC-DEMO", location: "Active Crisis" };
   const [incident, setIncident] = useState<Incident | null>(null);
   
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const barAnim1 = useRef(new Animated.Value(0)).current;
-  const barAnim2 = useRef(new Animated.Value(0)).current;
-  const barAnim3 = useRef(new Animated.Value(0)).current;
+  const bar1 = useSharedValue(0);
+  const bar2 = useSharedValue(0);
+  const bar3 = useSharedValue(0);
 
   useEffect(() => {
     const fetchIncident = async () => {
       const data = await api.getIncident(incidentId);
       setIncident(data);
       
-      Animated.sequence([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.stagger(200, [
-          Animated.timing(barAnim1, { toValue: 1, duration: 600, useNativeDriver: false }),
-          Animated.timing(barAnim2, { toValue: 1, duration: 600, useNativeDriver: false }),
-          Animated.timing(barAnim3, { toValue: 1, duration: 600, useNativeDriver: false }),
-        ])
-      ]).start();
+      bar1.value = withDelay(500, withTiming(85, { duration: 1000 }));
+      bar2.value = withDelay(700, withTiming(95, { duration: 1000 }));
+      bar3.value = withDelay(900, withTiming(60, { duration: 1000 }));
     };
     fetchIncident();
   }, [incidentId]);
+
+  const animatedBar1 = useAnimatedStyle(() => ({ height: `${bar1.value}%` }));
+  const animatedBar2 = useAnimatedStyle(() => ({ height: `${bar2.value}%` }));
+  const animatedBar3 = useAnimatedStyle(() => ({ height: `${bar3.value}%` }));
 
   return (
     <View style={styles.container}>
@@ -63,47 +64,47 @@ export default function OutcomeScreen({ route, navigation }: any) {
       
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
           <TouchableOpacity onPress={() => navigation.popToTop()} style={styles.iconButton}>
             <Home size={18} color={THEME.colors.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>MISSION REPORT</Text>
           <View style={{ width: 36 }} /> 
-        </View>
+        </Animated.View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Animated.View style={[styles.successBanner, { opacity: fadeAnim }]}>
-            <View style={styles.bannerIconContainer}>
+          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.successBanner}>
+            <Animated.View entering={ZoomIn.delay(300).springify()} style={styles.bannerIconContainer}>
               <ShieldCheck size={36} color={THEME.colors.background} strokeWidth={1.5} />
-            </View>
+            </Animated.View>
             <Text style={styles.successTitle}>SITUATION RESOLVED</Text>
             <Text style={styles.successSubtitle}>AGENTIC LOOP TERMINATED SUCCESSFULLY</Text>
           </Animated.View>
 
           {/* Impact Visualizer (Simple Animated Bar Chart) */}
-          <Animated.View style={[styles.chartCard, { opacity: fadeAnim }]}>
+          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.chartCard}>
             <View style={styles.chartHeader}>
               <BarChart2 size={16} color={THEME.colors.text.muted} />
               <Text style={styles.chartTitle}>IMPACT REDUCTION ANALYSIS</Text>
             </View>
             <View style={styles.chartBody}>
               <View style={styles.barGroup}>
-                <Animated.View style={[styles.barFill, { height: barAnim1.interpolate({ inputRange: [0, 1], outputRange: ["0%", "85%"] }) }]} />
+                <Animated.View style={[styles.barFill, animatedBar1]} />
                 <Text style={styles.barLabel}>TRAFFIC</Text>
               </View>
               <View style={styles.barGroup}>
-                <Animated.View style={[styles.barFill, { backgroundColor: THEME.colors.primary, height: barAnim2.interpolate({ inputRange: [0, 1], outputRange: ["0%", "95%"] }) }]} />
+                <Animated.View style={[styles.barFill, { backgroundColor: THEME.colors.primary }, animatedBar2]} />
                 <Text style={styles.barLabel}>SAFETY</Text>
               </View>
               <View style={styles.barGroup}>
-                <Animated.View style={[styles.barFill, { height: barAnim3.interpolate({ inputRange: [0, 1], outputRange: ["0%", "60%"] }) }]} />
+                <Animated.View style={[styles.barFill, animatedBar3]} />
                 <Text style={styles.barLabel}>RESPONSE</Text>
               </View>
             </View>
           </Animated.View>
 
           {/* Stats Grid */}
-          <Animated.View style={[styles.statsGrid, { opacity: fadeAnim }]}>
+          <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.statsGrid}>
             <View style={styles.statCard}>
               <Car size={20} color={THEME.colors.text.secondary} />
               <Text style={styles.statValue}>50+</Text>
@@ -127,7 +128,7 @@ export default function OutcomeScreen({ route, navigation }: any) {
           </Animated.View>
 
           {/* Detailed Breakdown */}
-          <Animated.View style={[styles.reportCard, { opacity: fadeAnim }]}>
+          <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.reportCard}>
             <Text style={styles.reportCardTitle}>SUMMARY ANALYSIS</Text>
             
             <View style={styles.reportItem}>
@@ -151,12 +152,14 @@ export default function OutcomeScreen({ route, navigation }: any) {
             </View>
           </Animated.View>
 
-          <TouchableOpacity 
-            style={styles.doneButton}
-            onPress={() => navigation.popToTop()}
-          >
-            <Text style={styles.doneButtonText}>RETURN TO COMMAND CENTER</Text>
-          </TouchableOpacity>
+          <Animated.View entering={FadeInUp.delay(700).springify()} style={{ width: '100%' }}>
+            <TouchableOpacity 
+              style={styles.doneButton}
+              onPress={() => navigation.popToTop()}
+            >
+              <Text style={styles.doneButtonText}>RETURN TO COMMAND CENTER</Text>
+            </TouchableOpacity>
+          </Animated.View>
           
           <View style={{ height: 40 }} />
         </ScrollView>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -6,12 +6,22 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  Animated,
   ScrollView,
   RefreshControl,
   ActivityIndicator,
   Dimensions,
+  Pressable
 } from "react-native";
+import Animated, { 
+  FadeInDown, 
+  FadeInUp,
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withSpring
+} from "react-native-reanimated";
 import { THEME } from "../lib/theme";
 import SeverityBadge from "../components/SeverityBadge";
 import { api, Incident } from "../lib/api";
@@ -39,35 +49,35 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const listAnim = useRef(new Animated.Value(0)).current;
+  
+  const pulseOpacity = useSharedValue(1);
 
   const fetchIncidents = async () => {
     const data = await api.getActiveIncidents();
     setIncidents(data);
     setLoading(false);
     setRefreshing(false);
-
-    Animated.timing(listAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start();
   };
 
   useEffect(() => {
     fetchIncidents();
     const interval = setInterval(fetchIncidents, 5000);
 
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 0.3, duration: 1000, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
-      ])
-    ).start();
+    pulseOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.3, { duration: 1000 }),
+        withTiming(1, { duration: 1000 })
+      ),
+      -1,
+      true
+    );
 
     return () => clearInterval(interval);
   }, []);
+
+  const statusDotStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value
+  }));
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -75,83 +85,76 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
   };
 
   const renderIncidentCard = ({ item, index }: { item: Incident; index: number }) => {
-    const scaleAnim = new Animated.Value(1);
+    const scale = useSharedValue(1);
+    
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: scale.value }]
+    }));
 
     const handlePressIn = () => {
-      Animated.spring(scaleAnim, { toValue: 0.98, useNativeDriver: true }).start();
+      scale.value = withSpring(0.98, { damping: 15, stiffness: 300 });
     };
 
     const handlePressOut = () => {
-      Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+      scale.value = withSpring(1, { damping: 15, stiffness: 300 });
     };
 
-    const translateY = listAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [50 + index * 20, 0]
-    });
-
-    const opacity = listAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 1]
-    });
-
-    // Custom visual severity bar
     const severityPercentage = (item.severity_score / 10) * 100;
     const isCritical = item.severity_score >= 7.5;
 
     return (
-      <Animated.View style={{ opacity, transform: [{ translateY }, { scale: scaleAnim }] }}>
-        <TouchableOpacity 
-          style={styles.card}
-          activeOpacity={1}
+      <Animated.View entering={FadeInDown.delay(100 * index + 300).springify()} key={`card-${item.id}`}>
+        <Pressable 
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           onPress={() => navigation.navigate("Reasoning", { incidentId: item.id, location: item.location })}
         >
-          <View style={styles.cardHeader}>
-            <View style={styles.cardHeaderInfo}>
-              <Text style={styles.cardLocation}>{item.location}</Text>
-              <View style={styles.cardTimestamp}>
-                <Clock size={10} color={THEME.colors.text.muted} />
-                <Text style={styles.cardTimeText}>
-                  {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
+          <Animated.View style={[styles.card, animatedStyle]}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderInfo}>
+                <Text style={styles.cardLocation}>{item.location}</Text>
+                <View style={styles.cardTimestamp}>
+                  <Clock size={10} color={THEME.colors.text.muted} />
+                  <Text style={styles.cardTimeText}>
+                    {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
+              </View>
+              <SeverityBadge score={item.severity_score} />
+            </View>
+
+            {/* Severity Visual Bar */}
+            <View style={styles.severityBarContainer}>
+              <Animated.View style={[styles.severityBarFill, { 
+                width: `${severityPercentage}%`, 
+                backgroundColor: isCritical ? THEME.colors.text.primary : THEME.colors.primary 
+              }]} />
+            </View>
+
+            <View style={styles.cardStatsGrid}>
+              <View style={styles.cardStat}>
+                <Text style={styles.cardStatLabel}>CONFIDENCE</Text>
+                <Text style={styles.cardStatValue}>{(item.confidence * 100).toFixed(0)}%</Text>
+              </View>
+              <View style={styles.cardStat}>
+                <Text style={styles.cardStatLabel}>POPULATION</Text>
+                <Text style={styles.cardStatValue}>{item.estimated_population}</Text>
+              </View>
+              <View style={styles.cardStat}>
+                <Text style={styles.cardStatLabel}>IMPACT ETA</Text>
+                <Text style={styles.cardStatValue}>{item.peak_impact_eta || "IMMEDIATE"}</Text>
               </View>
             </View>
-            <SeverityBadge score={item.severity_score} />
-          </View>
 
-          {/* Severity Visual Bar */}
-          <View style={styles.severityBarContainer}>
-            <View style={[styles.severityBarFill, { 
-              width: `${severityPercentage}%`, 
-              backgroundColor: isCritical ? THEME.colors.text.primary : THEME.colors.primary 
-            }]} />
-          </View>
-
-          <View style={styles.cardStatsGrid}>
-            <View style={styles.cardStat}>
-              <Text style={styles.cardStatLabel}>CONFIDENCE</Text>
-              <Text style={styles.cardStatValue}>{(item.confidence * 100).toFixed(0)}%</Text>
+            <View style={styles.cardFooter}>
+              <View style={styles.agentStatus}>
+                <Cpu size={12} color={THEME.colors.primary} />
+                <Text style={styles.agentStatusText}>ORCHESTRATOR ACTIVE</Text>
+              </View>
+              <ChevronRight size={16} color={THEME.colors.text.muted} />
             </View>
-            <View style={styles.cardStat}>
-              <Text style={styles.cardStatLabel}>POPULATION</Text>
-              <Text style={styles.cardStatValue}>{item.estimated_population}</Text>
-            </View>
-            <View style={styles.cardStat}>
-              <Text style={styles.cardStatLabel}>IMPACT ETA</Text>
-              <Text style={styles.cardStatValue}>{item.peak_impact_eta || "IMMEDIATE"}</Text>
-            </View>
-          </View>
-
-          <View style={styles.cardFooter}>
-            <View style={styles.agentStatus}>
-              <Cpu size={12} color={THEME.colors.primary} />
-              <Text style={styles.agentStatusText}>ORCHESTRATOR ACTIVE</Text>
-            </View>
-            <ChevronRight size={16} color={THEME.colors.text.muted} />
-          </View>
-        </TouchableOpacity>
+          </Animated.View>
+        </Pressable>
       </Animated.View>
     );
   };
@@ -162,18 +165,18 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
       <SafeAreaView style={styles.safeArea}>
         
         {/* Executive Header */}
-        <View style={styles.header}>
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
           <View>
             <Text style={styles.headerTitle}>COMMAND CENTER</Text>
             <View style={styles.systemStatus}>
-              <Animated.View style={[styles.statusDot, { opacity: pulseAnim }]} />
+              <Animated.View style={[styles.statusDot, statusDotStyle]} />
               <Text style={styles.statusText}>CIRO-ORCHESTRATOR ONLINE</Text>
             </View>
           </View>
           <TouchableOpacity style={styles.headerIconButton}>
             <Bell size={20} color={THEME.colors.text.primary} />
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
         <ScrollView 
           style={styles.scrollView}
@@ -183,7 +186,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
           }
         >
           {/* High-End KPI Dashboard */}
-          <View style={styles.kpiContainer}>
+          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.kpiContainer}>
             <View style={styles.kpiCard}>
               <View style={styles.kpiIconWrapper}>
                 <Target size={16} color={THEME.colors.background} />
@@ -202,10 +205,10 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 <Text style={styles.kpiLabel}>POPULATION AFFECTED</Text>
               </View>
             </View>
-          </View>
+          </Animated.View>
 
           {/* Quick Actions Panel */}
-          <View style={styles.section}>
+          <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.section}>
             <Text style={styles.sectionHeader}>SYSTEM MODULES</Text>
             <View style={styles.actionGrid}>
               <TouchableOpacity 
@@ -228,10 +231,10 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 <Text style={styles.actionTitle}>AI LOGSTREAM</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
 
           {/* Crisis Feed */}
-          <View style={styles.section}>
+          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionHeader}>PRIORITY INCIDENTS</Text>
             </View>
@@ -251,13 +254,13 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 <Text style={styles.emptySubtitle}>No active operational anomalies.</Text>
               </View>
             )}
-          </View>
+          </Animated.View>
           
           <View style={{ height: 100 }} />
         </ScrollView>
 
         {/* Global Navigation Bar */}
-        <View style={styles.navBar}>
+        <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.navBar}>
           <TouchableOpacity style={styles.navItem}>
             <LayoutDashboard size={20} color={THEME.colors.primary} strokeWidth={2.5} />
             <Text style={[styles.navLabel, { color: THEME.colors.primary }]}>DASHBOARD</Text>
@@ -274,7 +277,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
             <Cpu size={20} color={THEME.colors.text.muted} strokeWidth={2} />
             <Text style={styles.navLabel}>AI CORE</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
       </SafeAreaView>
     </View>

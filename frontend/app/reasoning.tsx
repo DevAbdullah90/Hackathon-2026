@@ -8,8 +8,8 @@ import {
   StatusBar,
   ScrollView,
   Dimensions,
-  Animated
 } from "react-native";
+import Animated, { FadeInDown, FadeInUp, useSharedValue, withRepeat, withSequence, withTiming, useAnimatedStyle } from "react-native-reanimated";
 import LiveLogStream from "../components/LiveLogStream";
 import { THEME } from "../lib/theme";
 import { 
@@ -28,16 +28,22 @@ export default function ReasoningCenter({ route, navigation }: any) {
   const { incidentId, location } = route.params || { incidentId: "DEMO-001", location: "Active Sector" };
   const [agentsActive, setAgentsActive] = useState(["ORCHESTRATOR", "GEOSPATIAL", "LOGISTICS"]);
   
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useSharedValue(1);
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 0.5, duration: 800, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      ])
-    ).start();
+    pulseOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.3, { duration: 800 }),
+        withTiming(1, { duration: 800 })
+      ),
+      -1,
+      true
+    );
   }, []);
+
+  const animatedPulseStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value
+  }));
 
   return (
     <View style={styles.container}>
@@ -45,7 +51,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
       
       <SafeAreaView style={styles.safeArea}>
         {/* Top Mission Header */}
-        <View style={styles.header}>
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton} 
             onPress={() => navigation.goBack()}
@@ -59,11 +65,11 @@ export default function ReasoningCenter({ route, navigation }: any) {
           <View style={styles.missionId}>
             <Text style={styles.missionIdText}>{incidentId}</Text>
           </View>
-        </View>
+        </Animated.View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Agent Status Grid */}
-          <View style={styles.agentGrid}>
+          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.agentGrid}>
             {agentsActive.map((agent, index) => (
               <View key={agent} style={styles.agentCard}>
                 <View style={styles.agentIconContainer}>
@@ -71,31 +77,31 @@ export default function ReasoningCenter({ route, navigation }: any) {
                 </View>
                 <Text style={styles.agentName}>{agent}</Text>
                 <View style={styles.agentStatusRow}>
-                  <Animated.View style={[styles.agentStatusDot, { opacity: index === 0 ? pulseAnim : 1 }]} />
+                  <Animated.View style={[styles.agentStatusDot, index === 0 ? animatedPulseStyle : null]} />
                   <Text style={styles.agentStatus}>ONLINE</Text>
                 </View>
               </View>
             ))}
-          </View>
+          </Animated.View>
 
           {/* Reasoning Console */}
-          <View style={styles.consoleHeader}>
+          <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.consoleHeader}>
             <View style={styles.consoleTitleRow}>
               <Terminal size={14} color={THEME.colors.text.muted} />
               <Text style={styles.consoleTitle}>AI LOGSTREAM</Text>
             </View>
             <View style={styles.liveBadge}>
-              <Animated.View style={[styles.pulseDot, { opacity: pulseAnim }]} />
+              <Animated.View style={[styles.pulseDot, animatedPulseStyle]} />
               <Text style={styles.liveText}>LIVE</Text>
             </View>
-          </View>
+          </Animated.View>
 
-          <View style={styles.logContainer}>
+          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.logContainer}>
             <LiveLogStream incidentId={incidentId} />
-          </View>
+          </Animated.View>
 
           {/* Strategy Summary */}
-          <View style={styles.strategyCard}>
+          <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.strategyCard}>
             <View style={styles.strategyHeader}>
               <Search size={16} color={THEME.colors.text.primary} />
               <Text style={styles.strategyTitle}>STRATEGY SYNTHESIS</Text>
@@ -104,13 +110,13 @@ export default function ReasoningCenter({ route, navigation }: any) {
               System is cross-referencing rainfall patterns with topography data. 
               Agentic loops are calculating optimal evacuation routes and drainage priorities.
             </Text>
-          </View>
+          </Animated.View>
 
           <View style={{ height: 100 }} />
         </ScrollView>
 
         {/* Action Footer */}
-        <View style={styles.footer}>
+        <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.footer}>
           <TouchableOpacity 
             style={styles.simulationButton}
             onPress={() => navigation.navigate("Simulation", { incidentId, location })}
@@ -119,7 +125,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
             <Play size={16} color={THEME.colors.background} fill={THEME.colors.background} />
             <Text style={styles.simulationButtonText}>INITIATE SIMULATION</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </SafeAreaView>
     </View>
   );

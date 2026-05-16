@@ -6,91 +6,96 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   StatusBar,
-  Animated,
   Dimensions
 } from "react-native";
+import Animated, { 
+  FadeIn, 
+  FadeInDown, 
+  FadeInUp, 
+  ZoomIn,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  withSequence,
+  useAnimatedStyle
+} from "react-native-reanimated";
 import { THEME } from "../lib/theme";
 import { ShieldAlert, ArrowRight, Activity, Globe } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
 
 export default function WelcomeScreen({ navigation }: any) {
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const slideAnim = React.useRef(new Animated.Value(30)).current;
+  const pulseScale = useSharedValue(1);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      })
-    ]).start();
+    pulseScale.value = withRepeat(
+      withSequence(
+        withTiming(1.05, { duration: 1000 }),
+        withTiming(1, { duration: 1000 })
+      ),
+      -1,
+      true
+    );
   }, []);
+
+  const animatedButtonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }]
+  }));
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
       {/* Decorative Grid Background */}
-      <View style={styles.gridOverlay}>
+      <Animated.View entering={FadeIn.duration(1500)} style={styles.gridOverlay}>
         {Array.from({ length: 20 }).map((_, i) => (
           <View key={`h-${i}`} style={[styles.gridLineHorizontal, { top: i * 40 }]} />
         ))}
         {Array.from({ length: 15 }).map((_, i) => (
           <View key={`v-${i}`} style={[styles.gridLineVertical, { left: i * 40 }]} />
         ))}
-      </View>
+      </Animated.View>
 
       <SafeAreaView style={styles.safeArea}>
-        <Animated.View 
-          style={[
-            styles.content, 
-            { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-          ]}
-        >
-          <View style={styles.headerArea}>
+        <View style={styles.content}>
+          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.headerArea}>
             <View style={styles.badge}>
               <Activity size={12} color={THEME.colors.primary} />
               <Text style={styles.badgeText}>SECURE CONNECTION</Text>
             </View>
-          </View>
+          </Animated.View>
 
           <View style={styles.heroSection}>
-            <View style={styles.logoContainer}>
+            <Animated.View entering={ZoomIn.delay(400).springify()} style={styles.logoContainer}>
               <Globe size={48} color={THEME.colors.text.primary} strokeWidth={1} />
-            </View>
-            <Text style={styles.title}>CIRO</Text>
-            <Text style={styles.subtitle}>COMMAND & CONTROL</Text>
+            </Animated.View>
+            <Animated.Text entering={FadeInDown.delay(500).springify()} style={styles.title}>CIRO</Animated.Text>
+            <Animated.Text entering={FadeInDown.delay(600).springify()} style={styles.subtitle}>COMMAND & CONTROL</Animated.Text>
             
-            <Text style={styles.description}>
+            <Animated.Text entering={FadeInDown.delay(700).springify()} style={styles.description}>
               Cognitive Incident Response Orchestrator. 
               Real-time multi-agent crisis management and 
               infrastructure rerouting system.
-            </Text>
+            </Animated.Text>
           </View>
 
-          <View style={styles.footerArea}>
+          <Animated.View entering={FadeInUp.delay(900).springify()} style={styles.footerArea}>
             <View style={styles.systemStatus}>
               <View style={styles.statusDot} />
               <Text style={styles.statusText}>ALL SYSTEMS NOMINAL</Text>
             </View>
 
             <TouchableOpacity 
-              style={styles.primaryButton}
               onPress={() => navigation.replace("Dashboard")}
               activeOpacity={0.8}
             >
-              <Text style={styles.primaryButtonText}>INITIALIZE</Text>
-              <ArrowRight size={20} color={THEME.colors.background} />
+              <Animated.View style={[styles.primaryButton, animatedButtonStyle]}>
+                <Text style={styles.primaryButtonText}>INITIALIZE</Text>
+                <ArrowRight size={20} color={THEME.colors.background} />
+              </Animated.View>
             </TouchableOpacity>
-          </View>
-        </Animated.View>
+          </Animated.View>
+        </View>
       </SafeAreaView>
     </View>
   );

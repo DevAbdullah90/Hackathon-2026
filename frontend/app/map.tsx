@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   Animated,
 } from "react-native";
+import Reanimated, { FadeInUp, FadeInDown, FadeIn } from "react-native-reanimated";
 import MapView, { Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
 import { CONFIG } from "./constants/config";
@@ -146,7 +147,7 @@ export default function FloodMap({ route, navigation }: any) {
       </MapView>
 
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
-        <View style={styles.header}>
+        <Reanimated.View entering={FadeInDown.delay(200).springify()} style={styles.header}>
           <TouchableOpacity 
             style={styles.iconButton} 
             onPress={() => navigation.goBack()}
@@ -163,26 +164,28 @@ export default function FloodMap({ route, navigation }: any) {
           </View>
 
           {loading && <ActivityIndicator color={THEME.colors.primary} size="small" />}
-        </View>
+        </Reanimated.View>
 
-        <TouchableOpacity 
-          style={[styles.reportFab, reporting && styles.disabledFab]}
-          onPress={handleReportPress}
-          disabled={reporting}
-          activeOpacity={0.8}
-        >
-          {reporting ? (
-            <ActivityIndicator color={THEME.colors.background} />
-          ) : (
-            <>
-              <Navigation size={16} color={THEME.colors.background} />
-              <Text style={styles.reportFabText}>TRANSMIT GPS</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <Reanimated.View entering={FadeInUp.delay(300).springify()} style={[styles.reportFab, reporting && styles.disabledFab]}>
+          <TouchableOpacity 
+            onPress={handleReportPress}
+            disabled={reporting}
+            activeOpacity={0.8}
+            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+          >
+            {reporting ? (
+              <ActivityIndicator color={THEME.colors.background} />
+            ) : (
+              <>
+                <Navigation size={16} color={THEME.colors.background} />
+                <Text style={styles.reportFabText}>TRANSMIT GPS</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </Reanimated.View>
 
         {incidents.length > 0 && (
-          <View style={styles.bottomContainer}>
+          <Reanimated.View entering={FadeInUp.delay(400).springify()} style={styles.bottomContainer}>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -223,7 +226,7 @@ export default function FloodMap({ route, navigation }: any) {
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
+          </Reanimated.View>
         )}
       </SafeAreaView>
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   View, 
   Text, 
@@ -10,8 +10,8 @@ import {
   ActivityIndicator, 
   Alert,
   Dimensions,
-  Animated
 } from "react-native";
+import Animated, { FadeInDown, FadeInUp, FadeIn } from "react-native-reanimated";
 import ExecutionTimeline from "../components/ExecutionTimeline";
 import { api, Action } from "../lib/api";
 import { THEME } from "../lib/theme";
@@ -31,7 +31,6 @@ export default function SimView({ route, navigation }: any) {
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const fetchSimulationState = async () => {
     const data = await api.getSimulationState(incidentId);
@@ -41,11 +40,6 @@ export default function SimView({ route, navigation }: any) {
 
   useEffect(() => {
     fetchSimulationState();
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
 
     const interval = setInterval(fetchSimulationState, 3000);
     return () => clearInterval(interval);
@@ -72,7 +66,7 @@ export default function SimView({ route, navigation }: any) {
       
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <ChevronLeft size={20} color={THEME.colors.text.primary} />
           </TouchableOpacity>
@@ -85,11 +79,11 @@ export default function SimView({ route, navigation }: any) {
               {completedCount}/{actions.length || 0} DONE
             </Text>
           </View>
-        </View>
+        </Animated.View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Summary Card */}
-          <Animated.View style={[styles.summaryCard, { opacity: fadeAnim }]}>
+          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.summaryCard}>
             <View style={styles.summaryHeader}>
               <View style={styles.iconCircle}>
                 <Shield size={20} color={THEME.colors.background} />
@@ -124,7 +118,7 @@ export default function SimView({ route, navigation }: any) {
           </Animated.View>
 
           {/* Timeline Section */}
-          <View style={styles.timelineSection}>
+          <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.timelineSection}>
             <View style={styles.sectionHeader}>
               <Activity size={16} color={THEME.colors.text.muted} />
               <Text style={styles.sectionTitle}>EXECUTION TIMELINE</Text>
@@ -140,14 +134,14 @@ export default function SimView({ route, navigation }: any) {
                 <Text style={styles.emptyText}>Waiting for orchestration sequence...</Text>
               </View>
             )}
-          </View>
+          </Animated.View>
 
           <View style={{ height: 100 }} />
         </ScrollView>
 
         {/* Success Footer */}
         {allCompleted && (
-          <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
+          <Animated.View entering={FadeInUp.springify()} style={styles.footer}>
             <TouchableOpacity 
               style={styles.outcomeButton}
               onPress={() => navigation.navigate("Outcome", { incidentId, location })}
