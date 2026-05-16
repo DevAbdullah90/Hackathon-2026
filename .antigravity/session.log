@@ -37,3 +37,14 @@ Feature branch: `quratulain_shah`
 - Kept Quratulain implementation intact
 - Added compatibility shim for `app.ai.agent_definitions`
 - Preserved the newer AI-layer structure from `master`
+
+## UI Redesign Session
+
+### Completed
+- Overhauled entire frontend to a strict black, white, and dark green command-center theme.
+- Redesigned `WelcomeScreen`, `Dashboard`, `FloodMap`, `ReasoningCenter`, `SimView`, and `OutcomeScreen`.
+- Refactored `SeverityBadge`, `MapOverlay`, `LiveLogStream`, and `ExecutionTimeline` components.
+- Standardized icons to use `lucide-react-native` and removed all emojis.
+- Implemented `Animated.View` for charts, timelines, and dashboard cards, adding staggered and pulsing effects without adding heavy external charting dependencies.
+- Re-installed missing dependencies (`@expo-google-fonts/inter`, `@expo-google-fonts/jetbrains-mono`, `lucide-react-native`) and fixed styling issues.
+- Code cleanly compiles via `tsc --noEmit`.

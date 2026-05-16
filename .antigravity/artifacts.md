@@ -62,12 +62,20 @@
 - `backend/app/db/clear_data.py`
 - `backend/app/main.py`
 
-### Frontend
+### Frontend (Redesigned)
 - `frontend/App.tsx`
+- `frontend/app/welcome.tsx`
 - `frontend/app/index.tsx`
 - `frontend/app/map.tsx`
+- `frontend/app/reasoning.tsx`
+- `frontend/app/simulation.tsx`
+- `frontend/app/outcome.tsx`
 - `frontend/components/SeverityBadge.tsx`
+- `frontend/components/MapOverlay.tsx`
+- `frontend/components/LiveLogStream.tsx`
+- `frontend/components/ExecutionTimeline.tsx`
 - `frontend/app/constants/config.ts`
+- `frontend/lib/theme.ts`
 
 ---
 
