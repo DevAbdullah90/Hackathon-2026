@@ -14,9 +14,9 @@ from app.db.session import async_session_factory
 from app.models.signals import Signal
 from app.models.incidents import Incident
 from app.models.reasoning_logs import ReasoningLog
-from app.simulation.seed_signals import SCENARIO_ISLAMABAD
+from app.simulation.seed_signals import SCENARIO_KARACHI
 from app.ai.orchestrator import triage_agent
-from app.ai.specialists import signal_agent, detection_agent, severity_agent
+from app.ai.specialists import signal_agent, detection_agent, severity_agent, notification_agent
 from app.ai.connection import config
 
 @pytest.mark.asyncio
@@ -32,7 +32,7 @@ async def test_intelligence_pipeline():
 
         # Inject 3 signals from Islamabad G-10
         signal_payloads = []
-        for sig_data in SCENARIO_ISLAMABAD:
+        for sig_data in SCENARIO_KARACHI:
             signal = Signal(**sig_data)
             session.add(signal)
             await session.commit()
@@ -78,8 +78,14 @@ async def test_intelligence_pipeline():
                     print("\n[Agent: Severity Agent]")
                     res3 = await Runner.run(severity_agent, json.dumps(detection_output), run_config=config)
                     severity_output = json.loads(res3.final_output)
-                    print("Severity Result:", severity_output)
+                    print("Severity Result:", json.dumps(severity_output, ensure_ascii=True))
                     
+                    # 4. Run Notification Agent
+                    print("\n[Agent: Notification Agent]")
+                    # Pass the severity output (which includes incident data) to the Notification Agent
+                    res4 = await Runner.run(notification_agent, json.dumps(severity_output), run_config=config)
+                    print("Notification Result:", res4.final_output)
+
                     # Merge outputs for persistence
                     final_output_data = {
                         "location": detection_output.get("incident_location", "Unknown Location"),
