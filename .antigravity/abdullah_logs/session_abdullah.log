@@ -48,6 +48,8 @@ Branch: abdullah-develop
     - Registered `websocket.router` in `api_router`.
     - Integrated `emit_log` into the `Logging Agent`.
     - Added `app/tests/test_websocket.py` for verification.
+    - Fixed `ImportError` by using `async_session_factory` instead of `SessionLocal`.
+    - Added robustness to `tracer.py` to handle non-UUID incident strings gracefully.
   STATUS : ✅ DONE
 
 ================================================================================
