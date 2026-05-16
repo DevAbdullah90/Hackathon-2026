@@ -36,6 +36,22 @@ Branch: abdullah-develop
     - Clarified Signal Agent role: Normalization, Credibility, Reverse Geocoding.
   STATUS : ✅ DONE
 
+--------------------------------------------------------------------------------
+SESSION 12 — 2026-05-16T16:11:00Z
+Branch: abdullah-develop
+--------------------------------------------------------------------------------
+  TASK   : WebSocket Live Reasoning Logs
+  GOAL   : Enable real-time streaming of AI agent "thinking" to the frontend.
+  ACTIONS:
+    - Implemented `ConnectionManager` and `WS /api/v1/ws/{incident_id}`.
+    - Created `emit_log` tool in `app/ai/tools/tracer.py` for DB + WS logging.
+    - Registered `websocket.router` in `api_router`.
+    - Integrated `emit_log` into the `Logging Agent`.
+    - Added `app/tests/test_websocket.py` for verification.
+    - Fixed `ImportError` by using `async_session_factory` instead of `SessionLocal`.
+    - Added robustness to `tracer.py` to handle non-UUID incident strings gracefully.
+  STATUS : ✅ DONE
+
 ================================================================================
 END OF ABDULLAH'S SESSION LOG
 ================================================================================
