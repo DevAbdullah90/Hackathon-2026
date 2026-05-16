@@ -11,7 +11,10 @@ Feature branch: `quratulain_shah`
 - Weather, traffic, dispatch, notify, and simulation tools
 - Notification Agent in the AI layer
 - Deterministic simulation engine with state transitions
-- Focused verification scripts for DB, tools, agent flow, and simulation
+- Two new SDK-native Detection Agent tools: `get_traffic_matrix` and `get_nearby_signals`
+- Refined `get_nearby_signals` with accurate Haversine distance filtering
+- Cleaned up AI tools package with centralized exports in `app/ai/tools/__init__.py`
+- Final cleanup: Removed all temporary test and verification scripts from the repository
 
 ### Verification
 - `test_db.py` passed

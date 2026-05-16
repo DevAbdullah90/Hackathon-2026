@@ -14,12 +14,15 @@ from .prompts import (
     SIGNAL_AGENT_INSTRUCTIONS,
     VERIFICATION_AGENT_INSTRUCTIONS,
 )
-from .tools.geo import reverse_geocode
-from .tools.news import search_local_news
-from .tools.notify import send_notification
+from .tools import (
+    reverse_geocode,
+    search_local_news,
+    send_notification,
+    get_traffic_matrix,
+    get_weather_alerts,
+    get_nearby_signals,
+)
 from .tools.tracer import emit_log
-from .tools.traffic import get_traffic_matrix
-from .tools.weather import get_weather_alerts
 
 
 signal_agent = Agent(
@@ -31,7 +34,7 @@ signal_agent = Agent(
 detection_agent = Agent(
     name="Detection Agent",
     instructions=DETECTION_AGENT_INSTRUCTIONS,
-    tools=[search_local_news, get_traffic_matrix],
+    tools=[search_local_news, get_traffic_matrix, get_nearby_signals],
 )
 
 severity_agent = Agent(

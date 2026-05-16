@@ -39,13 +39,12 @@
 - `backend/app/ai/specialists.py`
 - `backend/app/ai/agent_definitions.py` (compatibility shim)
 - `backend/app/ai/tools/notify.py`
+- `backend/app/ai/tools/traffic.py` (SDK-native wrapper)
+- `backend/app/ai/tools/nearby_signals.py` (Haversine-filtered DB tool)
+- `backend/app/ai/tools/__init__.py` (Centralized tool exports)
 
 ### Verification
-- `backend/test_db.py`
-- `backend/test_tools.py`
-- `backend/test_agent_notifications.py`
-- `backend/test_simulation.py`
-- `backend/test_sdk_notification_agent.py`
+- (All temporary test scripts removed for final push)
 
 ---
 
