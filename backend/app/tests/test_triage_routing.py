@@ -3,7 +3,6 @@ import asyncio
 import logging
 from agents import Runner, trace
 from app.ai.orchestrator import triage_agent
-from app.ai.connection import config
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("agents").setLevel(logging.DEBUG)
@@ -25,7 +24,7 @@ async def test_routing():
     
     try:
         with trace("Triage Test", group_id="ciro_test_routing"):
-            result = await Runner.run(triage_agent, signal_json, run_config=config)
+            result = await Runner.run(triage_agent, signal_json)
             
         print("\n--- AGENT HISTORY ---")
         if hasattr(result, "messages"):

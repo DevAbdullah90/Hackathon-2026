@@ -15,18 +15,26 @@ BASE_URL = "http://localhost:8000/api/v1/signals"
 # A cluster of 3 citizen reports in close proximity.
 SCENARIO_ISLAMABAD = [
     {
-        "source": "user_gps",
-        "lat": 33.6844,
-        "lng": 73.0479,
-        "type": "flood",
-        "raw_payload": {"comment": "Water entering shops in G-10 Markaz"}
+        "source": "social_mock",
+        "lat": 33.7294,
+        "lng": 73.0931,
+        "type": "medical_emergency",
+        "raw_payload": {
+            "text": "Ambulance stuck in flood water near F-6 Markaz! Patient needs oxygen!", 
+            "platform": "twitter", 
+            "urgency": "high"
+        }
     },
     {
-        "source": "user_gps",
-        "lat": 33.6850,
-        "lng": 73.0485,
-        "type": "flood",
-        "raw_payload": {"comment": "Heavy water accumulation on main road"}
+        "source": "traffic_api",
+        "lat": 33.7300,
+        "lng": 73.0940,
+        "type": "traffic_blockage",
+        "raw_payload": {
+            "status": "BLOCKED", 
+            "reason": "Flash Flood", 
+            "location": "F-6 Super Market"
+        }
     },
     {
         "source": "user_gps",
@@ -71,6 +79,41 @@ SCENARIO_KARACHI = [
     }
 ]
 
+# ── SCENARIO 3: EDGE CASES (LAHORE GULBERG) ──────────────────────────────
+# Tests system resilience against missing data, bad coords, and unexpected keys.
+SCENARIO_LAHORE_EDGE_CASE = [
+    {
+        "source": "social_mock",
+        "lat": None,
+        "lng": None,
+        "type": "flood",
+        "raw_payload": {
+            "text": "Gulberg Main Boulevard is completely underwater. Cars are stuck.",
+            "platform": "twitter",
+            "hashtags": ["#LahoreRain", "#GulbergFlood"]
+        }
+    },
+    {
+        "source": "user_gps",
+        "lat": 31.5204,
+        "lng": 74.3587,
+        "type": "",  # Missing type, should be inferred
+        "raw_payload": {
+            "comment": "Water entering shops near Liberty Market.",
+            "unexpected_nested_data": {"device": "iPhone", "battery": "12%"}
+        }
+    },
+    {
+        "source": "unknown",
+        "lat": 31.5200,
+        "lng": 74.3580,
+        "type": "non_flood",  # Contradictory signal (false alarm or irrelevant)
+        "raw_payload": {
+            "report": "Road is perfectly dry here. No water."
+        }
+    }
+]
+
 async def fire_signal(payload: dict, client: httpx.AsyncClient):
     print(f"📡 Sending signal from {payload['source']}...")
     try:
@@ -99,7 +142,8 @@ async def main():
     print("🌊 CIRO Simulation Controller")
     print("1. Scenario 1: Local Flooding (Islamabad G-10)")
     print("2. Scenario 2: Monsoon Crisis (Karachi Clifton)")
-    print("3. Run Both Scenarios")
+    print("3. Scenario 3: Edge Cases (Lahore Gulberg)")
+    print("4. Run All Scenarios")
     print("q. Quit")
     
     choice = input("\nSelect a scenario to fire: ").strip().lower()
@@ -109,10 +153,13 @@ async def main():
     elif choice == '2':
         await run_scenario("Karachi Clifton", SCENARIO_KARACHI)
     elif choice == '3':
+        await run_scenario("Lahore Gulberg Edge Cases", SCENARIO_LAHORE_EDGE_CASE)
+    elif choice == '4':
         await run_scenario("Islamabad G-10", SCENARIO_ISLAMABAD)
-        print("Waiting for cooldown...")
-        await asyncio.sleep(5)
+        await asyncio.sleep(3)
         await run_scenario("Karachi Clifton", SCENARIO_KARACHI)
+        await asyncio.sleep(3)
+        await run_scenario("Lahore Gulberg Edge Cases", SCENARIO_LAHORE_EDGE_CASE)
     elif choice == 'q':
         sys.exit()
     else:
