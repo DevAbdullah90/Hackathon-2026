@@ -12,7 +12,9 @@ from typing import Optional
 from app.db.session import async_session_factory
 from app.models.reasoning_logs import ReasoningLog
 from app.api.api_v1.endpoints.websocket import manager
+from agents import function_tool
 
+@function_tool
 async def emit_log(
     agent_name: str,
     log_text: str,
