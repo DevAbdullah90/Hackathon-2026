@@ -115,7 +115,7 @@ export default function FloodMap({ route, navigation }: any) {
         style={styles.map}
         initialRegion={CONFIG.ISLAMABAD_CENTER}
         showsUserLocation={true}
-        mapType="mutedStandard"
+        mapType="standard"
         userInterfaceStyle="light"
         customMapStyle={MAP_STYLE}
       >
