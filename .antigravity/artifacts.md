@@ -44,8 +44,25 @@
 - `index.tsx`: Dashboard screen with live indicators and incident list.
 - `map.tsx`: Live Karachi map utilizing `react-native-maps`.
 
+<<<<<<< HEAD
 ### 📄 `frontend/app/constants/config.ts`
 - **Description**: Added `KARACHI_CENTER` configuration.
+=======
+### Frontend (Redesigned)
+- `frontend/App.tsx`
+- `frontend/app/welcome.tsx`
+- `frontend/app/index.tsx`
+- `frontend/app/map.tsx`
+- `frontend/app/reasoning.tsx`
+- `frontend/app/simulation.tsx`
+- `frontend/app/outcome.tsx`
+- `frontend/components/SeverityBadge.tsx`
+- `frontend/components/MapOverlay.tsx`
+- `frontend/components/LiveLogStream.tsx`
+- `frontend/components/ExecutionTimeline.tsx`
+- `frontend/app/constants/config.ts`
+- `frontend/lib/theme.ts`
+>>>>>>> origin/quratulain_shah
 
 ---
 

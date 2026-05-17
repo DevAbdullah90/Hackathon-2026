@@ -1,131 +1,195 @@
-// ============================================
-// lib/api.ts
-// MOCK DATA LAYER — swap with real API later
-// Owner: Ayesha (Frontend Lead)
-// ============================================
-
-const BASE_URL = "http://localhost:8000";
-const WS_URL   = "ws://localhost:8000";
-// TODO: Update these when Abdullah shares backend URL
-
-export type Incident = {
+export interface Incident {
   id: string;
   location: string;
-  severity: number;
+  lat: number;
+  lng: number;
+  severity_score: number;
   confidence: number;
-  status: "monitoring" | "confirmed" | "resolved";
-  lat: number;
-  lng: number;
-  affected: number;
-  eta: string;
-  risk_factors: string[];
-};
+  affected_radius_km: number;
+  estimated_population: number;
+  peak_impact_eta: string;
+  status: string;
+  risk_factors?: any;
+  created_at: string;
+}
 
-export type AgentLog = {
+export interface Action {
   id: string;
-  agent: string;
-  time: string;
-  phase: "OBSERVE" | "REASON" | "DECIDE" | "ACT" | "EVALUATE";
-  message: string;
-};
+  incident_id: string;
+  type: string;
+  status: string;
+  predicted_side_effects?: string;
+  metadata?: any;
+  updated_at: string;
+}
 
-export type SimAction = {
+export interface ReasoningLog {
   id: string;
-  type: string;
-  status: "PENDING" | "ACTIVE" | "COMPLETED" | "FAILED";
-  time: string;
-};
+  incident_id: string;
+  agent_name: string;
+  log_text: string;
+  created_at: string;
+}
 
-export type Signal = {
-  lat: number;
-  lng: number;
-  type: string;
-  source: string;
-};
+const now = () => new Date().toISOString();
 
 const MOCK_INCIDENTS: Incident[] = [
-  { 
-    id:"INC-001", 
-    location:"Gulshan-e-Iqbal, Karachi",
-    severity:9.0, 
-    confidence:92, 
-    status:"confirmed",
-    lat:24.9215, 
-    lng:67.0944,
-    affected:4500, 
-    eta:"45 mins",
-    risk_factors:["Hospital 200m","Rain 2hrs"] 
+  {
+    id: "inc-g10",
+    location: "G-10, Islamabad",
+    lat: 33.6675,
+    lng: 73.0303,
+    severity_score: 8.9,
+    confidence: 0.96,
+    affected_radius_km: 1.8,
+    estimated_population: 6400,
+    peak_impact_eta: "12 min",
+    status: "ACTIVE",
+    risk_factors: ["heavy_rain", "drainage_blockage", "road_ponding"],
+    created_at: "2026-05-17T09:20:00.000Z",
   },
-  { 
-    id:"INC-002", 
-    location:"North Nazimabad, Karachi",
-    severity:6.0, 
-    confidence:75, 
-    status:"monitoring",
-    lat:24.9400, 
-    lng:67.0600,
-    affected:2100, 
-    eta:"1.5 hrs",
-    risk_factors:["School nearby","Traffic slow"] 
-  }
+  {
+    id: "inc-g13",
+    location: "G-13, Islamabad",
+    lat: 33.6872,
+    lng: 73.0156,
+    severity_score: 6.2,
+    confidence: 0.89,
+    affected_radius_km: 1.1,
+    estimated_population: 3100,
+    peak_impact_eta: "25 min",
+    status: "ACTIVE",
+    risk_factors: ["moderate_flooding", "traffic_delay"],
+    created_at: "2026-05-17T09:28:00.000Z",
+  },
 ];
 
-const MOCK_LOGS: AgentLog[] = [
-  { id:"1", agent:"Triage Agent", time:"10:32:01", phase:"OBSERVE", message:"Signal received from Karachi GPS" },
-  { id:"2", agent:"Signal Agent", time:"10:32:03", phase:"REASON", message:"GPS normalized. Credibility: 0.92" },
-  { id:"3", agent:"Detection Agent", time:"10:32:08", phase:"DECIDE", message:"3 signals clustered. CONFIRMED!" },
-  { id:"4", agent:"Severity Agent", time:"10:32:12", phase:"ACT", message:"Hospital 200m. Score: 9.0/10" },
-  { id:"5", agent:"Planning Agent", time:"10:32:15", phase:"EVALUATE", message:"3 actions queued." }
-];
+const MOCK_REASONING_LOGS: Record<string, ReasoningLog[]> = {
+  "inc-g10": [
+    {
+      id: "log-1",
+      incident_id: "inc-g10",
+      agent_name: "detection_agent",
+      log_text: "Received user GPS signal and confirmed water accumulation near G-10 service road.",
+      created_at: now(),
+    },
+    {
+      id: "log-2",
+      incident_id: "inc-g10",
+      agent_name: "notification_agent",
+      log_text: "Prepared stakeholder alerts for public, hospital, utility, traffic, 1122, and command center.",
+      created_at: now(),
+    },
+    {
+      id: "log-3",
+      incident_id: "inc-g10",
+      agent_name: "simulation_engine",
+      log_text: "Rescue dispatch and drainage response marked active in the execution timeline.",
+      created_at: now(),
+    },
+  ],
+  "inc-g13": [
+    {
+      id: "log-1b",
+      incident_id: "inc-g13",
+      agent_name: "detection_agent",
+      log_text: "Secondary rainfall pattern detected. Traffic matrix indicates congestion near G-13.",
+      created_at: now(),
+    },
+    {
+      id: "log-2b",
+      incident_id: "inc-g13",
+      agent_name: "notification_agent",
+      log_text: "Utility and traffic authority notifications queued with reduced severity priority.",
+      created_at: now(),
+    },
+  ],
+};
 
-const MOCK_ACTIONS: SimAction[] = [
-  { id:"A1", type:"ALERT_CITIZENS", status:"COMPLETED", time:"T+0s" },
-  { id:"A2", type:"REROUTE_TRAFFIC", status:"ACTIVE", time:"T+30s" },
-  { id:"A3", type:"DISPATCH_DRAINAGE", status:"PENDING", time:"T+60s" }
-];
+const MOCK_ACTIONS: Record<string, Action[]> = {
+  "inc-g10": [
+    {
+      id: "action-1",
+      incident_id: "inc-g10",
+      type: "DISPATCH_RESCUE",
+      status: "COMPLETED",
+      predicted_side_effects: "Reduced congestion on main access road.",
+      updated_at: now(),
+    },
+    {
+      id: "action-2",
+      incident_id: "inc-g10",
+      type: "DEPLOY_DRAINAGE_CREW",
+      status: "COMPLETED",
+      predicted_side_effects: "Water level stabilizes within 20 minutes.",
+      updated_at: now(),
+    },
+    {
+      id: "action-3",
+      incident_id: "inc-g10",
+      type: "NOTIFY_TRAFFIC_AUTHORITY",
+      status: "COMPLETED",
+      predicted_side_effects: "Alternate routes opened around affected sector.",
+      updated_at: now(),
+    },
+  ],
+  "inc-g13": [
+    {
+      id: "action-4",
+      incident_id: "inc-g13",
+      type: "MONITOR_RAINFALL",
+      status: "COMPLETED",
+      predicted_side_effects: "Early warning issued to nearby residents.",
+      updated_at: now(),
+    },
+    {
+      id: "action-5",
+      incident_id: "inc-g13",
+      type: "PREPARE_RESPONSE_TEAM",
+      status: "COMPLETED",
+      predicted_side_effects: "Standby resources assigned for rapid escalation.",
+      updated_at: now(),
+    },
+  ],
+};
 
-export async function getIncidentsActive(): Promise<Incident[]> {
-  // TODO: const r = await fetch(`${BASE_URL}/api/v1/incidents/active`);
-  return MOCK_INCIDENTS;
-}
+export const api = {
+  // --- Incidents ---
+  async getActiveIncidents(): Promise<Incident[]> {
+    return MOCK_INCIDENTS;
+  },
 
-export async function getIncidentById(id: string): Promise<Incident | null> {
-  // TODO: const r = await fetch(`${BASE_URL}/api/v1/incidents/${id}`);
-  return MOCK_INCIDENTS.find(i => i.id === id) ?? null;
-}
+  async getIncident(id: string): Promise<Incident | null> {
+    return MOCK_INCIDENTS.find((incident) => incident.id === id) ?? MOCK_INCIDENTS[0] ?? null;
+  },
 
-export async function getSimulationState(incidentId: string): Promise<SimAction[]> {
-  // TODO: const r = await fetch(`${BASE_URL}/api/v1/simulation/state/${incidentId}`);
-  return MOCK_ACTIONS;
-}
+  // --- Signals ---
+  async reportFlood(lat: number, lng: number): Promise<boolean> {
+    console.log("Mock flood report received:", { lat, lng, source: "user_gps", type: "flood" });
+    return true;
+  },
 
-export async function postSignal(lat: number, lng: number) {
-  // TODO: await fetch(`${BASE_URL}/api/v1/signals`, {
-  //   method:"POST",
-  //   body: JSON.stringify({ lat, lng, type:"flood", source:"user_gps" })
-  // });
-  console.log("[MOCK] Signal posted:", { lat, lng });
-  return { success: true };
-}
+  // --- Simulation ---
+  async triggerSimulation(id: string): Promise<boolean> {
+    console.log("Mock simulation trigger:", id);
+    return true;
+  },
 
-export function setupWebSocket(
-  incidentId: string,
-  onMessage: (log: AgentLog) => void
-) {
-  // TODO: Real WebSocket:
-  // const ws = new WebSocket(`${WS_URL}/api/v1/ws/${incidentId}`);
-  // ws.onmessage = (e) => onMessage(JSON.parse(e.data));
-  // return ws;
+  async getSimulationState(id: string): Promise<Action[]> {
+    return MOCK_ACTIONS[id] ?? this.getMockSimulationState(id);
+  },
 
-  // Mock: simulate streaming logs one by one
-  let index = 0;
-  const interval = setInterval(() => {
-    if (index < MOCK_LOGS.length) {
-      onMessage(MOCK_LOGS[index]);
-      index++;
-    } else {
-      clearInterval(interval);
-    }
-  }, 1500);
-  return { close: () => clearInterval(interval) };
-}
+  // Helper for demo when backend is incomplete
+  getMockSimulationState(incidentId: string): Action[] {
+    const timestamp = now();
+    return [
+      { id: "a1", incident_id: incidentId, type: "Rescue Dispatch", status: "COMPLETED", updated_at: timestamp },
+      { id: "a2", incident_id: incidentId, type: "Drainage Activation", status: "COMPLETED", updated_at: timestamp },
+      { id: "a3", incident_id: incidentId, type: "Utility Shutdown", status: "COMPLETED", updated_at: timestamp },
+    ];
+  },
+
+  async getReasoningLogs(incidentId: string): Promise<ReasoningLog[]> {
+    return MOCK_REASONING_LOGS[incidentId] ?? [];
+  },
+};

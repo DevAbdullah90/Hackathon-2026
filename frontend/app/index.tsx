@@ -1,391 +1,590 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  Animated,
   ScrollView,
+  RefreshControl,
+  ActivityIndicator,
+  Dimensions,
+  Pressable
 } from "react-native";
+import Animated, { 
+  FadeInDown, 
+  FadeInUp,
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withSpring
+} from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import AtmosphericBackground from "../components/AtmosphericBackground";
+import { THEME } from "../lib/theme";
 import SeverityBadge from "../components/SeverityBadge";
+import { api, Incident } from "../lib/api";
+import { 
+  LayoutDashboard, 
+  Map as MapIcon, 
+  Cpu, 
+  Bell, 
+  Activity, 
+  Users, 
+  Clock, 
+  ChevronRight,
+  ShieldCheck,
+  Zap,
+  Target
+} from "lucide-react-native";
 
-// --- Mock Data ---
-// TODO: Replace mock data with real API call later
-const MOCK_INCIDENTS = [
-  {
-    id: "INC-001",
-    location: "Gulshan-e-Iqbal, Karachi",
-    severity: 9.0,
-    confidence: 92,
-    time: "10:32 AM",
-    affected: "4500",
-    eta: "45 mins",
-  },
-  {
-    id: "INC-002",
-    location: "North Nazimabad, Karachi",
-    severity: 6.0,
-    confidence: 75,
-    time: "10:45 AM",
-    affected: "2100",
-    eta: "1.5 hrs",
-  },
-];
+const { width } = Dimensions.get("window");
 
 interface DashboardProps {
   navigation: any;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+interface IncidentCardProps {
+  item: Incident;
+  index: number;
+  navigation: any;
+}
 
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 0.4,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
+const IncidentCard: React.FC<IncidentCardProps> = ({ item, index, navigation }) => {
+  const scale = useSharedValue(1);
 
-  const renderIncidentCard = ({ item }: { item: typeof MOCK_INCIDENTS[0] }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.cardLocation}>{item.location}</Text>
-          <Text style={styles.cardTime}>{item.time}</Text>
-        </View>
-        <SeverityBadge score={item.severity} />
-      </View>
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
-      <View style={styles.cardDivider} />
+  const handlePressIn = () => {
+    scale.value = withSpring(0.98, { damping: 15, stiffness: 300 });
+  };
 
-      <View style={styles.cardDetails}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Confidence</Text>
-          <Text style={styles.detailValue}>{item.confidence}%</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>👥 Affected</Text>
-          <Text style={styles.detailValue}>{item.affected}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>⏱️ ETA</Text>
-          <Text style={styles.detailValue}>{item.eta}</Text>
-        </View>
-      </View>
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
 
-      <View style={styles.cardActions}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.secondaryButton]}
-          onPress={() => navigation.navigate("Map")}
-        >
-          <Text style={styles.secondaryButtonText}>🗺️ View on Map</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.primaryButton]}
-          onPress={() => console.log("AI Reasoning for", item.id)}
-        >
-          <Text style={styles.primaryButtonText}>🤖 AI Reasoning</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+  const severityPercentage = (item.severity_score / 10) * 100;
+  const isCritical = item.severity_score >= 7.5;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Animated.View entering={FadeInDown.delay(100 * index + 300).springify()} style={styles.cardWrapper}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={() => navigation.navigate("Reasoning", { incidentId: item.id, location: item.location })}
+      >
+        <Animated.View style={[animatedStyle]}>
+          <BlurView intensity={30} tint="dark" style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderInfo}>
+              <Text style={styles.cardLocation}>{item.location}</Text>
+              <View style={styles.cardTimestamp}>
+                <Clock size={10} color={THEME.colors.text.muted} />
+                <Text style={styles.cardTimeText}>
+                  {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+              </View>
+            </View>
+            <SeverityBadge score={item.severity_score} />
+          </View>
+
+          {/* Severity Visual Bar */}
+          <View style={styles.severityBarContainer}>
+            <Animated.View
+              style={[
+                styles.severityBarFill,
+                {
+                  width: `${severityPercentage}%`,
+                  backgroundColor: isCritical ? THEME.colors.text.primary : THEME.colors.primary,
+                },
+              ]}
+            />
+          </View>
+
+          <View style={styles.cardStatsGrid}>
+            <View style={styles.cardStat}>
+              <Text style={styles.cardStatLabel}>CONFIDENCE</Text>
+              <Text style={styles.cardStatValue}>{(item.confidence * 100).toFixed(0)}%</Text>
+            </View>
+            <View style={styles.cardStat}>
+              <Text style={styles.cardStatLabel}>POPULATION</Text>
+              <Text style={styles.cardStatValue}>{item.estimated_population}</Text>
+            </View>
+            <View style={styles.cardStat}>
+              <Text style={styles.cardStatLabel}>IMPACT ETA</Text>
+              <Text style={styles.cardStatValue}>{item.peak_impact_eta || "IMMEDIATE"}</Text>
+            </View>
+          </View>
+
+          <View style={styles.cardFooter}>
+            <View style={styles.agentStatus}>
+              <Cpu size={12} color={THEME.colors.primary} />
+              <Text style={styles.agentStatusText}>ORCHESTRATOR ACTIVE</Text>
+            </View>
+            <ChevronRight size={16} color={THEME.colors.text.muted} />
+          </View>
+          </BlurView>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
+};
+
+const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  const pulseOpacity = useSharedValue(1);
+
+  const fetchIncidents = async () => {
+    const data = await api.getActiveIncidents();
+    setIncidents(data);
+    setLoading(false);
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchIncidents();
+    const interval = setInterval(fetchIncidents, 5000);
+
+    pulseOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.3, { duration: 1000 }),
+        withTiming(1, { duration: 1000 })
+      ),
+      -1,
+      true
+    );
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const statusDotStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value
+  }));
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchIncidents();
+  };
+
+  return (
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>🌊 CIRO</Text>
-          <Text style={styles.headerSubtitle}>Crisis Intelligence & Response</Text>
-        </View>
-        <View style={styles.liveIndicator}>
-          <Animated.View style={[styles.pulseDot, { opacity: pulseAnim }]} />
-          <Text style={styles.liveText}>LIVE</Text>
-        </View>
-      </View>
-
-      <ScrollView style={styles.content}>
-        {/* Stats Row */}
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>2</Text>
-            <Text style={styles.statLabel}>Active{"\n"}Incidents</Text>
+      <Animated.View entering={FadeInDown.duration(1500)} style={StyleSheet.absoluteFill}>
+        <AtmosphericBackground />
+      </Animated.View>
+      <SafeAreaView style={styles.safeArea}>
+        
+        {/* Executive Header */}
+        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>COMMAND CENTER</Text>
+            <View style={styles.systemStatus}>
+              <Animated.View style={[styles.statusDot, statusDotStyle]} />
+              <Text style={styles.statusText}>CIRO-ORCHESTRATOR ONLINE</Text>
+            </View>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>3/4</Text>
-            <Text style={styles.statLabel}>Resources{"\n"}Deployed</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>5K</Text>
-            <Text style={styles.statLabel}>Alerts{"\n"}Sent</Text>
-          </View>
-        </View>
+          <TouchableOpacity style={styles.headerIconButton}>
+            <Bell size={20} color={THEME.colors.text.primary} />
+          </TouchableOpacity>
+        </Animated.View>
 
-        {/* Incidents Heading */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Active Incidents</Text>
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>2</Text>
-          </View>
-        </View>
+        <ScrollView 
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.colors.primary} />
+          }
+        >
+          {/* High-End KPI Dashboard */}
+          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.kpiContainer}>
+            <BlurView intensity={20} tint="dark" style={styles.kpiCard}>
+              <View style={styles.kpiIconWrapper}>
+                <Target size={16} color={THEME.colors.background} />
+              </View>
+              <View style={styles.kpiInfo}>
+                <Text style={styles.kpiValue}>{incidents.length}</Text>
+                <Text style={styles.kpiLabel}>ACTIVE ZONES</Text>
+              </View>
+            </BlurView>
+            <BlurView intensity={20} tint="dark" style={styles.kpiCard}>
+              <View style={[styles.kpiIconWrapper, { backgroundColor: THEME.colors.surfaceElevated }]}>
+                <Users size={16} color={THEME.colors.text.primary} />
+              </View>
+              <View style={styles.kpiInfo}>
+                <Text style={styles.kpiValue}>{(incidents.reduce((acc, i) => acc + i.estimated_population, 0) / 1000).toFixed(1)}k</Text>
+                <Text style={styles.kpiLabel}>POPULATION AFFECTED</Text>
+              </View>
+            </BlurView>
+          </Animated.View>
 
-        {/* Incident List */}
-        <FlatList
-          data={MOCK_INCIDENTS}
-          renderItem={renderIncidentCard}
-          keyExtractor={(item) => item.id}
-          scrollEnabled={false} // Since it's inside a ScrollView
-          contentContainerStyle={styles.listContent}
-        />
-      </ScrollView>
+          {/* Quick Actions Panel */}
+          <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.section}>
+            <Text style={styles.sectionHeader}>SYSTEM MODULES</Text>
+            <View style={styles.actionGrid}>
+              <TouchableOpacity 
+                style={styles.actionCardContainer}
+                onPress={() => navigation.navigate("Map")}
+              >
+                <BlurView intensity={30} tint="dark" style={styles.actionCard}>
+                  <MapIcon size={20} color={THEME.colors.primary} />
+                  <Text style={styles.actionTitle}>TACTICAL MAP</Text>
+                </BlurView>
+              </TouchableOpacity>
 
-      {/* Bottom Tab Bar */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity style={styles.tabItem}>
-          <Text style={[styles.tabIcon, styles.activeTabIcon]}>🏠</Text>
-          <Text style={[styles.tabLabel, styles.activeTabLabel]}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem} onPress={() => navigation.navigate("Map")}>
-          <Text style={styles.tabIcon}>🗺️</Text>
-          <Text style={styles.tabLabel}>Map</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <Text style={styles.tabIcon}>⚡</Text>
-          <Text style={styles.tabLabel}>Simulation</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.tabItem}>
-          <Text style={styles.tabIcon}>📊</Text>
-          <Text style={styles.tabLabel}>Reports</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+              <TouchableOpacity 
+                style={styles.actionCardContainer}
+                onPress={() => {
+                  if (incidents.length > 0) {
+                    navigation.navigate("Reasoning", { incidentId: incidents[0].id, location: incidents[0].location });
+                  }
+                }}
+              >
+                <BlurView intensity={30} tint="dark" style={styles.actionCard}>
+                  <Cpu size={20} color={THEME.colors.primary} />
+                  <Text style={styles.actionTitle}>AI LOGSTREAM</Text>
+                </BlurView>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+
+          {/* Crisis Feed */}
+          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionHeader}>PRIORITY INCIDENTS</Text>
+            </View>
+
+            {loading ? (
+              <ActivityIndicator color={THEME.colors.primary} size="large" style={styles.loader} />
+            ) : incidents.length > 0 ? (
+              incidents.map((item, index) => (
+                <IncidentCard key={item.id} item={item} index={index} navigation={navigation} />
+              ))
+            ) : (
+              <BlurView intensity={20} tint="dark" style={styles.emptyState}>
+                <ShieldCheck size={32} color={THEME.colors.primary} strokeWidth={1.5} />
+                <Text style={styles.emptyTitle}>ALL CLEAR</Text>
+                <Text style={styles.emptySubtitle}>No active operational anomalies.</Text>
+              </BlurView>
+            )}
+          </Animated.View>
+          
+          <View style={{ height: 100 }} />
+        </ScrollView>
+
+        {/* Global Navigation Bar */}
+        <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.navBarWrapper}>
+          <BlurView intensity={50} tint="dark" style={styles.navBar}>
+            <TouchableOpacity style={styles.navItem}>
+              <LayoutDashboard size={20} color={THEME.colors.primary} strokeWidth={2.5} />
+              <Text style={[styles.navLabel, { color: THEME.colors.primary }]}>DASHBOARD</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("Map")}>
+              <MapIcon size={20} color={THEME.colors.text.muted} strokeWidth={2} />
+              <Text style={styles.navLabel}>MAP</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.navItem} onPress={() => {
+              if (incidents.length > 0) {
+                navigation.navigate("Reasoning", { incidentId: incidents[0].id, location: incidents[0].location });
+              }
+            }}>
+              <Cpu size={20} color={THEME.colors.text.muted} strokeWidth={2} />
+              <Text style={styles.navLabel}>AI CORE</Text>
+            </TouchableOpacity>
+          </BlurView>
+        </Animated.View>
+
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#111827",
+    backgroundColor: THEME.colors.background,
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: "#111827",
+    paddingHorizontal: THEME.spacing.lg,
+    paddingVertical: THEME.spacing.lg,
+    backgroundColor: "transparent",
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    letterSpacing: 1,
+    fontSize: 20,
+    fontFamily: THEME.fonts.heading,
+    color: THEME.colors.text.primary,
+    letterSpacing: 2,
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "#9CA3AF",
+  systemStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: THEME.spacing.xs,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: THEME.colors.primary,
+    marginRight: THEME.spacing.sm,
+    shadowColor: THEME.colors.primary,
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  statusText: {
+    fontSize: 9,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.primary,
+    letterSpacing: 2,
+  },
+  headerIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: THEME.colors.glass,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  kpiContainer: {
+    flexDirection: "row",
+    paddingHorizontal: THEME.spacing.lg,
+    marginBottom: THEME.spacing.xl,
+    gap: THEME.spacing.md,
+  },
+  kpiCard: {
+    flex: 1,
+    backgroundColor: THEME.colors.glass,
+    padding: THEME.spacing.lg,
+    borderRadius: THEME.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
+    overflow: "hidden",
+  },
+  kpiIconWrapper: {
+    width: 28,
+    height: 28,
+    borderRadius: THEME.borderRadius.sm,
+    backgroundColor: THEME.colors.text.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  kpiInfo: {
+    marginTop: THEME.spacing.md,
+  },
+  kpiValue: {
+    fontSize: 24,
+    fontFamily: THEME.fonts.heading,
+    color: THEME.colors.text.primary,
+  },
+  kpiLabel: {
+    fontSize: 9,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.muted,
+    letterSpacing: 1,
     marginTop: 2,
   },
-  liveIndicator: {
+  section: {
+    paddingHorizontal: THEME.spacing.lg,
+    marginBottom: THEME.spacing.xl,
+  },
+  sectionHeaderRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "rgba(220, 38, 38, 0.1)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  pulseDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#DC2626",
-    marginRight: 6,
-  },
-  liveText: {
-    color: "#DC2626",
-    fontWeight: "bold",
-    fontSize: 12,
-  },
-  content: {
-    flex: 1,
-  },
-  statsRow: {
-    flexDirection: "row",
-    paddingHorizontal: 15,
-    marginBottom: 25,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: "#1F2937",
-    padding: 15,
-    borderRadius: 16,
-    marginHorizontal: 5,
-    borderWidth: 1,
-    borderColor: "#374151",
-  },
-  statValue: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "800",
-  },
-  statLabel: {
-    color: "#9CA3AF",
-    fontSize: 11,
-    marginTop: 4,
-    lineHeight: 14,
+    marginBottom: THEME.spacing.md,
   },
   sectionHeader: {
+    fontSize: 10,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.secondary,
+    letterSpacing: 2,
+    marginBottom: THEME.spacing.md,
+  },
+  actionGrid: {
     flexDirection: "row",
+    gap: THEME.spacing.md,
+  },
+  actionCardContainer: {
+    flex: 1,
+    borderRadius: THEME.borderRadius.lg,
+    overflow: "hidden",
+  },
+  actionCard: {
+    backgroundColor: THEME.colors.glass,
+    padding: THEME.spacing.lg,
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
     alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 15,
+    flexDirection: "row",
+    gap: 12,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  countBadge: {
-    backgroundColor: "#374151",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginLeft: 10,
-  },
-  countText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
+  actionTitle: {
+    fontSize: 10,
+    fontFamily: THEME.fonts.heading,
+    color: THEME.colors.text.primary,
+    letterSpacing: 1,
   },
   card: {
-    backgroundColor: "#1F2937",
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 16,
+    backgroundColor: THEME.colors.glass,
+    borderRadius: THEME.borderRadius.lg,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: "#374151",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    borderColor: THEME.colors.glassBorder,
+  },
+  cardWrapper: {
+    marginBottom: THEME.spacing.md,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
+    marginBottom: THEME.spacing.sm,
+  },
+  cardHeaderInfo: {
+    flex: 1,
+    marginRight: THEME.spacing.md,
   },
   cardLocation: {
-    color: "#FFFFFF",
-    fontSize: 17,
+    fontSize: 14,
+    fontFamily: THEME.fonts.heading,
+    color: THEME.colors.text.primary,
+    marginBottom: THEME.spacing.xs,
+    letterSpacing: 1,
+  },
+  cardTimestamp: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: THEME.spacing.xs,
+  },
+  cardTimeText: {
+    fontSize: 10,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.muted,
+  },
+  severityBarContainer: {
+    height: 4,
+    backgroundColor: THEME.colors.surfaceBorder,
+    borderRadius: 2,
+    marginBottom: THEME.spacing.lg,
+    overflow: "hidden",
+  },
+  severityBarFill: {
+    height: "100%",
+    borderRadius: 2,
+  },
+  cardStatsGrid: {
+    flexDirection: "row",
+    backgroundColor: THEME.colors.glass,
+    padding: THEME.spacing.md,
+    borderRadius: THEME.borderRadius.sm,
+    marginBottom: THEME.spacing.lg,
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
+  },
+  cardStat: {
+    flex: 1,
+    alignItems: "center",
+  },
+  cardStatLabel: {
+    fontSize: 8,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.muted,
+    marginBottom: THEME.spacing.xs,
+    letterSpacing: 0.5,
+  },
+  cardStatValue: {
+    fontSize: 12,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.primary,
     fontWeight: "bold",
   },
-  cardTime: {
-    color: "#6B7280",
-    fontSize: 12,
-    marginTop: 2,
-  },
-  cardDivider: {
-    height: 1,
-    backgroundColor: "#374151",
-    marginVertical: 15,
-  },
-  cardDetails: {
+  cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 18,
-  },
-  detailRow: {
     alignItems: "center",
   },
-  detailLabel: {
-    color: "#9CA3AF",
-    fontSize: 11,
-    marginBottom: 4,
-  },
-  detailValue: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  cardActions: {
+  agentStatus: {
     flexDirection: "row",
-    gap: 10,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
     alignItems: "center",
+    gap: THEME.spacing.sm,
   },
-  primaryButton: {
-    backgroundColor: "#2563EB",
+  agentStatusText: {
+    fontSize: 9,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.primary,
+    letterSpacing: 1,
   },
-  secondaryButton: {
-    backgroundColor: "#374151",
-    borderWidth: 1,
-    borderColor: "#4B5563",
-  },
-  primaryButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 13,
-  },
-  secondaryButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  tabBar: {
+  navBarWrapper: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    backgroundColor: "#111827",
-    paddingBottom: 25,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: "#1F2937",
-    justifyContent: "space-around",
+    bottom: 30,
+    left: THEME.spacing.xl,
+    right: THEME.spacing.xl,
+    borderRadius: THEME.borderRadius.full,
+    overflow: "hidden",
+    ...THEME.shadows.glow,
   },
-  tabItem: {
+  navBar: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: THEME.spacing.md,
+    backgroundColor: THEME.colors.glass,
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
+  },
+  navItem: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
   },
-  tabIcon: {
-    fontSize: 20,
-    color: "#9CA3AF",
+  navLabel: {
+    fontSize: 9,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.muted,
+    marginTop: THEME.spacing.xs,
+    letterSpacing: 1,
   },
-  tabLabel: {
+  loader: {
+    marginTop: THEME.spacing.xxl,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: THEME.spacing.xxl,
+    backgroundColor: THEME.colors.glass,
+    borderRadius: THEME.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
+  },
+  emptyTitle: {
+    fontSize: 12,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.primary,
+    marginTop: THEME.spacing.md,
+    letterSpacing: 2,
+  },
+  emptySubtitle: {
     fontSize: 10,
-    color: "#9CA3AF",
-    marginTop: 4,
-    fontWeight: "500",
-  },
-  activeTabIcon: {
-    color: "#2563EB",
-  },
-  activeTabLabel: {
-    color: "#2563EB",
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.muted,
+    textAlign: "center",
+    marginTop: THEME.spacing.xs,
   },
 });
 

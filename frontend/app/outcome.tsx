@@ -1,282 +1,397 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Link } from 'expo-router';
+import React, { useEffect, useState } from "react";
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  StatusBar, 
+  ScrollView, 
+  Dimensions
+} from "react-native";
+import Animated, { 
+  FadeInDown, 
+  FadeInUp, 
+  ZoomIn,
+  useSharedValue, 
+  withTiming, 
+  withDelay,
+  useAnimatedStyle 
+} from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import AtmosphericBackground from "../components/AtmosphericBackground";
+import { api, Incident } from "../lib/api";
+import { THEME } from "../lib/theme";
+import { 
+  Home, 
+  ShieldCheck, 
+  Users, 
+  Clock, 
+  TrendingDown, 
+  Car, 
+  MapPin, 
+  Activity,
+  BarChart2
+} from "lucide-react-native";
 
-// TODO: Replace with GET /api/v1/incidents/{id}
-const MOCK_OUTCOME = {
-  incident_id: "INC-001",
-  location: "Gulshan-e-Iqbal, Karachi",
-  response_time: "45 seconds",
-  vehicles_saved: 52,
-  congestion_reduction: "62%",
-  alerts_sent: 5200,
-  community_status: "SAFE",
-  actions: [
-    { label:"Public Alerts", value:"5,200 users", icon:"🔔" },
-    { label:"Traffic Rerouted", value:"240 vehicles", icon:"🚦" },
-    { label:"Teams Dispatched", value:"2 rescue teams", icon:"🚒" }
-  ],
-  before: { congestion:"100%", blocked_roads:3, stranded:52 },
-  after:  { congestion:"38%",  blocked_roads:0, stranded:0  }
-};
+const { width } = Dimensions.get("window");
 
-export default function OutcomeScreen() {
-  const router = useRouter();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+export default function OutcomeScreen({ route, navigation }: any) {
+  const { incidentId, location } = route.params || { incidentId: "INC-DEMO", location: "Active Crisis" };
+  const [incident, setIncident] = useState<Incident | null>(null);
+  
+  const bar1 = useSharedValue(0);
+  const bar2 = useSharedValue(0);
+  const bar3 = useSharedValue(0);
 
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+    const fetchIncident = async () => {
+      const data = await api.getIncident(incidentId);
+      setIncident(data);
+      
+      bar1.value = withDelay(500, withTiming(85, { duration: 1000 }));
+      bar2.value = withDelay(700, withTiming(95, { duration: 1000 }));
+      bar3.value = withDelay(900, withTiming(60, { duration: 1000 }));
+    };
+    fetchIncident();
+  }, [incidentId]);
+
+  const animatedBar1 = useAnimatedStyle(() => ({ height: `${bar1.value}%` }));
+  const animatedBar2 = useAnimatedStyle(() => ({ height: `${bar2.value}%` }));
+  const animatedBar3 = useAnimatedStyle(() => ({ height: `${bar3.value}%` }));
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <Animated.View entering={FadeInDown.duration(1500)} style={StyleSheet.absoluteFill}>
+        <AtmosphericBackground />
+      </Animated.View>
+
+      <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>📊 Mission Complete</Text>
-          <View style={{ width: 60 }} />
-        </View>
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <BlurView intensity={20} tint="dark" style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.popToTop()} style={styles.iconButton}>
+              <Home size={18} color={THEME.colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>MISSION REPORT</Text>
+            <View style={{ width: 36 }} /> 
+          </BlurView>
+        </Animated.View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Badge */}
-          <View style={styles.badgeContainer}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>✅ COMMUNITY {MOCK_OUTCOME.community_status}</Text>
-            </View>
-          </View>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.successBanner}>
+            <Animated.View entering={ZoomIn.delay(300).springify()} style={styles.bannerIconContainer}>
+              <ShieldCheck size={36} color={THEME.colors.background} strokeWidth={1.5} />
+            </Animated.View>
+            <Text style={styles.successTitle}>SITUATION RESOLVED</Text>
+            <Text style={styles.successSubtitle}>AGENTIC LOOP TERMINATED SUCCESSFULLY</Text>
+          </Animated.View>
 
-          {/* Stats Row */}
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{MOCK_OUTCOME.vehicles_saved}</Text>
-              <Text style={styles.statLabel}>Vehicles Saved</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{MOCK_OUTCOME.congestion_reduction}</Text>
-              <Text style={styles.statLabel}>Congestion Down</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{MOCK_OUTCOME.response_time.replace(' seconds', 's')}</Text>
-              <Text style={styles.statLabel}>Response Time</Text>
-            </View>
-          </View>
-
-          {/* Before vs After */}
-          <View style={styles.comparisonContainer}>
-            <Text style={styles.sectionTitle}>Impact Analysis</Text>
-            <View style={styles.comparisonColumns}>
-              <View style={[styles.comparisonCol, styles.beforeCol]}>
-                <Text style={styles.colHeader}>BEFORE</Text>
-                <Text style={styles.colText}>Congestion: {MOCK_OUTCOME.before.congestion}</Text>
-                <Text style={styles.colText}>Blocked Roads: {MOCK_OUTCOME.before.blocked_roads}</Text>
-                <Text style={styles.colText}>Stranded: {MOCK_OUTCOME.before.stranded}</Text>
+          {/* Impact Visualizer */}
+          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.chartCardContainer}>
+            <BlurView intensity={25} tint="dark" style={styles.chartCard}>
+              <View style={styles.chartHeader}>
+                <BarChart2 size={16} color={THEME.colors.text.muted} />
+                <Text style={styles.chartTitle}>IMPACT REDUCTION ANALYSIS</Text>
               </View>
-              <View style={[styles.comparisonCol, styles.afterCol]}>
-                <Text style={styles.colHeader}>AFTER</Text>
-                <Text style={styles.colText}>Congestion: {MOCK_OUTCOME.after.congestion}</Text>
-                <Text style={styles.colText}>Blocked Roads: {MOCK_OUTCOME.after.blocked_roads}</Text>
-                <Text style={styles.colText}>Stranded: {MOCK_OUTCOME.after.stranded}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Completed Actions */}
-          <View style={styles.actionsContainer}>
-            <Text style={styles.sectionTitle}>Completed Actions</Text>
-            {MOCK_OUTCOME.actions.map((action, index) => (
-              <View key={index} style={styles.actionRow}>
-                <Text style={styles.actionIcon}>{action.icon}</Text>
-                <View style={styles.actionTextContainer}>
-                  <Text style={styles.actionLabel}>{action.label}</Text>
-                  <Text style={styles.actionValue}>{action.value}</Text>
+              <View style={styles.chartBody}>
+                <View style={styles.barGroup}>
+                  <Animated.View style={[styles.barFill, animatedBar1]} />
+                  <Text style={styles.barLabel}>TRAFFIC</Text>
+                </View>
+                <View style={styles.barGroup}>
+                  <Animated.View style={[styles.barFill, { backgroundColor: THEME.colors.primary }, animatedBar2]} />
+                  <Text style={styles.barLabel}>SAFETY</Text>
+                </View>
+                <View style={styles.barGroup}>
+                  <Animated.View style={[styles.barFill, animatedBar3]} />
+                  <Text style={styles.barLabel}>RESPONSE</Text>
                 </View>
               </View>
-            ))}
-          </View>
+            </BlurView>
+          </Animated.View>
 
-          {/* Back to Dashboard */}
-          <Link href="/" asChild>
-            <TouchableOpacity style={styles.dashboardButton}>
-              <Text style={styles.dashboardButtonText}>🏠 Back to Dashboard</Text>
+          {/* Stats Grid */}
+          <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.statsGrid}>
+            <BlurView intensity={20} tint="dark" style={styles.statCard}>
+              <Car size={20} color={THEME.colors.text.secondary} />
+              <Text style={styles.statValue}>50+</Text>
+              <Text style={styles.statLabel}>VEHICLES REROUTED</Text>
+            </BlurView>
+            <BlurView intensity={20} tint="dark" style={styles.statCard}>
+              <TrendingDown size={20} color={THEME.colors.primary} />
+              <Text style={styles.statValue}>-60%</Text>
+              <Text style={styles.statLabel}>CONGESTION REDUCTION</Text>
+            </BlurView>
+            <BlurView intensity={20} tint="dark" style={styles.statCard}>
+              <Users size={20} color={THEME.colors.text.secondary} />
+              <Text style={styles.statValue}>{incident?.estimated_population || "4.5K"}</Text>
+              <Text style={styles.statLabel}>RESIDENTS PROTECTED</Text>
+            </BlurView>
+            <BlurView intensity={20} tint="dark" style={styles.statCard}>
+              <Clock size={20} color={THEME.colors.text.secondary} />
+              <Text style={styles.statValue}>45s</Text>
+              <Text style={styles.statLabel}>MEAN DETECTION TIME</Text>
+            </BlurView>
+          </Animated.View>
+
+          {/* Detailed Breakdown */}
+          <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.reportCardContainer}>
+            <BlurView intensity={20} tint="dark" style={styles.reportCard}>
+              <Text style={styles.reportCardTitle}>SUMMARY ANALYSIS</Text>
+              
+              <View style={styles.reportItem}>
+                <View style={styles.reportItemIcon}>
+                  <MapPin size={16} color={THEME.colors.text.primary} />
+                </View>
+                <View style={styles.reportItemContent}>
+                  <Text style={styles.itemTitle}>Location Secured</Text>
+                  <Text style={styles.itemDescription}>{location}</Text>
+                </View>
+              </View>
+
+              <View style={styles.reportItem}>
+                <View style={styles.reportItemIcon}>
+                  <Activity size={16} color={THEME.colors.text.primary} />
+                </View>
+                <View style={styles.reportItemContent}>
+                  <Text style={styles.itemTitle}>Infrastructure Integrity</Text>
+                  <Text style={styles.itemDescription}>Nearby hospitals and power grids remained operational throughout the event.</Text>
+                </View>
+              </View>
+            </BlurView>
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.delay(700).springify()} style={{ width: '100%' }}>
+            <TouchableOpacity 
+              style={styles.doneButton}
+              onPress={() => navigation.popToTop()}
+            >
+              <Text style={styles.doneButtonText}>RETURN TO COMMAND CENTER</Text>
             </TouchableOpacity>
-          </Link>
+          </Animated.View>
+          
+          <View style={{ height: 40 }} />
         </ScrollView>
-      </Animated.View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#121212',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: THEME.colors.background,
+  },
+  safeArea: {
+    flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: THEME.spacing.lg,
+    paddingVertical: THEME.spacing.lg,
+    backgroundColor: THEME.colors.glass,
     borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
-    backgroundColor: '#1C1C1E',
+    borderBottomColor: THEME.colors.glassBorder,
   },
-  backButton: {
-    padding: 8,
-    width: 60,
-  },
-  backButtonText: {
-    color: '#0A84FF',
-    fontSize: 16,
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: THEME.colors.glass,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: THEME.colors.text.primary,
+    fontSize: 12,
+    fontFamily: THEME.fonts.heading,
+    letterSpacing: 2,
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
+  content: {
+    paddingHorizontal: THEME.spacing.lg,
+    alignItems: "center",
   },
-  badgeContainer: {
-    alignItems: 'center',
-    marginVertical: 24,
+  successBanner: {
+    alignItems: "center",
+    marginBottom: 30,
+    marginTop: 10,
   },
-  badge: {
-    backgroundColor: 'rgba(48, 209, 88, 0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
+  bannerIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: THEME.colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: THEME.spacing.lg,
+    ...THEME.shadows.glow,
+  },
+  successTitle: {
+    color: THEME.colors.text.primary,
+    fontSize: 20,
+    fontFamily: THEME.fonts.heading,
+    textAlign: "center",
+    marginBottom: 6,
+    letterSpacing: 1,
+    textShadowColor: THEME.colors.accent + "60",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
+  },
+  successSubtitle: {
+    color: THEME.colors.primary,
+    fontSize: 9,
+    fontFamily: THEME.fonts.mono,
+    letterSpacing: 2,
+    textAlign: "center",
+  },
+  chartCardContainer: {
+    width: "100%",
+    borderRadius: THEME.borderRadius.md,
+    overflow: "hidden",
+    marginBottom: THEME.spacing.lg,
+  },
+  chartCard: {
+    backgroundColor: THEME.colors.glass,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: '#30D158',
+    borderColor: THEME.colors.glassBorder,
   },
-  badgeText: {
-    color: '#30D158',
-    fontSize: 18,
-    fontWeight: 'bold',
+  chartHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: THEME.spacing.lg,
+  },
+  chartTitle: {
+    color: THEME.colors.text.muted,
+    fontSize: 10,
+    fontFamily: THEME.fonts.mono,
     letterSpacing: 1,
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
+  chartBody: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "flex-end",
+    height: 120,
+    paddingBottom: 20,
+  },
+  barGroup: {
+    alignItems: "center",
+    height: "100%",
+    justifyContent: "flex-end",
+  },
+  barFill: {
+    width: 30,
+    backgroundColor: THEME.colors.text.secondary,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+  },
+  barLabel: {
+    color: THEME.colors.text.muted,
+    fontSize: 8,
+    fontFamily: THEME.fonts.mono,
+    marginTop: 8,
+    position: "absolute",
+    bottom: 0,
+  },
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: THEME.spacing.md,
+    marginBottom: THEME.spacing.xl,
   },
   statCard: {
-    flex: 1,
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 4,
-    alignItems: 'center',
+    backgroundColor: THEME.colors.glass,
+    width: (width - THEME.spacing.lg * 2 - THEME.spacing.md) / 2,
+    padding: THEME.spacing.lg,
+    borderRadius: THEME.borderRadius.md,
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#2C2C2E',
+    borderColor: THEME.colors.glassBorder,
+    overflow: "hidden",
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
+    color: THEME.colors.text.primary,
+    fontSize: 20,
+    fontFamily: THEME.fonts.heading,
+    marginTop: THEME.spacing.sm,
   },
   statLabel: {
+    color: THEME.colors.text.muted,
+    fontSize: 8,
+    fontFamily: THEME.fonts.mono,
+    letterSpacing: 0.5,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  reportCardContainer: {
+    width: "100%",
+    borderRadius: THEME.borderRadius.md,
+    overflow: "hidden",
+    marginBottom: THEME.spacing.xl,
+  },
+  reportCard: {
+    backgroundColor: THEME.colors.glass,
+    padding: THEME.spacing.lg,
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
+  },
+  reportCardTitle: {
+    color: THEME.colors.text.muted,
+    fontSize: 10,
+    fontFamily: THEME.fonts.mono,
+    letterSpacing: 2,
+    marginBottom: THEME.spacing.lg,
+  },
+  reportItem: {
+    flexDirection: "row",
+    gap: THEME.spacing.md,
+    marginBottom: THEME.spacing.lg,
+  },
+  reportItemIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: THEME.colors.glass,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
+  },
+  reportItemContent: {
+    flex: 1,
+  },
+  itemTitle: {
+    color: THEME.colors.text.primary,
     fontSize: 12,
-    color: '#8E8E93',
-    textAlign: 'center',
+    fontFamily: THEME.fonts.heading,
+    marginBottom: 4,
   },
-  comparisonContainer: {
-    marginBottom: 24,
+  itemDescription: {
+    color: THEME.colors.text.secondary,
+    fontSize: 11,
+    fontFamily: THEME.fonts.body,
+    lineHeight: 18,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    marginBottom: 12,
+  doneButton: {
+    backgroundColor: THEME.colors.primary,
+    width: "100%",
+    height: 56,
+    borderRadius: THEME.borderRadius.sm,
+    justifyContent: "center",
+    alignItems: "center",
+    ...THEME.shadows.glow,
   },
-  comparisonColumns: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  comparisonCol: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    marginHorizontal: 4,
-  },
-  beforeCol: {
-    backgroundColor: 'rgba(255, 69, 58, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 69, 58, 0.3)',
-  },
-  afterCol: {
-    backgroundColor: 'rgba(48, 209, 88, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(48, 209, 88, 0.3)',
-  },
-  colHeader: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  colText: {
-    fontSize: 14,
-    color: '#D1D1D6',
-    marginBottom: 8,
-  },
-  actionsContainer: {
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: '#2C2C2E',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2E',
-  },
-  actionIcon: {
-    fontSize: 24,
-    marginRight: 16,
-  },
-  actionTextContainer: {
-    flex: 1,
-  },
-  actionLabel: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  actionValue: {
-    fontSize: 14,
-    color: '#8E8E93',
-    marginTop: 2,
-  },
-  dashboardButton: {
-    backgroundColor: '#0A84FF',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dashboardButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  doneButtonText: {
+    color: THEME.colors.background,
+    fontSize: 12,
+    fontFamily: THEME.fonts.heading,
+    letterSpacing: 2,
   },
 });
