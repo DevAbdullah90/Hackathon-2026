@@ -108,7 +108,7 @@ export default function FloodMap({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       <MapView
         ref={mapRef}

@@ -3,15 +3,12 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  TouchableOpacity, 
-  SafeAreaView, 
   StatusBar,
   Dimensions
 } from "react-native";
 import Animated, { 
   FadeIn, 
   FadeInDown, 
-  FadeInUp, 
   ZoomIn,
   useSharedValue,
   withRepeat,
@@ -19,84 +16,80 @@ import Animated, {
   withSequence,
   useAnimatedStyle
 } from "react-native-reanimated";
-import { BlurView } from "expo-blur";
-import AtmosphericBackground from "../components/AtmosphericBackground";
 import { THEME } from "../lib/theme";
-import { ShieldAlert, ArrowRight, Activity, Globe } from "lucide-react-native";
+import { Shield } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
 
 export default function WelcomeScreen({ navigation }: any) {
   const pulseScale = useSharedValue(1);
+  const glowOpacity = useSharedValue(0.6);
 
   useEffect(() => {
+    // Elegant breathing micro-animation
     pulseScale.value = withRepeat(
       withSequence(
-        withTiming(1.05, { duration: 1500 }),
-        withTiming(1, { duration: 1500 })
+        withTiming(1.08, { duration: 1200 }),
+        withTiming(1, { duration: 1200 })
       ),
       -1,
       true
     );
+
+    glowOpacity.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 1200 }),
+        withTiming(0.6, { duration: 1200 })
+      ),
+      -1,
+      true
+    );
+
+    // Automated 2.2-second transition to Dashboard
+    const timer = setTimeout(() => {
+      navigation.replace("Dashboard");
+    }, 2200);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  const animatedButtonStyle = useAnimatedStyle(() => ({
+  const animatedLogoStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
-    shadowOpacity: pulseScale.value * 0.5,
+  }));
+
+  const animatedGlowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+    transform: [{ scale: pulseScale.value * 1.3 }],
   }));
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor={THEME.colors.primary} />
       
-      {/* Premium Cinematic Background */}
-      <Animated.View entering={FadeIn.duration(2000)} style={StyleSheet.absoluteFill}>
-        <AtmosphericBackground />
+      {/* Centered Brand Presentation */}
+      <View style={styles.centerArea}>
+        {/* Glowing Logo Aura */}
+        <Animated.View style={[styles.logoGlow, animatedGlowStyle]} />
+
+        {/* Minimalist White Logo */}
+        <Animated.View entering={ZoomIn.duration(800).springify()} style={[styles.logoContainer, animatedLogoStyle]}>
+          <Shield size={64} color="#FFFFFF" strokeWidth={1.5} />
+        </Animated.View>
+
+        {/* Premium Typography */}
+        <Animated.Text entering={FadeInDown.delay(300).duration(600)} style={styles.title}>
+          CIRO
+        </Animated.Text>
+        <Animated.Text entering={FadeInDown.delay(550).duration(600)} style={styles.subtitle}>
+          CRISIS INTEL & ORCHESTRATION
+        </Animated.Text>
+      </View>
+
+      {/* System Status Loading Indicator */}
+      <Animated.View entering={FadeIn.delay(800).duration(1000)} style={styles.loaderArea}>
+        <View style={styles.spinner} />
+        <Text style={styles.loaderText}>INITIALIZING COGNITIVE ENGINE...</Text>
       </Animated.View>
-
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.headerArea}>
-            <BlurView intensity={20} tint="light" style={styles.badge}>
-              <Activity size={12} color={THEME.colors.primary} />
-              <Text style={styles.badgeText}>SECURE CONNECTION</Text>
-            </BlurView>
-          </Animated.View>
-
-          <View style={styles.heroSection}>
-            <Animated.View entering={ZoomIn.delay(400).springify()} style={{ marginBottom: THEME.spacing.xl }}>
-              <BlurView intensity={40} tint="light" style={styles.logoContainer}>
-                <Globe size={48} color={THEME.colors.text.primary} strokeWidth={1} />
-              </BlurView>
-            </Animated.View>
-            <Animated.Text entering={FadeInDown.delay(500).springify()} style={styles.title}>CIRO</Animated.Text>
-            <Animated.Text entering={FadeInDown.delay(600).springify()} style={styles.subtitle}>COMMAND & CONTROL</Animated.Text>
-            
-            <Animated.Text entering={FadeInDown.delay(700).springify()} style={styles.description}>
-              Cognitive Incident Response Orchestrator. 
-              Real-time multi-agent crisis management and 
-              infrastructure rerouting system.
-            </Animated.Text>
-          </View>
-
-          <Animated.View entering={FadeInUp.delay(900).springify()} style={styles.footerArea}>
-            <View style={styles.systemStatus}>
-              <Animated.View style={[styles.statusDot, { transform: [{ scale: pulseScale.value }] }]} />
-              <Text style={styles.statusText}>ALL SYSTEMS NOMINAL</Text>
-            </View>
-
-            <TouchableOpacity 
-              onPress={() => navigation.replace("Dashboard")}
-              activeOpacity={0.8}
-            >
-              <Animated.View style={[styles.primaryButton, animatedButtonStyle]}>
-                <Text style={styles.primaryButtonText}>INITIALIZE</Text>
-                <ArrowRight size={20} color={THEME.colors.background} />
-              </Animated.View>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </SafeAreaView>
     </View>
   );
 }
@@ -104,118 +97,75 @@ export default function WelcomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: THEME.colors.background,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    padding: THEME.spacing.xl,
-    justifyContent: "space-between",
-  },
-  headerArea: {
-    alignItems: "flex-start",
-    marginTop: THEME.spacing.lg,
-  },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: THEME.borderRadius.full,
-    borderWidth: 1,
-    borderColor: THEME.colors.primary + "40",
-    overflow: "hidden",
-    gap: 6,
-  },
-  badgeText: {
-    color: THEME.colors.primary,
-    fontSize: 10,
-    fontFamily: THEME.fonts.mono,
-    letterSpacing: 1,
-  },
-  heroSection: {
-    flex: 1,
+    backgroundColor: THEME.colors.primary, // Solid premium deep green `#064E3B`
     justifyContent: "center",
+    alignItems: "center",
+  },
+  centerArea: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: THEME.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    width: 120,
+    height: 120,
+    borderRadius: THEME.borderRadius.xl,
     justifyContent: "center",
     alignItems: "center",
-    overflow: "hidden",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.24)",
+    shadowColor: "#FFFFFF",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 10,
+    zIndex: 2,
+  },
+  logoGlow: {
+    position: "absolute",
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    zIndex: 1,
   },
   title: {
-    color: THEME.colors.text.primary,
-    fontSize: 56,
+    color: "#FFFFFF",
+    fontSize: 48,
     fontFamily: THEME.fonts.heading,
-    letterSpacing: 6,
-    marginBottom: THEME.spacing.xs,
-    textShadowColor: THEME.colors.accent + "80",
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
+    letterSpacing: 8,
+    marginTop: THEME.spacing.xl,
+    fontWeight: "900",
+    textShadowColor: "rgba(255, 255, 255, 0.2)",
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 10,
   },
   subtitle: {
-    color: THEME.colors.primary,
-    fontSize: 14,
-    fontFamily: THEME.fonts.mono,
-    letterSpacing: 6,
-    marginBottom: THEME.spacing.xl,
-  },
-  description: {
-    color: THEME.colors.text.secondary,
-    fontSize: 15,
-    fontFamily: THEME.fonts.body,
-    lineHeight: 26,
-    maxWidth: "85%",
-  },
-  footerArea: {
-    marginBottom: THEME.spacing.xl,
-  },
-  systemStatus: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: THEME.spacing.lg,
-    gap: 12,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: THEME.colors.primary,
-    shadowColor: THEME.colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  statusText: {
-    color: THEME.colors.text.muted,
+    color: "rgba(255, 255, 255, 0.65)",
     fontSize: 10,
     fontFamily: THEME.fonts.mono,
-    letterSpacing: 2,
+    letterSpacing: 4,
+    marginTop: THEME.spacing.sm,
+    textAlign: "center",
   },
-  primaryButton: {
-    backgroundColor: THEME.colors.primary,
-    height: 64,
-    borderRadius: THEME.borderRadius.md,
-    flexDirection: "row",
-    justifyContent: "space-between",
+  loaderArea: {
+    position: "absolute",
+    bottom: 60,
     alignItems: "center",
-    paddingHorizontal: THEME.spacing.xl,
-    shadowColor: THEME.colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 16,
-    elevation: 8,
+    gap: THEME.spacing.sm,
   },
-  primaryButtonText: {
-    color: THEME.colors.background,
-    fontSize: 14,
-    fontFamily: THEME.fonts.heading,
+  spinner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderTopColor: "#FFFFFF",
+  },
+  loaderText: {
+    color: "rgba(255, 255, 255, 0.4)",
+    fontSize: 8,
+    fontFamily: THEME.fonts.mono,
     letterSpacing: 2,
   },
 });

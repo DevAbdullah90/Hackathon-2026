@@ -65,7 +65,7 @@ export default function SimView({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <Animated.View entering={FadeInDown.duration(1500)} style={StyleSheet.absoluteFill}>
         <AtmosphericBackground />
       </Animated.View>
