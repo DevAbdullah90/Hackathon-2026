@@ -32,7 +32,12 @@ async def read_active_incidents(
     """
     query = (
         select(Incident)
-        .where(or_(Incident.status == "confirmed", Incident.status == "monitoring"))
+        .where(or_(
+            Incident.status == "confirmed",
+            Incident.status == "CONFIRMED",
+            Incident.status == "monitoring",
+            Incident.status == "MONITORING",
+        ))
         .offset(offset)
         .limit(limit)
         .order_by(Incident.created_at.desc())
