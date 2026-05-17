@@ -18,6 +18,8 @@ import Animated, {
   withDelay,
   useAnimatedStyle 
 } from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import AtmosphericBackground from "../components/AtmosphericBackground";
 import { api, Incident } from "../lib/api";
 import { THEME } from "../lib/theme";
 import { 
@@ -61,15 +63,20 @@ export default function OutcomeScreen({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+      <Animated.View entering={FadeInDown.duration(1500)} style={StyleSheet.absoluteFill}>
+        <AtmosphericBackground />
+      </Animated.View>
+
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.popToTop()} style={styles.iconButton}>
-            <Home size={18} color={THEME.colors.text.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>MISSION REPORT</Text>
-          <View style={{ width: 36 }} /> 
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <BlurView intensity={20} tint="dark" style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.popToTop()} style={styles.iconButton}>
+              <Home size={18} color={THEME.colors.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>MISSION REPORT</Text>
+            <View style={{ width: 36 }} /> 
+          </BlurView>
         </Animated.View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -81,75 +88,79 @@ export default function OutcomeScreen({ route, navigation }: any) {
             <Text style={styles.successSubtitle}>AGENTIC LOOP TERMINATED SUCCESSFULLY</Text>
           </Animated.View>
 
-          {/* Impact Visualizer (Simple Animated Bar Chart) */}
-          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <BarChart2 size={16} color={THEME.colors.text.muted} />
-              <Text style={styles.chartTitle}>IMPACT REDUCTION ANALYSIS</Text>
-            </View>
-            <View style={styles.chartBody}>
-              <View style={styles.barGroup}>
-                <Animated.View style={[styles.barFill, animatedBar1]} />
-                <Text style={styles.barLabel}>TRAFFIC</Text>
+          {/* Impact Visualizer */}
+          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.chartCardContainer}>
+            <BlurView intensity={25} tint="dark" style={styles.chartCard}>
+              <View style={styles.chartHeader}>
+                <BarChart2 size={16} color={THEME.colors.text.muted} />
+                <Text style={styles.chartTitle}>IMPACT REDUCTION ANALYSIS</Text>
               </View>
-              <View style={styles.barGroup}>
-                <Animated.View style={[styles.barFill, { backgroundColor: THEME.colors.primary }, animatedBar2]} />
-                <Text style={styles.barLabel}>SAFETY</Text>
+              <View style={styles.chartBody}>
+                <View style={styles.barGroup}>
+                  <Animated.View style={[styles.barFill, animatedBar1]} />
+                  <Text style={styles.barLabel}>TRAFFIC</Text>
+                </View>
+                <View style={styles.barGroup}>
+                  <Animated.View style={[styles.barFill, { backgroundColor: THEME.colors.primary }, animatedBar2]} />
+                  <Text style={styles.barLabel}>SAFETY</Text>
+                </View>
+                <View style={styles.barGroup}>
+                  <Animated.View style={[styles.barFill, animatedBar3]} />
+                  <Text style={styles.barLabel}>RESPONSE</Text>
+                </View>
               </View>
-              <View style={styles.barGroup}>
-                <Animated.View style={[styles.barFill, animatedBar3]} />
-                <Text style={styles.barLabel}>RESPONSE</Text>
-              </View>
-            </View>
+            </BlurView>
           </Animated.View>
 
           {/* Stats Grid */}
           <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.statsGrid}>
-            <View style={styles.statCard}>
+            <BlurView intensity={20} tint="dark" style={styles.statCard}>
               <Car size={20} color={THEME.colors.text.secondary} />
               <Text style={styles.statValue}>50+</Text>
               <Text style={styles.statLabel}>VEHICLES REROUTED</Text>
-            </View>
-            <View style={styles.statCard}>
+            </BlurView>
+            <BlurView intensity={20} tint="dark" style={styles.statCard}>
               <TrendingDown size={20} color={THEME.colors.primary} />
               <Text style={styles.statValue}>-60%</Text>
               <Text style={styles.statLabel}>CONGESTION REDUCTION</Text>
-            </View>
-            <View style={styles.statCard}>
+            </BlurView>
+            <BlurView intensity={20} tint="dark" style={styles.statCard}>
               <Users size={20} color={THEME.colors.text.secondary} />
               <Text style={styles.statValue}>{incident?.estimated_population || "4.5K"}</Text>
               <Text style={styles.statLabel}>RESIDENTS PROTECTED</Text>
-            </View>
-            <View style={styles.statCard}>
+            </BlurView>
+            <BlurView intensity={20} tint="dark" style={styles.statCard}>
               <Clock size={20} color={THEME.colors.text.secondary} />
               <Text style={styles.statValue}>45s</Text>
               <Text style={styles.statLabel}>MEAN DETECTION TIME</Text>
-            </View>
+            </BlurView>
           </Animated.View>
 
           {/* Detailed Breakdown */}
-          <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.reportCard}>
-            <Text style={styles.reportCardTitle}>SUMMARY ANALYSIS</Text>
-            
-            <View style={styles.reportItem}>
-              <View style={styles.reportItemIcon}>
-                <MapPin size={16} color={THEME.colors.text.primary} />
+          <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.reportCardContainer}>
+            <BlurView intensity={20} tint="dark" style={styles.reportCard}>
+              <Text style={styles.reportCardTitle}>SUMMARY ANALYSIS</Text>
+              
+              <View style={styles.reportItem}>
+                <View style={styles.reportItemIcon}>
+                  <MapPin size={16} color={THEME.colors.text.primary} />
+                </View>
+                <View style={styles.reportItemContent}>
+                  <Text style={styles.itemTitle}>Location Secured</Text>
+                  <Text style={styles.itemDescription}>{location}</Text>
+                </View>
               </View>
-              <View style={styles.reportItemContent}>
-                <Text style={styles.itemTitle}>Location Secured</Text>
-                <Text style={styles.itemDescription}>{location}</Text>
-              </View>
-            </View>
 
-            <View style={styles.reportItem}>
-              <View style={styles.reportItemIcon}>
-                <Activity size={16} color={THEME.colors.text.primary} />
+              <View style={styles.reportItem}>
+                <View style={styles.reportItemIcon}>
+                  <Activity size={16} color={THEME.colors.text.primary} />
+                </View>
+                <View style={styles.reportItemContent}>
+                  <Text style={styles.itemTitle}>Infrastructure Integrity</Text>
+                  <Text style={styles.itemDescription}>Nearby hospitals and power grids remained operational throughout the event.</Text>
+                </View>
               </View>
-              <View style={styles.reportItemContent}>
-                <Text style={styles.itemTitle}>Infrastructure Integrity</Text>
-                <Text style={styles.itemDescription}>Nearby hospitals and power grids remained operational throughout the event.</Text>
-              </View>
-            </View>
+            </BlurView>
           </Animated.View>
 
           <Animated.View entering={FadeInUp.delay(700).springify()} style={{ width: '100%' }}>
@@ -182,16 +193,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: THEME.spacing.lg,
     paddingVertical: THEME.spacing.lg,
+    backgroundColor: THEME.colors.glass,
+    borderBottomWidth: 1,
+    borderBottomColor: THEME.colors.glassBorder,
   },
   iconButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   headerTitle: {
     color: THEME.colors.text.primary,
@@ -216,10 +230,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: THEME.spacing.lg,
-    shadowColor: THEME.colors.primary,
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
+    ...THEME.shadows.glow,
   },
   successTitle: {
     color: THEME.colors.text.primary,
@@ -228,6 +239,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 6,
     letterSpacing: 1,
+    textShadowColor: THEME.colors.accent + "60",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 15,
   },
   successSubtitle: {
     color: THEME.colors.primary,
@@ -236,14 +250,17 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textAlign: "center",
   },
-  chartCard: {
-    backgroundColor: THEME.colors.surface,
+  chartCardContainer: {
     width: "100%",
-    padding: THEME.spacing.lg,
     borderRadius: THEME.borderRadius.md,
-    borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    overflow: "hidden",
     marginBottom: THEME.spacing.lg,
+  },
+  chartCard: {
+    backgroundColor: THEME.colors.glass,
+    padding: THEME.spacing.lg,
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
   },
   chartHeader: {
     flexDirection: "row",
@@ -290,13 +307,14 @@ const styles = StyleSheet.create({
     marginBottom: THEME.spacing.xl,
   },
   statCard: {
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     width: (width - THEME.spacing.lg * 2 - THEME.spacing.md) / 2,
     padding: THEME.spacing.lg,
     borderRadius: THEME.borderRadius.md,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
+    overflow: "hidden",
   },
   statValue: {
     color: THEME.colors.text.primary,
@@ -312,14 +330,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: "center",
   },
-  reportCard: {
-    backgroundColor: THEME.colors.surface,
+  reportCardContainer: {
     width: "100%",
-    padding: THEME.spacing.lg,
     borderRadius: THEME.borderRadius.md,
+    overflow: "hidden",
     marginBottom: THEME.spacing.xl,
+  },
+  reportCard: {
+    backgroundColor: THEME.colors.glass,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   reportCardTitle: {
     color: THEME.colors.text.muted,
@@ -337,11 +358,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: THEME.colors.background,
+    backgroundColor: THEME.colors.glass,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   reportItemContent: {
     flex: 1,
@@ -359,12 +380,13 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   doneButton: {
-    backgroundColor: THEME.colors.text.primary,
+    backgroundColor: THEME.colors.primary,
     width: "100%",
     height: 56,
     borderRadius: THEME.borderRadius.sm,
     justifyContent: "center",
     alignItems: "center",
+    ...THEME.shadows.glow,
   },
   doneButtonText: {
     color: THEME.colors.background,

@@ -14,6 +14,7 @@ import {
   Animated,
 } from "react-native";
 import Reanimated, { FadeInUp, FadeInDown, FadeIn } from "react-native-reanimated";
+import { BlurView } from "expo-blur";
 import MapView, { Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
 import { CONFIG } from "./constants/config";
@@ -147,23 +148,25 @@ export default function FloodMap({ route, navigation }: any) {
       </MapView>
 
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
-        <Reanimated.View entering={FadeInDown.delay(200).springify()} style={styles.header}>
-          <TouchableOpacity 
-            style={styles.iconButton} 
-            onPress={() => navigation.goBack()}
-          >
-            <ChevronLeft size={20} color={THEME.colors.text.primary} />
-          </TouchableOpacity>
-          
-          <View style={styles.headerContent}>
-            <Text style={styles.headerTitle}>TACTICAL MAP</Text>
-            <View style={styles.statusRow}>
-              <View style={[styles.statusDot, { backgroundColor: THEME.colors.primary }]} />
-              <Text style={styles.statusText}>{incidents.length} TARGETS ACQUIRED</Text>
+        <Reanimated.View entering={FadeInDown.delay(200).springify()} style={{ margin: THEME.spacing.md, borderRadius: THEME.borderRadius.md, overflow: "hidden" }}>
+          <BlurView intensity={30} tint="dark" style={styles.header}>
+            <TouchableOpacity 
+              style={styles.iconButton} 
+              onPress={() => navigation.goBack()}
+            >
+              <ChevronLeft size={20} color={THEME.colors.text.primary} />
+            </TouchableOpacity>
+            
+            <View style={styles.headerContent}>
+              <Text style={styles.headerTitle}>TACTICAL MAP</Text>
+              <View style={styles.statusRow}>
+                <View style={[styles.statusDot, { backgroundColor: THEME.colors.primary }]} />
+                <Text style={styles.statusText}>{incidents.length} TARGETS ACQUIRED</Text>
+              </View>
             </View>
-          </View>
 
-          {loading && <ActivityIndicator color={THEME.colors.primary} size="small" />}
+            {loading && <ActivityIndicator color={THEME.colors.primary} size="small" />}
+          </BlurView>
         </Reanimated.View>
 
         <Reanimated.View entering={FadeInUp.delay(300).springify()} style={[styles.reportFab, reporting && styles.disabledFab]}>
@@ -196,33 +199,34 @@ export default function FloodMap({ route, navigation }: any) {
               {incidents.map((incident) => (
                 <TouchableOpacity
                   key={`card-${incident.id}`}
-                  style={[
-                    styles.miniCard, 
-                    selectedIncident?.id === incident.id && styles.activeCard
-                  ]}
                   activeOpacity={0.9}
                   onPress={() => handleIncidentPress(incident)}
                 >
-                  <View style={styles.miniCardTop}>
-                    <Text style={styles.miniCardLocation} numberOfLines={1}>
-                      {incident.location}
-                    </Text>
-                    <SeverityBadge score={incident.severity_score} />
-                  </View>
-                  
-                  <View style={styles.miniCardFooter}>
-                    <View style={styles.miniCardStat}>
-                      <Users size={12} color={THEME.colors.text.muted} />
-                      <Text style={styles.miniCardStatText}>{incident.estimated_population}</Text>
+                  <BlurView intensity={40} tint="dark" style={[
+                    styles.miniCard, 
+                    selectedIncident?.id === incident.id && styles.activeCard
+                  ]}>
+                    <View style={styles.miniCardTop}>
+                      <Text style={styles.miniCardLocation} numberOfLines={1}>
+                        {incident.location}
+                      </Text>
+                      <SeverityBadge score={incident.severity_score} />
                     </View>
-                    <TouchableOpacity 
-                      style={styles.miniCardAction}
-                      onPress={() => navigation.navigate("Reasoning", { incidentId: incident.id, location: incident.location })}
-                    >
-                      <Cpu size={12} color={THEME.colors.background} />
-                      <Text style={styles.miniCardActionText}>ENGAGE AI</Text>
-                    </TouchableOpacity>
-                  </View>
+                    
+                    <View style={styles.miniCardFooter}>
+                      <View style={styles.miniCardStat}>
+                        <Users size={12} color={THEME.colors.text.muted} />
+                        <Text style={styles.miniCardStatText}>{incident.estimated_population}</Text>
+                      </View>
+                      <TouchableOpacity 
+                        style={styles.miniCardAction}
+                        onPress={() => navigation.navigate("Reasoning", { incidentId: incident.id, location: incident.location })}
+                      >
+                        <Cpu size={12} color={THEME.colors.background} />
+                        <Text style={styles.miniCardActionText}>ENGAGE AI</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </BlurView>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -236,8 +240,8 @@ export default function FloodMap({ route, navigation }: any) {
         animationType="slide" 
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <BlurView intensity={20} tint="dark" style={styles.modalOverlay}>
+          <BlurView intensity={50} tint="dark" style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderInfo}>
                 <Activity size={14} color={THEME.colors.primary} />
@@ -257,7 +261,7 @@ export default function FloodMap({ route, navigation }: any) {
                     <Text style={styles.modalStatLabel}>SEVERITY</Text>
                     <Text style={[
                       styles.modalStatValue, 
-                      { color: selectedIncident.severity_score >= 7.5 ? THEME.colors.text.primary : THEME.colors.primary }
+                      { color: selectedIncident.severity_score >= 7.5 ? THEME.colors.status.critical : THEME.colors.primary }
                     ]}>
                       {selectedIncident.severity_score.toFixed(1)}
                     </Text>
@@ -284,8 +288,8 @@ export default function FloodMap({ route, navigation }: any) {
                 </TouchableOpacity>
               </View>
             )}
-          </View>
-        </View>
+          </BlurView>
+        </BlurView>
       </Modal>
     </View>
   );
@@ -331,12 +335,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(10, 10, 10, 0.95)",
-    margin: THEME.spacing.md,
+    backgroundColor: THEME.colors.glass,
     padding: THEME.spacing.md,
-    borderRadius: THEME.borderRadius.md,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
     gap: THEME.spacing.md,
   },
   iconButton: {
@@ -404,12 +406,12 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.md,
   },
   miniCard: {
-    backgroundColor: "rgba(18, 18, 18, 0.98)",
+    backgroundColor: THEME.colors.glass,
     width: width * 0.8,
     borderRadius: THEME.borderRadius.md,
     padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   activeCard: {
     borderColor: THEME.colors.primary,
@@ -494,13 +496,13 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     borderTopLeftRadius: THEME.borderRadius.lg,
     borderTopRightRadius: THEME.borderRadius.lg,
     padding: THEME.spacing.xl,
     paddingBottom: 60,
     borderTopWidth: 1,
-    borderTopColor: THEME.colors.surfaceBorder,
+    borderTopColor: THEME.colors.glassBorder,
   },
   modalHeader: {
     flexDirection: "row",
@@ -535,12 +537,12 @@ const styles = StyleSheet.create({
   modalStatsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
-    backgroundColor: THEME.colors.background,
+    backgroundColor: THEME.colors.glass,
     borderRadius: THEME.borderRadius.sm,
     padding: THEME.spacing.lg,
     marginBottom: THEME.spacing.xl,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   modalStatItem: {
     alignItems: "center",

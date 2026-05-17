@@ -1,31 +1,28 @@
 export const THEME = {
   colors: {
     // 60% Black / Deep Charcoal Backgrounds
-    background: "#0A0A0A",
-    surface: "#121212",
-    surfaceElevated: "#171717",
-    surfaceBorder: "#262626", // Subtle border
+    background: "#050505",
+    surface: "#0D0D0D",
+    surfaceElevated: "#141414",
+    surfaceBorder: "#222222", 
+    glass: "rgba(20, 20, 20, 0.6)",
+    glassBorder: "rgba(255, 255, 255, 0.08)",
     
     // 30% White / Muted Text
     text: {
       primary: "#FFFFFF",
-      secondary: "#D4D4D4",
-      muted: "#A3A3A3",
+      secondary: "#A1A1AA", // Zinc 400
+      muted: "#52525B", // Zinc 600
     },
 
     // 10% Green Emphasis
-    primary: "#10B981", // Emerald/Neon Green for primary actions
-    primaryDark: "#047857", // Darker green for backgrounds/subtle accents
+    primary: "#00E676", // Neon Green for active/confirmed action
+    primaryDark: "#004D40", 
+    accent: "#00FF9D", // Glow color
     
-    // Status colors (adapted to fit the theme where possible, but strictly avoiding random colors)
-    // Critical usually implies red, but we can use white/red accents strictly if needed, 
-    // or keep it monochrome/green if we strictly follow the prompt.
-    // The prompt says: "Use dark green or neon green only for important emphasis... Do not use bright random colors outside the theme."
-    // Let's use a very muted red if absolutely necessary for critical alerts, or just use high-contrast white.
-    // I'll define muted status colors but rely mostly on green for emphasis.
     status: {
-      success: "#10B981", 
-      warning: "#F59E0B", // Keeping warning/critical for severity, but using them very sparingly
+      success: "#00E676", 
+      warning: "#F59E0B", 
       critical: "#EF4444", 
     },
   },
@@ -50,4 +47,20 @@ export const THEME = {
     body: "Inter_400Regular",
     mono: "JetBrainsMono_400Regular",
   },
+  shadows: {
+    glow: {
+      shadowColor: "#00FF9D",
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.4,
+      shadowRadius: 15,
+      elevation: 10,
+    },
+    card: {
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.5,
+      shadowRadius: 24,
+      elevation: 5,
+    }
+  }
 };

@@ -10,6 +10,8 @@ import {
   Dimensions,
 } from "react-native";
 import Animated, { FadeInDown, FadeInUp, useSharedValue, withRepeat, withSequence, withTiming, useAnimatedStyle } from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import AtmosphericBackground from "../components/AtmosphericBackground";
 import LiveLogStream from "../components/LiveLogStream";
 import { THEME } from "../lib/theme";
 import { 
@@ -48,38 +50,44 @@ export default function ReasoningCenter({ route, navigation }: any) {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+      <Animated.View entering={FadeInDown.duration(1500)} style={StyleSheet.absoluteFill}>
+        <AtmosphericBackground />
+      </Animated.View>
       <SafeAreaView style={styles.safeArea}>
         {/* Top Mission Header */}
-        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton} 
-            onPress={() => navigation.goBack()}
-          >
-            <ChevronLeft size={20} color={THEME.colors.text.primary} />
-          </TouchableOpacity>
-          <View style={styles.headerInfo}>
-            <Text style={styles.headerLabel}>MISSION ANALYSIS</Text>
-            <Text style={styles.headerTitle}>{location}</Text>
-          </View>
-          <View style={styles.missionId}>
-            <Text style={styles.missionIdText}>{incidentId}</Text>
-          </View>
+        <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <BlurView intensity={20} tint="dark" style={styles.header}>
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => navigation.goBack()}
+            >
+              <ChevronLeft size={20} color={THEME.colors.text.primary} />
+            </TouchableOpacity>
+            <View style={styles.headerInfo}>
+              <Text style={styles.headerLabel}>MISSION ANALYSIS</Text>
+              <Text style={styles.headerTitle}>{location}</Text>
+            </View>
+            <View style={styles.missionId}>
+              <Text style={styles.missionIdText}>{incidentId}</Text>
+            </View>
+          </BlurView>
         </Animated.View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Agent Status Grid */}
           <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.agentGrid}>
             {agentsActive.map((agent, index) => (
-              <View key={agent} style={styles.agentCard}>
-                <View style={styles.agentIconContainer}>
-                  {index === 0 ? <Cpu size={16} color={THEME.colors.primary} /> : <Layers size={16} color={THEME.colors.text.primary} />}
-                </View>
-                <Text style={styles.agentName}>{agent}</Text>
-                <View style={styles.agentStatusRow}>
-                  <Animated.View style={[styles.agentStatusDot, index === 0 ? animatedPulseStyle : null]} />
-                  <Text style={styles.agentStatus}>ONLINE</Text>
-                </View>
+              <View key={agent} style={styles.agentCardContainer}>
+                <BlurView intensity={30} tint="dark" style={styles.agentCard}>
+                  <View style={styles.agentIconContainer}>
+                    {index === 0 ? <Cpu size={16} color={THEME.colors.primary} /> : <Layers size={16} color={THEME.colors.text.primary} />}
+                  </View>
+                  <Text style={styles.agentName}>{agent}</Text>
+                  <View style={styles.agentStatusRow}>
+                    <Animated.View style={[styles.agentStatusDot, index === 0 ? animatedPulseStyle : null]} />
+                    <Text style={styles.agentStatus}>ONLINE</Text>
+                  </View>
+                </BlurView>
               </View>
             ))}
           </Animated.View>
@@ -96,20 +104,24 @@ export default function ReasoningCenter({ route, navigation }: any) {
             </View>
           </Animated.View>
 
-          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.logContainer}>
-            <LiveLogStream incidentId={incidentId} />
+          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.logContainerContainer}>
+            <BlurView intensity={20} tint="dark" style={styles.logContainer}>
+              <LiveLogStream incidentId={incidentId} />
+            </BlurView>
           </Animated.View>
 
           {/* Strategy Summary */}
-          <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.strategyCard}>
-            <View style={styles.strategyHeader}>
-              <Search size={16} color={THEME.colors.text.primary} />
-              <Text style={styles.strategyTitle}>STRATEGY SYNTHESIS</Text>
-            </View>
-            <Text style={styles.strategyText}>
-              System is cross-referencing rainfall patterns with topography data. 
-              Agentic loops are calculating optimal evacuation routes and drainage priorities.
-            </Text>
+          <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.strategyCardContainer}>
+            <BlurView intensity={20} tint="dark" style={styles.strategyCard}>
+              <View style={styles.strategyHeader}>
+                <Search size={16} color={THEME.colors.text.primary} />
+                <Text style={styles.strategyTitle}>STRATEGY SYNTHESIS</Text>
+              </View>
+              <Text style={styles.strategyText}>
+                System is cross-referencing rainfall patterns with topography data. 
+                Agentic loops are calculating optimal evacuation routes and drainage priorities.
+              </Text>
+            </BlurView>
           </Animated.View>
 
           <View style={{ height: 100 }} />
@@ -144,17 +156,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: THEME.spacing.lg,
     paddingVertical: THEME.spacing.lg,
+    backgroundColor: THEME.colors.glass,
     gap: THEME.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: THEME.colors.glassBorder,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   headerInfo: {
     flex: 1,
@@ -173,12 +188,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   missionId: {
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: THEME.borderRadius.sm,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   missionIdText: {
     color: THEME.colors.text.muted,
@@ -194,13 +209,16 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.md,
     marginBottom: THEME.spacing.xl,
   },
-  agentCard: {
+  agentCardContainer: {
     flex: 1,
-    backgroundColor: THEME.colors.surface,
-    padding: THEME.spacing.md,
     borderRadius: THEME.borderRadius.md,
+    overflow: "hidden",
+  },
+  agentCard: {
+    backgroundColor: THEME.colors.glass,
+    padding: THEME.spacing.md,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
     alignItems: "center",
   },
   agentIconContainer: {
@@ -265,22 +283,28 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     letterSpacing: 1,
   },
-  logContainer: {
-    backgroundColor: THEME.colors.surface,
+  logContainerContainer: {
     borderRadius: THEME.borderRadius.md,
+    overflow: "hidden",
+    marginBottom: THEME.spacing.xl,
+  },
+  logContainer: {
+    backgroundColor: THEME.colors.glass,
     padding: THEME.spacing.sm,
     height: 300,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
+  },
+  strategyCardContainer: {
+    borderRadius: THEME.borderRadius.md,
+    overflow: "hidden",
     marginBottom: THEME.spacing.xl,
   },
   strategyCard: {
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     padding: THEME.spacing.lg,
-    borderRadius: THEME.borderRadius.md,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
-    marginBottom: THEME.spacing.xl,
+    borderColor: THEME.colors.glassBorder,
   },
   strategyHeader: {
     flexDirection: "row",
@@ -307,7 +331,7 @@ const styles = StyleSheet.create({
     right: 0,
     padding: THEME.spacing.lg,
     paddingBottom: 40,
-    backgroundColor: THEME.colors.background,
+    backgroundColor: "transparent",
   },
   simulationButton: {
     backgroundColor: THEME.colors.text.primary,

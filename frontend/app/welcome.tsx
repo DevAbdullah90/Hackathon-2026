@@ -19,6 +19,8 @@ import Animated, {
   withSequence,
   useAnimatedStyle
 } from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import AtmosphericBackground from "../components/AtmosphericBackground";
 import { THEME } from "../lib/theme";
 import { ShieldAlert, ArrowRight, Activity, Globe } from "lucide-react-native";
 
@@ -30,8 +32,8 @@ export default function WelcomeScreen({ navigation }: any) {
   useEffect(() => {
     pulseScale.value = withRepeat(
       withSequence(
-        withTiming(1.05, { duration: 1000 }),
-        withTiming(1, { duration: 1000 })
+        withTiming(1.05, { duration: 1500 }),
+        withTiming(1, { duration: 1500 })
       ),
       -1,
       true
@@ -39,35 +41,33 @@ export default function WelcomeScreen({ navigation }: any) {
   }, []);
 
   const animatedButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }]
+    transform: [{ scale: pulseScale.value }],
+    shadowOpacity: pulseScale.value * 0.5,
   }));
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      {/* Decorative Grid Background */}
-      <Animated.View entering={FadeIn.duration(1500)} style={styles.gridOverlay}>
-        {Array.from({ length: 20 }).map((_, i) => (
-          <View key={`h-${i}`} style={[styles.gridLineHorizontal, { top: i * 40 }]} />
-        ))}
-        {Array.from({ length: 15 }).map((_, i) => (
-          <View key={`v-${i}`} style={[styles.gridLineVertical, { left: i * 40 }]} />
-        ))}
+      {/* Premium Cinematic Background */}
+      <Animated.View entering={FadeIn.duration(2000)} style={StyleSheet.absoluteFill}>
+        <AtmosphericBackground />
       </Animated.View>
 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.headerArea}>
-            <View style={styles.badge}>
+            <BlurView intensity={20} tint="dark" style={styles.badge}>
               <Activity size={12} color={THEME.colors.primary} />
               <Text style={styles.badgeText}>SECURE CONNECTION</Text>
-            </View>
+            </BlurView>
           </Animated.View>
 
           <View style={styles.heroSection}>
-            <Animated.View entering={ZoomIn.delay(400).springify()} style={styles.logoContainer}>
-              <Globe size={48} color={THEME.colors.text.primary} strokeWidth={1} />
+            <Animated.View entering={ZoomIn.delay(400).springify()} style={{ marginBottom: THEME.spacing.xl }}>
+              <BlurView intensity={40} tint="dark" style={styles.logoContainer}>
+                <Globe size={48} color={THEME.colors.text.primary} strokeWidth={1} />
+              </BlurView>
             </Animated.View>
             <Animated.Text entering={FadeInDown.delay(500).springify()} style={styles.title}>CIRO</Animated.Text>
             <Animated.Text entering={FadeInDown.delay(600).springify()} style={styles.subtitle}>COMMAND & CONTROL</Animated.Text>
@@ -81,7 +81,7 @@ export default function WelcomeScreen({ navigation }: any) {
 
           <Animated.View entering={FadeInUp.delay(900).springify()} style={styles.footerArea}>
             <View style={styles.systemStatus}>
-              <View style={styles.statusDot} />
+              <Animated.View style={[styles.statusDot, { transform: [{ scale: pulseScale.value }] }]} />
               <Text style={styles.statusText}>ALL SYSTEMS NOMINAL</Text>
             </View>
 
@@ -106,24 +106,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: THEME.colors.background,
   },
-  gridOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.1,
-  },
-  gridLineHorizontal: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: THEME.colors.text.muted,
-  },
-  gridLineVertical: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    width: 1,
-    backgroundColor: THEME.colors.text.muted,
-  },
   safeArea: {
     flex: 1,
   },
@@ -139,12 +121,12 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(16, 185, 129, 0.1)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: THEME.borderRadius.full,
     borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.2)",
+    borderColor: THEME.colors.primary + "40",
+    overflow: "hidden",
     gap: 6,
   },
   badgeText: {
@@ -161,33 +143,35 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: THEME.borderRadius.lg,
-    backgroundColor: THEME.colors.surface,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: THEME.spacing.xl,
+    overflow: "hidden",
   },
   title: {
     color: THEME.colors.text.primary,
-    fontSize: 48,
+    fontSize: 56,
     fontFamily: THEME.fonts.heading,
-    letterSpacing: 4,
+    letterSpacing: 6,
     marginBottom: THEME.spacing.xs,
+    textShadowColor: THEME.colors.accent + "80",
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 20,
   },
   subtitle: {
-    color: THEME.colors.text.muted,
+    color: THEME.colors.primary,
     fontSize: 14,
     fontFamily: THEME.fonts.mono,
-    letterSpacing: 4,
+    letterSpacing: 6,
     marginBottom: THEME.spacing.xl,
   },
   description: {
     color: THEME.colors.text.secondary,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: THEME.fonts.body,
-    lineHeight: 24,
-    maxWidth: "80%",
+    lineHeight: 26,
+    maxWidth: "85%",
   },
   footerArea: {
     marginBottom: THEME.spacing.xl,
@@ -196,24 +180,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: THEME.spacing.lg,
-    gap: 8,
+    gap: 12,
   },
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: THEME.colors.primary,
-    shadowColor: THEME.colors.primary,
+    shadowColor: THEME.colors.accent,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
+    shadowOpacity: 1,
+    shadowRadius: 10,
     elevation: 4,
   },
   statusText: {
     color: THEME.colors.text.muted,
     fontSize: 10,
     fontFamily: THEME.fonts.mono,
-    letterSpacing: 1.5,
+    letterSpacing: 2,
   },
   primaryButton: {
     backgroundColor: THEME.colors.primary,
@@ -223,6 +207,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: THEME.spacing.xl,
+    shadowColor: THEME.colors.accent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 16,
+    elevation: 8,
   },
   primaryButtonText: {
     color: THEME.colors.background,

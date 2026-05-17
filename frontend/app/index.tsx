@@ -22,6 +22,8 @@ import Animated, {
   withSequence,
   withSpring
 } from "react-native-reanimated";
+import { BlurView } from "expo-blur";
+import AtmosphericBackground from "../components/AtmosphericBackground";
 import { THEME } from "../lib/theme";
 import SeverityBadge from "../components/SeverityBadge";
 import { api, Incident } from "../lib/api";
@@ -44,6 +46,94 @@ const { width } = Dimensions.get("window");
 interface DashboardProps {
   navigation: any;
 }
+
+interface IncidentCardProps {
+  item: Incident;
+  index: number;
+  navigation: any;
+}
+
+const IncidentCard: React.FC<IncidentCardProps> = ({ item, index, navigation }) => {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.98, { damping: 15, stiffness: 300 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
+  const severityPercentage = (item.severity_score / 10) * 100;
+  const isCritical = item.severity_score >= 7.5;
+
+  return (
+    <Animated.View entering={FadeInDown.delay(100 * index + 300).springify()} style={styles.cardWrapper}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={() => navigation.navigate("Reasoning", { incidentId: item.id, location: item.location })}
+      >
+        <Animated.View style={[animatedStyle]}>
+          <BlurView intensity={30} tint="dark" style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderInfo}>
+              <Text style={styles.cardLocation}>{item.location}</Text>
+              <View style={styles.cardTimestamp}>
+                <Clock size={10} color={THEME.colors.text.muted} />
+                <Text style={styles.cardTimeText}>
+                  {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+              </View>
+            </View>
+            <SeverityBadge score={item.severity_score} />
+          </View>
+
+          {/* Severity Visual Bar */}
+          <View style={styles.severityBarContainer}>
+            <Animated.View
+              style={[
+                styles.severityBarFill,
+                {
+                  width: `${severityPercentage}%`,
+                  backgroundColor: isCritical ? THEME.colors.text.primary : THEME.colors.primary,
+                },
+              ]}
+            />
+          </View>
+
+          <View style={styles.cardStatsGrid}>
+            <View style={styles.cardStat}>
+              <Text style={styles.cardStatLabel}>CONFIDENCE</Text>
+              <Text style={styles.cardStatValue}>{(item.confidence * 100).toFixed(0)}%</Text>
+            </View>
+            <View style={styles.cardStat}>
+              <Text style={styles.cardStatLabel}>POPULATION</Text>
+              <Text style={styles.cardStatValue}>{item.estimated_population}</Text>
+            </View>
+            <View style={styles.cardStat}>
+              <Text style={styles.cardStatLabel}>IMPACT ETA</Text>
+              <Text style={styles.cardStatValue}>{item.peak_impact_eta || "IMMEDIATE"}</Text>
+            </View>
+          </View>
+
+          <View style={styles.cardFooter}>
+            <View style={styles.agentStatus}>
+              <Cpu size={12} color={THEME.colors.primary} />
+              <Text style={styles.agentStatusText}>ORCHESTRATOR ACTIVE</Text>
+            </View>
+            <ChevronRight size={16} color={THEME.colors.text.muted} />
+          </View>
+          </BlurView>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
+};
 
 const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -84,84 +174,12 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
     fetchIncidents();
   };
 
-  const renderIncidentCard = ({ item, index }: { item: Incident; index: number }) => {
-    const scale = useSharedValue(1);
-    
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }]
-    }));
-
-    const handlePressIn = () => {
-      scale.value = withSpring(0.98, { damping: 15, stiffness: 300 });
-    };
-
-    const handlePressOut = () => {
-      scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-    };
-
-    const severityPercentage = (item.severity_score / 10) * 100;
-    const isCritical = item.severity_score >= 7.5;
-
-    return (
-      <Animated.View entering={FadeInDown.delay(100 * index + 300).springify()} key={`card-${item.id}`}>
-        <Pressable 
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          onPress={() => navigation.navigate("Reasoning", { incidentId: item.id, location: item.location })}
-        >
-          <Animated.View style={[styles.card, animatedStyle]}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardHeaderInfo}>
-                <Text style={styles.cardLocation}>{item.location}</Text>
-                <View style={styles.cardTimestamp}>
-                  <Clock size={10} color={THEME.colors.text.muted} />
-                  <Text style={styles.cardTimeText}>
-                    {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </View>
-              </View>
-              <SeverityBadge score={item.severity_score} />
-            </View>
-
-            {/* Severity Visual Bar */}
-            <View style={styles.severityBarContainer}>
-              <Animated.View style={[styles.severityBarFill, { 
-                width: `${severityPercentage}%`, 
-                backgroundColor: isCritical ? THEME.colors.text.primary : THEME.colors.primary 
-              }]} />
-            </View>
-
-            <View style={styles.cardStatsGrid}>
-              <View style={styles.cardStat}>
-                <Text style={styles.cardStatLabel}>CONFIDENCE</Text>
-                <Text style={styles.cardStatValue}>{(item.confidence * 100).toFixed(0)}%</Text>
-              </View>
-              <View style={styles.cardStat}>
-                <Text style={styles.cardStatLabel}>POPULATION</Text>
-                <Text style={styles.cardStatValue}>{item.estimated_population}</Text>
-              </View>
-              <View style={styles.cardStat}>
-                <Text style={styles.cardStatLabel}>IMPACT ETA</Text>
-                <Text style={styles.cardStatValue}>{item.peak_impact_eta || "IMMEDIATE"}</Text>
-              </View>
-            </View>
-
-            <View style={styles.cardFooter}>
-              <View style={styles.agentStatus}>
-                <Cpu size={12} color={THEME.colors.primary} />
-                <Text style={styles.agentStatusText}>ORCHESTRATOR ACTIVE</Text>
-              </View>
-              <ChevronRight size={16} color={THEME.colors.text.muted} />
-            </View>
-          </Animated.View>
-        </Pressable>
-      </Animated.View>
-    );
-  };
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
+      <Animated.View entering={FadeInDown.duration(1500)} style={StyleSheet.absoluteFill}>
+        <AtmosphericBackground />
+      </Animated.View>
       <SafeAreaView style={styles.safeArea}>
         
         {/* Executive Header */}
@@ -187,7 +205,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
         >
           {/* High-End KPI Dashboard */}
           <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.kpiContainer}>
-            <View style={styles.kpiCard}>
+            <BlurView intensity={20} tint="dark" style={styles.kpiCard}>
               <View style={styles.kpiIconWrapper}>
                 <Target size={16} color={THEME.colors.background} />
               </View>
@@ -195,8 +213,8 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 <Text style={styles.kpiValue}>{incidents.length}</Text>
                 <Text style={styles.kpiLabel}>ACTIVE ZONES</Text>
               </View>
-            </View>
-            <View style={styles.kpiCard}>
+            </BlurView>
+            <BlurView intensity={20} tint="dark" style={styles.kpiCard}>
               <View style={[styles.kpiIconWrapper, { backgroundColor: THEME.colors.surfaceElevated }]}>
                 <Users size={16} color={THEME.colors.text.primary} />
               </View>
@@ -204,7 +222,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 <Text style={styles.kpiValue}>{(incidents.reduce((acc, i) => acc + i.estimated_population, 0) / 1000).toFixed(1)}k</Text>
                 <Text style={styles.kpiLabel}>POPULATION AFFECTED</Text>
               </View>
-            </View>
+            </BlurView>
           </Animated.View>
 
           {/* Quick Actions Panel */}
@@ -212,23 +230,27 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
             <Text style={styles.sectionHeader}>SYSTEM MODULES</Text>
             <View style={styles.actionGrid}>
               <TouchableOpacity 
-                style={styles.actionCard}
+                style={styles.actionCardContainer}
                 onPress={() => navigation.navigate("Map")}
               >
-                <MapIcon size={20} color={THEME.colors.primary} />
-                <Text style={styles.actionTitle}>TACTICAL MAP</Text>
+                <BlurView intensity={30} tint="dark" style={styles.actionCard}>
+                  <MapIcon size={20} color={THEME.colors.primary} />
+                  <Text style={styles.actionTitle}>TACTICAL MAP</Text>
+                </BlurView>
               </TouchableOpacity>
 
               <TouchableOpacity 
-                style={styles.actionCard}
+                style={styles.actionCardContainer}
                 onPress={() => {
                   if (incidents.length > 0) {
                     navigation.navigate("Reasoning", { incidentId: incidents[0].id, location: incidents[0].location });
                   }
                 }}
               >
-                <Cpu size={20} color={THEME.colors.text.primary} />
-                <Text style={styles.actionTitle}>AI LOGSTREAM</Text>
+                <BlurView intensity={30} tint="dark" style={styles.actionCard}>
+                  <Cpu size={20} color={THEME.colors.primary} />
+                  <Text style={styles.actionTitle}>AI LOGSTREAM</Text>
+                </BlurView>
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -243,16 +265,14 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
               <ActivityIndicator color={THEME.colors.primary} size="large" style={styles.loader} />
             ) : incidents.length > 0 ? (
               incidents.map((item, index) => (
-                <React.Fragment key={item.id}>
-                  {renderIncidentCard({ item, index })}
-                </React.Fragment>
+                <IncidentCard key={item.id} item={item} index={index} navigation={navigation} />
               ))
             ) : (
-              <View style={styles.emptyState}>
+              <BlurView intensity={20} tint="dark" style={styles.emptyState}>
                 <ShieldCheck size={32} color={THEME.colors.primary} strokeWidth={1.5} />
                 <Text style={styles.emptyTitle}>ALL CLEAR</Text>
                 <Text style={styles.emptySubtitle}>No active operational anomalies.</Text>
-              </View>
+              </BlurView>
             )}
           </Animated.View>
           
@@ -260,23 +280,25 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
         </ScrollView>
 
         {/* Global Navigation Bar */}
-        <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.navBar}>
-          <TouchableOpacity style={styles.navItem}>
-            <LayoutDashboard size={20} color={THEME.colors.primary} strokeWidth={2.5} />
-            <Text style={[styles.navLabel, { color: THEME.colors.primary }]}>DASHBOARD</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("Map")}>
-            <MapIcon size={20} color={THEME.colors.text.muted} strokeWidth={2} />
-            <Text style={styles.navLabel}>MAP</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => {
-            if (incidents.length > 0) {
-              navigation.navigate("Reasoning", { incidentId: incidents[0].id, location: incidents[0].location });
-            }
-          }}>
-            <Cpu size={20} color={THEME.colors.text.muted} strokeWidth={2} />
-            <Text style={styles.navLabel}>AI CORE</Text>
-          </TouchableOpacity>
+        <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.navBarWrapper}>
+          <BlurView intensity={50} tint="dark" style={styles.navBar}>
+            <TouchableOpacity style={styles.navItem}>
+              <LayoutDashboard size={20} color={THEME.colors.primary} strokeWidth={2.5} />
+              <Text style={[styles.navLabel, { color: THEME.colors.primary }]}>DASHBOARD</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("Map")}>
+              <MapIcon size={20} color={THEME.colors.text.muted} strokeWidth={2} />
+              <Text style={styles.navLabel}>MAP</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.navItem} onPress={() => {
+              if (incidents.length > 0) {
+                navigation.navigate("Reasoning", { incidentId: incidents[0].id, location: incidents[0].location });
+              }
+            }}>
+              <Cpu size={20} color={THEME.colors.text.muted} strokeWidth={2} />
+              <Text style={styles.navLabel}>AI CORE</Text>
+            </TouchableOpacity>
+          </BlurView>
         </Animated.View>
 
       </SafeAreaView>
@@ -298,7 +320,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: THEME.spacing.lg,
     paddingVertical: THEME.spacing.lg,
-    backgroundColor: THEME.colors.background,
+    backgroundColor: "transparent",
   },
   headerTitle: {
     fontSize: 20,
@@ -332,11 +354,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   scrollView: {
     flex: 1,
@@ -349,11 +371,12 @@ const styles = StyleSheet.create({
   },
   kpiCard: {
     flex: 1,
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     padding: THEME.spacing.lg,
     borderRadius: THEME.borderRadius.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
+    overflow: "hidden",
   },
   kpiIconWrapper: {
     width: 28,
@@ -399,13 +422,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: THEME.spacing.md,
   },
-  actionCard: {
+  actionCardContainer: {
     flex: 1,
-    backgroundColor: THEME.colors.surface,
-    padding: THEME.spacing.lg,
     borderRadius: THEME.borderRadius.lg,
+    overflow: "hidden",
+  },
+  actionCard: {
+    backgroundColor: THEME.colors.glass,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
     alignItems: "center",
     flexDirection: "row",
     gap: 12,
@@ -417,12 +443,14 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   card: {
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     borderRadius: THEME.borderRadius.lg,
     padding: THEME.spacing.lg,
-    marginBottom: THEME.spacing.md,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
+  },
+  cardWrapper: {
+    marginBottom: THEME.spacing.md,
   },
   cardHeader: {
     flexDirection: "row",
@@ -464,12 +492,12 @@ const styles = StyleSheet.create({
   },
   cardStatsGrid: {
     flexDirection: "row",
-    backgroundColor: THEME.colors.background,
+    backgroundColor: THEME.colors.glass,
     padding: THEME.spacing.md,
     borderRadius: THEME.borderRadius.sm,
     marginBottom: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   cardStat: {
     flex: 1,
@@ -504,17 +532,22 @@ const styles = StyleSheet.create({
     color: THEME.colors.primary,
     letterSpacing: 1,
   },
-  navBar: {
+  navBarWrapper: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-    backgroundColor: THEME.colors.surface,
+    bottom: 30,
+    left: THEME.spacing.xl,
+    right: THEME.spacing.xl,
+    borderRadius: THEME.borderRadius.full,
+    overflow: "hidden",
+    ...THEME.shadows.glow,
+  },
+  navBar: {
     flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: THEME.colors.surfaceBorder,
-    paddingBottom: 20,
+    justifyContent: "space-around",
+    paddingVertical: THEME.spacing.md,
+    backgroundColor: THEME.colors.glass,
+    borderWidth: 1,
+    borderColor: THEME.colors.glassBorder,
   },
   navItem: {
     flex: 1,
@@ -534,10 +567,10 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: "center",
     paddingVertical: THEME.spacing.xxl,
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.glass,
     borderRadius: THEME.borderRadius.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: THEME.colors.glassBorder,
   },
   emptyTitle: {
     fontSize: 12,
