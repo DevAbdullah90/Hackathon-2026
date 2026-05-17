@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, StyleSheet, FlatList, Animated } from "react-native";
+import { View, Text, StyleSheet, FlatList } from "react-native";
+import Animated, { FadeInUp } from "react-native-reanimated";
 import { THEME } from "../lib/theme";
 
 interface LogEntry {
@@ -50,7 +51,7 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
 
   const renderLog = ({ item }: { item: LogEntry }) => {
     return (
-      <Animated.View style={styles.logRow}>
+      <Animated.View entering={FadeInUp.springify().mass(0.5)} style={styles.logRow}>
         <View style={styles.timeContainer}>
           <Text style={styles.logTime}>
             {new Date(item.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
