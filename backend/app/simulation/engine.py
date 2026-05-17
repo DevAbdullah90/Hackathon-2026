@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 from sqlalchemy import select
 from app.db.session import async_session_factory
@@ -20,7 +20,7 @@ async def broadcast_status_update(incident_id: uuid.UUID, state: str, action_ids
     STUB: Placeholder for WebSocket/Event broadcast logic.
     This will eventually push updates to the frontend in real-time.
     """
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
     print(f"EVENT_BROADCAST: [{timestamp}] Incident {incident_id} -> {state} for actions {action_ids}")
 
 async def run_simulation_loop(incident_id: uuid.UUID, action_ids: Optional[List[uuid.UUID]] = None):
@@ -57,7 +57,7 @@ async def run_simulation_loop(incident_id: uuid.UUID, action_ids: Optional[List[
             ids_to_broadcast = []
             for action in db_actions:
                 action.status = next_state
-                action.updated_at = datetime.utcnow()
+                action.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
                 session.add(action)
                 ids_to_broadcast.append(action.id)
             

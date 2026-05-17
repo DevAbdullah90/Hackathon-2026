@@ -17,7 +17,6 @@ from app.models.reasoning_logs import ReasoningLog
 from app.simulation.seed_signals import SCENARIO_KARACHI
 from app.ai.orchestrator import triage_agent
 from app.ai.specialists import signal_agent, detection_agent, severity_agent, notification_agent
-from app.ai.connection import config
 
 @pytest.mark.asyncio
 async def test_intelligence_pipeline():
@@ -56,7 +55,7 @@ async def test_intelligence_pipeline():
                 print("\n[Agent: Signal Agent]")
                 processed_signals = []
                 for sig in signal_payloads:
-                    res1 = await Runner.run(signal_agent, json.dumps(sig), run_config=config)
+                    res1 = await Runner.run(signal_agent, json.dumps(sig))
                     try:
                         parsed = json.loads(res1.final_output)
                         processed_signals.append(parsed)
@@ -68,7 +67,7 @@ async def test_intelligence_pipeline():
                 
                 # 2. Run Detection Agent
                 print("\n[Agent: Detection Agent]")
-                res2 = await Runner.run(detection_agent, json.dumps(processed_signals), run_config=config)
+                res2 = await Runner.run(detection_agent, json.dumps(processed_signals))
                 detection_output = json.loads(res2.final_output)
                 print("Detection Result:", detection_output)
                 
@@ -76,14 +75,14 @@ async def test_intelligence_pipeline():
                 final_output_data = {}
                 if isinstance(detection_output, dict) and detection_output.get("confirmed"):
                     print("\n[Agent: Severity Agent]")
-                    res3 = await Runner.run(severity_agent, json.dumps(detection_output), run_config=config)
+                    res3 = await Runner.run(severity_agent, json.dumps(detection_output))
                     severity_output = json.loads(res3.final_output)
                     print("Severity Result:", json.dumps(severity_output, ensure_ascii=True))
                     
                     # 4. Run Notification Agent
                     print("\n[Agent: Notification Agent]")
                     # Pass the severity output (which includes incident data) to the Notification Agent
-                    res4 = await Runner.run(notification_agent, json.dumps(severity_output), run_config=config)
+                    res4 = await Runner.run(notification_agent, json.dumps(severity_output))
                     print("Notification Result:", res4.final_output)
 
                     # Merge outputs for persistence

@@ -25,7 +25,6 @@ from app.models.signals import Signal
 from app.models.schemas import SignalCreate, SignalRead
 from app.db.session import get_session
 from app.ai.orchestrator import triage_agent
-from app.ai.connection import gemini_config, openai_config
 import logging
 
 router = APIRouter()
@@ -34,17 +33,13 @@ logger = logging.getLogger(__name__)
 
 async def _run_triage_pipeline(signal_payload: dict) -> None:
     """Background coroutine: runs the Triage Agent after the HTTP response is sent.
-    Tries Gemini first, falls back to OpenAI if quote is exceeded or an error occurs.
+    Uses the unified config driven by the LLM_PROVIDER env variable.
     """
     payload_str = json.dumps(signal_payload)
     try:
-        await Runner.run(triage_agent, payload_str, run_config=gemini_config)
+        await Runner.run(triage_agent, payload_str)
     except Exception as e:
-        logger.error(f"Gemini LLM failed ({e}). Falling back to OpenAI...")
-        try:
-            await Runner.run(triage_agent, payload_str, run_config=openai_config)
-        except Exception as fallback_err:
-            logger.error(f"OpenAI fallback also failed: {fallback_err}")
+        logger.error(f"Pipeline execution failed: {e}")
 
 
 @router.post("/", response_model=SignalRead, status_code=status.HTTP_201_CREATED)
