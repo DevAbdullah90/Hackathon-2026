@@ -61,6 +61,7 @@ export default function SimView({ route, navigation }: any) {
 
   const completedCount = actions.filter(a => a.status.toUpperCase() === "COMPLETED").length;
   const allCompleted = actions.length > 0 && completedCount === actions.length;
+  const isRunning = actions.some(a => ["SENT", "ACTIVE", "ON_SITE", "RUNNING"].includes(a.status.toUpperCase()));
 
   return (
     <View style={styles.container}>
@@ -106,7 +107,7 @@ export default function SimView({ route, navigation }: any) {
                 and infrastructure is being rerouted based on real-time data projections.
               </Text>
               
-              {actions.length === 0 && !loading && (
+              {actions.length > 0 && !loading && completedCount < actions.length && !isRunning && (
                 <TouchableOpacity 
                   style={[styles.triggerButton, triggering && styles.disabledButton]} 
                   onPress={handleTriggerSim}
