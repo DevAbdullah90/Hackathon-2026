@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { THEME } from "../lib/theme";
 import { api } from "../lib/api";
@@ -50,7 +50,7 @@ const getLogLevelColor = (level: string): string => {
 
 const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const flatListRef = useRef<FlatList>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -160,7 +160,7 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
     const messageColor = getLogLevelColor(item.level);
 
     return (
-      <Animated.View entering={FadeInUp.springify().mass(0.4)} style={styles.logRow}>
+      <Animated.View key={item.id} entering={FadeInUp.springify().mass(0.4)} style={styles.logRow}>
         <View style={styles.timeContainer}>
           <Text style={styles.logTime}>
             {new Date(item.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -178,14 +178,13 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={logs}
-        renderItem={renderLog}
-        keyExtractor={item => item.id}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+      <ScrollView
+        ref={scrollViewRef}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         showsVerticalScrollIndicator={false}
-      />
+      >
+        {logs.map(item => renderLog({ item }))}
+      </ScrollView>
     </View>
   );
 };
