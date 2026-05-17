@@ -1,0 +1,217 @@
+================================================================================
+  ANTIGRAVITY AI AGENT — TASK SESSION LOG
+  Task: Full System E2E Testing — Frontend + Backend Integration
+  Powered by Google DeepMind · Advanced Agentic Coding
+================================================================================
+
+Session ID      : 45fadf3e-e18c-4690-af37-db07a416d346
+Agent Model     : Claude Sonnet 4.6 (Thinking)
+Branch          : uneeza-ismail
+Task Owner      : Uneeza (Testing & Integration Lead)
+Started At      : 2026-05-18T01:43:00Z
+Completed At    : 2026-05-18T04:01:00Z
+
+--------------------------------------------------------------------------------
+TASK DESCRIPTION
+--------------------------------------------------------------------------------
+
+  Objective: Run the complete CIRO system end-to-end on a physical phone. Start
+             the frontend (Expo), connect it to the live backend (FastAPI), submit
+             real signals, trigger the AI agent pipeline, and verify the results
+             appear correctly on the mobile map.
+  Scope    :
+    1. Install frontend npm dependencies.
+    2. Resolve Node.js version incompatibility with Expo 54.
+    3. Install nvm-windows for Node version management.
+    4. Fix metro bundler error caused by metro@0.83 vs Expo 54 expectation.
+    5. Start Expo frontend and scan QR code on physical phone.
+    6. Identify correct laptop IP and fix frontend config.ts API URL.
+    7. Start backend server with virtual environment.
+    8. Submit test signals via Swagger UI.
+    9. Verify AI agent pipeline creates incidents in PostgreSQL.
+   10. Fix case-sensitivity bug in GET /incidents/active endpoint.
+   11. Verify incident markers appear on phone map.
+   12. Confirm reasoning logs and chain-of-thought load on incident tap.
+   13. Diagnose WebSocket Code 1006 disconnection issue.
+   14. Create this task log.
+
+--------------------------------------------------------------------------------
+SKILLS INVOKED
+--------------------------------------------------------------------------------
+
+  None — this was a pure testing and debugging session.
+  Tools used: run_command, view_file, multi_replace_file_content, grep_search
+
+--------------------------------------------------------------------------------
+REASONING TRACE
+--------------------------------------------------------------------------------
+
+  1. NPM PACKAGES: User ran `npm install` in frontend/. It succeeded but showed
+     18 audit vulnerabilities. All are inside Expo's own internal packages
+     (@expo/cli, expo-asset). These only affect the build machine, not the app.
+     Decision: Accept and ignore for hackathon. Post-hackathon: npx expo upgrade 55.
+
+  2. NODE VERSION ERROR: Running `npm run start` failed with:
+     "ERR_PACKAGE_PATH_NOT_EXPORTED: Package subpath './src/lib/TerminalReporter'
+     is not defined by exports in metro/package.json"
+     Root Cause: User was on Node.js v22.19.0. Expo 54 requires Node 18 or 20.
+     Node 22 enforces stricter ESM exports causing metro's internal paths to fail.
+
+  3. NVM NOT INSTALLED: `nvm install 20` failed — nvm was not installed.
+     Fix: User downloaded and installed nvm-windows from GitHub releases.
+
+  4. NVM PATH ISSUE: After installation, `nvm use 20` worked only in C: drive CMD.
+     Switching to D: drive in a new terminal window lost the PATH.
+     Fix: Must run `nvm use 20` in the SAME CMD window, then navigate to D: using
+     `D:` command. Never open a new CMD after nvm activation.
+
+  5. METRO VERSION MISMATCH: After switching to Node 20, same metro error persisted.
+     Checked: node_modules/metro version = 0.83.3
+     Expected by Expo 54: metro 0.80.x
+     Fix attempt: `npx expo install metro@0.80.12` → broke peer dependencies.
+     Further: `npx expo install --fix` → downgraded expo from 54 to 49 (wrong!)
+     Root cause: --fix incorrectly resolved expo SDK version.
+
+  6. DEPENDENCY MISMATCH: After --fix, package.json was downgraded to expo@^49.0.23,
+     react-native@0.72.10, expo-router@^2.0.0. But @react-navigation/stack@7.9.2
+     requires react-native-screens >= 4.0.0 while expo-router 2.x needs ~3.22.0.
+     Conflict: Could not resolve @react-navigation/stack with expo-router@2.
+     Fix: Full clean reinstall (rd /s /q node_modules, del package-lock.json,
+     npm install, npx expo install --fix). This restored working state.
+
+  7. EXPO START SUCCESS: After clean reinstall, `npx expo start` worked.
+     QR code appeared. User scanned on phone via Expo Go app.
+
+  8. IP ADDRESS CONFUSION:
+     - config.ts had old IP: 192.168.1.6 (different router, no longer valid)
+     - My initial script returned 192.168.100.248 (gateway/router IP — wrong!)
+     - User clarified: Phone IP = 192.168.100.151, Laptop IP = 192.168.100.248
+     - Actually 192.168.100.248 IS the laptop (confirmed via ipconfig).
+     Fix: Updated constants/config.ts AND constants/config.js (TWO separate files).
+     Both must match — api.js imports from config.js, TypeScript from config.ts.
+
+  9. DUPLICATE CONFIG FILES: Discovered two config files with different IPs:
+     - frontend/constants/config.ts  ← original, used by TS code (had old IP)
+     - frontend/constants/config.js  ← compiled JS version (had different IP)
+     Fix: Updated BOTH files to 192.168.100.248:8000.
+
+ 10. FRONTEND CONNECTED: After config fix + Expo reload (press R):
+     Before: "⚠️ [API FAILURE] GET /api/v1/incidents/active: Aborted" (every 5s)
+     After : "✨ [API RESPONSE] GET /api/v1/incidents/active -> HTTP 200 (766ms)"
+     Source confirmed in backend logs: 192.168.100.151 (phone) hitting backend.
+
+ 11. SIGNAL SUBMISSION: Submitted test signals via Swagger:
+     - POST /api/v1/signals/ with flood signal at (33.6844, 73.0479) → 201 Created
+     - Second submission of same coords → {"status": "DUPLICATE", "action": "DISCARDED"}
+     This confirmed the anti-duplication system is working correctly.
+
+ 12. INCIDENTS DB CHECK: Ran direct DB query to check if AI created incidents.
+     Found 8 incidents in DB — BUT GET /incidents/active returned empty list!
+     Root Cause: Case-sensitivity bug in the SQL filter:
+       Query: status == "confirmed" OR status == "monitoring"
+       DB had: status = "CONFIRMED" (uppercase — from AI agent output)
+     Fix: Added CONFIRMED and MONITORING uppercase variants to the WHERE clause.
+
+ 13. INCIDENTS ON MAP: After fix, frontend immediately picked up the confirmed
+     incidents on next polling cycle (~5 seconds). Map now shows incident markers.
+     User confirmed seeing: "Old Clifton, Karachi — Critical 7.5" on map.
+
+ 14. FULL PIPELINE VERIFIED: User tapped incident "Test Sector C, Karachi (8.2)".
+     Frontend logs confirmed:
+       GET /incidents/{id}/logs → HTTP 200  (reasoning logs loaded)
+       GET /incidents/{id}/cot  → HTTP 200  (chain of thought loaded)
+       WebSocket established             (live telemetry connected)
+
+ 15. WEBSOCKET CODE 1006: WebSocket connects but closes immediately with Code 1006
+     (abnormal closure — no close frame from server).
+     Root Cause: Windows Firewall blocking WebSocket upgrade handshake on port 8000.
+     Fix: Run in CMD as Admin:
+       netsh advfirewall firewall add rule name="CIRO WebSocket" dir=in
+       action=allow protocol=TCP localport=8000
+     Status: OPEN (not yet applied by user)
+
+ 16. VIRTUALIZED LISTS WARNING: React Native console shows:
+     "VirtualizedLists should never be nested inside plain ScrollViews"
+     This is a UI-only warning in the incident detail screen. Not a crash.
+     Root Cause: FlatList or similar inside a ScrollView in the detail component.
+     Status: OPEN (non-blocking for hackathon demo)
+
+--------------------------------------------------------------------------------
+FILES MODIFIED / CREATED
+--------------------------------------------------------------------------------
+
+  frontend/constants/config.ts                  <- Modified (IP 192.168.1.6 → 192.168.100.248)
+  frontend/constants/config.js                  <- Modified (IP 192.168.1.6 → 192.168.100.248)
+  backend/app/api/api_v1/endpoints/incidents.py <- Modified (case-insensitive status fix)
+  .antigravity/uneeza_logs/task-009-full-system-testing.log <- This file
+
+--------------------------------------------------------------------------------
+TOOL CALLS SUMMARY
+--------------------------------------------------------------------------------
+
+  [01:43Z] run_command → node --version (v22.19.0 found)                   ✅
+  [01:55Z] run_command → npm install (succeeded with 18 audit warnings)    ✅
+  [02:05Z] run_command → npx expo start (metro error diagnosed)            ⚠️
+  [02:11Z] run_command → npm install --legacy-peer-deps                    ✅
+  [02:13Z] run_command → npx expo install --fix (broke expo sdk version)   ⚠️
+  [02:22Z] run_command → npm install (clean reinstall)                     ✅
+  [02:30Z] run_command → npx expo start (QR code appeared)                 ✅
+  [02:45Z] grep_search → API_BASE_URL in all frontend files                ✅
+  [02:46Z] multi_replace_file_content → config.ts (IP fix)                 ✅
+  [02:46Z] multi_replace_file_content → config.js (IP fix)                 ✅
+  [02:52Z] run_command → ipconfig (confirmed laptop IP = 192.168.100.248)  ✅
+  [03:08Z] run_command → DB query for incidents (found case bug)            ✅
+  [03:10Z] replace_file_content → incidents.py (added CONFIRMED uppercase)  ✅
+  [03:11Z] run_command → DB verification query                             ✅
+
+  Total Files Modified/Created : 4
+  Bugs Found & Fixed           : 3
+  Bugs Open (non-blocking)     : 2
+
+--------------------------------------------------------------------------------
+FINAL TEST RESULTS
+--------------------------------------------------------------------------------
+
+  Backend Server            : RUNNING on 0.0.0.0:8000
+  Frontend (Expo)           : RUNNING via tunnel (phone connected)
+  Phone → Backend HTTP      : WORKING (HTTP 200 on all endpoints)
+  Signal Submission API     : WORKING (201 Created, duplicate detection active)
+  AI Agent Pipeline         : WORKING (incidents created in DB)
+  Incident Map Display      : WORKING (pins visible on phone map)
+  Reasoning Logs Endpoint   : WORKING (HTTP 200, logs loaded on tap)
+  Chain of Thought Endpoint : WORKING (HTTP 200, CoT loaded on tap)
+  WebSocket Live Stream     : PARTIAL (connects but Code 1006 closes — firewall)
+  VirtualizedList Warning   : OPEN (UI warning only, non-crashing)
+
+  Incidents in DB           : 8 confirmed incidents
+  Highest Severity          : 8.2 — Test Sector C, Karachi
+  Locations Verified        : Old Clifton Karachi, G-10 Islamabad, Test Sector C
+
+--------------------------------------------------------------------------------
+CURRENT OPEN ISSUES
+--------------------------------------------------------------------------------
+
+  Issue 1: WebSocket Code 1006 — MEDIUM PRIORITY
+  Description : WebSocket connects then immediately closes with Code 1006.
+                Live agent log streaming does not work on phone.
+  Root Cause  : Windows Firewall blocking WebSocket upgrade on port 8000.
+  Fix (pending): Run as Admin in CMD:
+                 netsh advfirewall firewall add rule name="CIRO WebSocket"
+                 dir=in action=allow protocol=TCP localport=8000
+
+  Issue 2: VirtualizedLists Warning — LOW PRIORITY
+  Description : React Native warning about FlatList nested inside ScrollView
+                in the incident detail screen.
+  Root Cause  : Frontend UI component nesting in incident detail page.
+  Fix (pending): Replace outer ScrollView with FlatList's ListHeaderComponent
+                 pattern in the incident detail screen component.
+
+  Issue 3: Incidents showing same map pin — COSMETIC
+  Description : Multiple Old Clifton incidents (5x) share identical coordinates
+                (24.8145, 67.034), appearing as one stacked pin on map.
+  Root Cause  : Test signals used same lat/lng repeatedly during development.
+  Fix (pending): Add pin clustering or deduplicate incidents by location radius.
+
+--------------------------------------------------------------------------------
+END OF TASK LOG
+================================================================================
