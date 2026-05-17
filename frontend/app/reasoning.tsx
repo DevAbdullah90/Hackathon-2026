@@ -87,12 +87,18 @@ export default function ReasoningCenter({ route, navigation }: any) {
               <Text style={styles.headerTitle}>{location}</Text>
             </View>
             <View style={styles.missionId}>
-              <Text style={styles.missionIdText}>{incidentId}</Text>
+              <Text style={styles.missionIdText} numberOfLines={1}>
+                {incidentId ? incidentId.slice(0, 8).toUpperCase() + "..." : "MISSION"}
+              </Text>
             </View>
           </BlurView>
         </Animated.View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 140, paddingTop: THEME.spacing.lg }}
+        >
           {/* Agent Status Grid */}
           <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.agentGrid}>
             {agentsActive.map((agent, index) => (
@@ -177,7 +183,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
             </BlurView>
           </Animated.View>
 
-          <View style={{ height: 100 }} />
+          <View style={{ height: 20 }} />
         </ScrollView>
 
         {/* Action Footer */}
