@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CONFIG = void 0;
 exports.CONFIG = {
     // Backend URL — pointed to local computer IP on Wi-Fi
-    API_BASE_URL: "http://192.168.100.248:8000",
-    WS_BASE_URL: "ws://192.168.100.248:8000",
+    API_BASE_URL: "http://192.168.1.6:8000",
+    WS_BASE_URL: "ws://192.168.1.6:8000",
     // Google Maps Key — baad mein real key aayegi
     GOOGLE_MAPS_KEY: "YOUR_GOOGLE_MAPS_KEY_HERE",
     // Islamabad center coordinates
