@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 def run_tests():
-    print("🚀 Starting CIRO E2E Full Pipeline Tests...")
+    print("[START] Starting CIRO E2E Full Pipeline Tests...")
     
     # Set up paths
     backend_dir = Path(__file__).parent
@@ -24,8 +24,8 @@ def run_tests():
         "-v", "-s"
     ]
     
-    print(f"📝 Writing output to: {output_file}")
-    print("⏳ Please wait, this may take 3-5 minutes as it runs all agents...")
+    print(f"[INFO] Writing output to: {output_file}")
+    print("[WAIT] Please wait, this may take 3-5 minutes as it runs all agents...")
     
     # Run the process and capture output
     with open(output_file, "w", encoding="utf-8") as f:
@@ -38,12 +38,12 @@ def run_tests():
             text=True
         )
     
-    print("\n✅ Tests Completed!")
+    print("\n[OK] Tests Completed!")
     print(f"Exit Code: {process.returncode}")
     print(f"You can view the full output in: {output_file.relative_to(backend_dir)}")
     
     if process.returncode != 0:
-        print("\n⚠️ Note: If you see an asyncio.TimeoutError, it just means the sequential LLM calls took longer than the default timeout. Run the scenarios individually to avoid rate-limiting.")
+        print("\n[WARN] Note: If you see an asyncio.TimeoutError, it just means the sequential LLM calls took longer than the default timeout. Run the scenarios individually to avoid rate-limiting.")
 
 if __name__ == "__main__":
     run_tests()

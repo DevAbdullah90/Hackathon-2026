@@ -482,8 +482,11 @@ Return a single Markdown string formatted exactly per the structure above.
 - No META tags of any kind
 - Pure Markdown only — must render correctly in React Native's Markdown component
 
+## TOOLS AVAILABLE
+- `emit_log(agent_name: str, log_text: str, incident_id: str, log_level: str)` — Saves the log to the database and broadcasts it to the UI.
+
 ## HARD CONSTRAINTS
-- Do NOT call any tools.
+- You MUST call the `emit_log` tool with the generated Markdown string.
 - Do NOT add information not present in `agent_output`. No inference, speculation, or embellishment.
 - Produce an entry for EVERY agent invocation — including errors. Silent failures are unacceptable in emergency systems.
 - Output pure Markdown only.
