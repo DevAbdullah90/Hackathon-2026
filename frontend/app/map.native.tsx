@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import * as Location from "expo-location";
-import { CONFIG } from "./constants/config";
+import { CONFIG } from "../constants/config";
 import { THEME } from "../lib/theme";
 import { api, Incident } from "../lib/api";
 import SeverityBadge from "../components/SeverityBadge";

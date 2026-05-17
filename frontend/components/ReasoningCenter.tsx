@@ -34,7 +34,7 @@ const ReasoningCenter: React.FC<Props> = ({ isModal = false, showHeader = true }
       {showHeader && (
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Ionicons name="brain" size={26} color="#60A5FA" />
+            <Ionicons name="bulb-outline" size={26} color="#60A5FA" />
             <Text style={styles.headerTitle}>Reasoning Center</Text>
           </View>
           <View style={styles.liveBadge}>
