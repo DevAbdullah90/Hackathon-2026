@@ -1,48 +1,48 @@
-# CIRO Implementation Plan — Database & Tools Foundation
+# Finalize Backend Architecture
 
-This document tracks the progress of the backend infrastructure for the **Urban Flood Response Orchestrator**.
+This plan covers the remaining tasks needed to finalize the backend, complete the Intelligence Phase, and wire up the Simulation engine for the frontend UI.
 
-## Phase 1: Database & Connection (COMPLETED)
-- [x] Configure .env with Neon PostgreSQL credentials.
-- [x] Establish async connection using `postgresql+asyncpg`.
-- [x] Verify connectivity with `test_db.py`.
+## Proposed Changes
 
-## Phase 2: Schema Implementation (COMPLETED)
-- [x] Define `signals` table for raw data ingestion.
-- [x] Define `incidents` table for cluster tracking.
-- [x] Define `resources` table for asset management.
-- [x] Define `actions` table for response tracking.
-- [x] Define `notifications` table for stakeholder logs.
-- [x] Define `reasoning_logs` table for agent transparency.
-- [x] Verify schema creation with live DB check.
+### AI Agents & Logic
+#### [MODIFY] [prompts.py](file:///C:/Users/hp/OneDrive/Desktop/Hackathon%20AISeekho/backend/app/ai/prompts.py)
+- **Add** `RESOURCE_AGENT_INSTRUCTIONS`: Instruct the agent to analyze the severity and assign the correct number of ambulances, rescue teams, and drainage crews from the `resources` table.
+- **Add** `PLANNING_AGENT_INSTRUCTIONS`: Instruct the agent to analyze the assigned resources and create response actions (e.g., "REROUTE_TRAFFIC") in the `actions` table.
+- **Update** `TRIAGE_AGENT_INSTRUCTIONS`: Replace the placeholder text with robust instructions that orchestrate the full pipeline: Signal -> Detection -> Severity -> Verification (if low confidence) -> Resource -> Planning -> Notification -> Logging.
 
-## Phase 3: Tool & Simulation Layer (COMPLETED)
-- [x] Implement `weather` tool stub/real OWM integration.
-- [x] Implement `traffic` tool stub/real Maps integration.
-- [x] Implement `dispatch` tool contract for tickets.
-- [x] Implement `notify` tool for DB persistence.
-- [x] Implement Simulation Engine as a background state machine.
-- [x] Verify state transitions (PENDING -> COMPLETED).
+#### [NEW] [resource_manager.py](file:///C:/Users/hp/OneDrive/Desktop/Hackathon%20AISeekho/backend/app/ai/tools/resource_manager.py)
+- Create an `allocate_resource` tool that the Resource Agent can call to reserve resources (updates `available_count` in the database).
 
-## Phase 4: Agent Notification Layer (COMPLETED)
-- [x] Implement Notification Agent for 6 stakeholders.
-- [x] Map messages to Public, Hospital, Utility, Traffic, 1122, and Command Center.
-- [x] Verify end-to-end agent-to-DB persistence.
+#### [NEW] [planner.py](file:///C:/Users/hp/OneDrive/Desktop/Hackathon%20AISeekho/backend/app/ai/tools/planner.py)
+- Create a `create_action` tool that the Planning Agent can call to insert response plans into the `actions` table.
 
-## Phase 5: AI Orchestration (PENDING)
-- [ ] Connect specialist agents to the tool layer.
-- [ ] Implement reasoning-to-action pipeline.
-- [ ] Finalize WebSocket broadcasts for frontend telemetry.
-
-## Phase 6: UI Redesign (COMPLETED)
-- [x] Establish a premium command-center theme (strict black, white, and dark green).
-- [x] Overhaul `WelcomeScreen`, `Dashboard`, and `FloodMap`.
-- [x] Upgrade `ReasoningCenter`, `SimView`, and `OutcomeScreen` with high-tech aesthetics.
-- [x] Rebuild components (`SeverityBadge`, `ExecutionTimeline`, `LiveLogStream`, `MapOverlay`) to match theme.
-- [x] Integrate `lucide-react-native` icons and standard fonts (`Inter`, `JetBrains Mono`).
-- [x] Add pure `Animated.View` charts and staggered entrance effects.
+#### [MODIFY] [specialists.py](file:///C:/Users/hp/OneDrive/Desktop/Hackathon%20AISeekho/backend/app/ai/specialists.py)
+- Connect the Resource Agent and Planning Agent to their new instructions and tools.
 
 ---
-**Current Branch**: `uneeza-ismail`
-**Verification Status**: All foundational tests passed.
-**Lead**: Uneeza
+
+### Simulation API
+#### [NEW] [simulation.py](file:///C:/Users/hp/OneDrive/Desktop/Hackathon%20AISeekho/backend/app/api/api_v1/endpoints/simulation.py)
+- Expose `POST /api/v1/simulation/trigger/{incident_id}`: This will be called by Ayesha's frontend button to kick off the simulation loop.
+- Expose `GET /api/v1/simulation/state/{incident_id}`: Used to poll or fetch the current status of all actions.
+
+#### [MODIFY] [api.py](file:///C:/Users/hp/OneDrive/Desktop/Hackathon%20AISeekho/backend/app/api/api_v1/api.py)
+- Register the new simulation router.
+
+---
+
+### Demo Script
+#### [NEW] [inject_signals.py](file:///C:/Users/hp/OneDrive/Desktop/Hackathon%20AISeekho/backend/mock_data/inject_signals.py)
+- A script to post exactly 3 GPS signals and 1 Weather alert to `/api/v1/signals`. This will trigger the AI pipeline automatically so you have a flawless, one-click demo for the judges.
+
+## User Review Required
+
+> [!IMPORTANT]
+> The Triage Agent will now hand off to 8 different sub-agents in a chain. Since this relies on the OpenAI Agents SDK, the orchestration flow will be heavily dependent on the new `TRIAGE_AGENT_INSTRUCTIONS`. I will make sure the prompts explicitly map the handoff paths to prevent infinite loops or getting stuck.
+
+## Verification Plan
+
+## Automated Verification
+- I will run the local server and use `inject_signals.py` to trigger the entire pipeline from end to end.
+- I will verify that the Resource Agent updates the database and the Planning Agent creates Action records.
+- I will trigger the simulation via the new API endpoint and verify it updates action statuses.

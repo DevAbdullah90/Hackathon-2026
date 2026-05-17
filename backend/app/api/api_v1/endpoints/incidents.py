@@ -12,7 +12,8 @@ from sqlmodel import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.incidents import Incident
-from app.models.schemas import IncidentRead
+from app.models.reasoning_logs import ReasoningLog
+from app.models.schemas import IncidentRead, ReasoningLogRead
 from app.db.session import get_session
 
 router = APIRouter()
@@ -57,3 +58,23 @@ async def read_incident(
             detail="Incident not found"
         )
     return incident
+
+
+@router.get("/{incident_id}/logs", response_model=List[ReasoningLogRead])
+async def read_incident_logs(
+    *,
+    session: AsyncSession = Depends(get_session),
+    incident_id: UUID
+):
+    """
+    Retrieve all AI reasoning logs associated with a specific incident.
+    """
+    query = (
+        select(ReasoningLog)
+        .where(ReasoningLog.incident_id == incident_id)
+        .order_by(ReasoningLog.created_at.asc())
+    )
+    result = await session.execute(query)
+    logs = result.scalars().all()
+    return logs
+
