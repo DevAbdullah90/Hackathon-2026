@@ -104,7 +104,7 @@ def _create_gemini_model(model: str | None = None) -> OpenAIChatCompletionsModel
         api_key=api_key,
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
     )
-    model_name = model or os.getenv("GEMINI_DEFAULT_MODEL", "gemini-2.5-flash")
+    model_name = model or os.getenv("GEMINI_DEFAULT_MODEL", "gemini-flash-lite-latest")
 
     return OpenAIChatCompletionsModel(
         model=model_name,

@@ -68,3 +68,24 @@ class ReasoningLogRead(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Chain of Thought Logs ──────────────────────────────────────────────────────
+
+class ChainOfThoughtCreate(BaseModel):
+    """Payload to save Chain of Thought reasoning"""
+    incident_id: Optional[uuid.UUID] = None
+    agent_name: str
+    cot_steps: str
+
+
+class ChainOfThoughtRead(BaseModel):
+    """Response schema for Chain of Thought reasoning traces"""
+    id: uuid.UUID
+    incident_id: Optional[uuid.UUID] = None
+    agent_name: str
+    cot_steps: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+

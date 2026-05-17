@@ -110,21 +110,21 @@ const styles = StyleSheet.create({
   },
   gridOverlay: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.05,
+    opacity: 0.08,
     pointerEvents: "none",
   },
   gridVertical: {
     ...StyleSheet.absoluteFillObject,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: "#ffffff",
+    borderColor: "#064E3B",
     left: "50%",
   },
   gridHorizontal: {
     ...StyleSheet.absoluteFillObject,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: "#ffffff",
+    borderColor: "#064E3B",
     top: "50%",
   },
 });

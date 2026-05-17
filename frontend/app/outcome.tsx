@@ -70,7 +70,7 @@ export default function OutcomeScreen({ route, navigation }: any) {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <BlurView intensity={20} tint="dark" style={styles.header}>
+          <BlurView intensity={20} tint="light" style={styles.header}>
             <TouchableOpacity onPress={() => navigation.popToTop()} style={styles.iconButton}>
               <Home size={18} color={THEME.colors.text.primary} />
             </TouchableOpacity>
@@ -90,7 +90,7 @@ export default function OutcomeScreen({ route, navigation }: any) {
 
           {/* Impact Visualizer */}
           <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.chartCardContainer}>
-            <BlurView intensity={25} tint="dark" style={styles.chartCard}>
+            <BlurView intensity={25} tint="light" style={styles.chartCard}>
               <View style={styles.chartHeader}>
                 <BarChart2 size={16} color={THEME.colors.text.muted} />
                 <Text style={styles.chartTitle}>IMPACT REDUCTION ANALYSIS</Text>
@@ -114,22 +114,22 @@ export default function OutcomeScreen({ route, navigation }: any) {
 
           {/* Stats Grid */}
           <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.statsGrid}>
-            <BlurView intensity={20} tint="dark" style={styles.statCard}>
+            <BlurView intensity={20} tint="light" style={styles.statCard}>
               <Car size={20} color={THEME.colors.text.secondary} />
               <Text style={styles.statValue}>50+</Text>
               <Text style={styles.statLabel}>VEHICLES REROUTED</Text>
             </BlurView>
-            <BlurView intensity={20} tint="dark" style={styles.statCard}>
+            <BlurView intensity={20} tint="light" style={styles.statCard}>
               <TrendingDown size={20} color={THEME.colors.primary} />
               <Text style={styles.statValue}>-60%</Text>
               <Text style={styles.statLabel}>CONGESTION REDUCTION</Text>
             </BlurView>
-            <BlurView intensity={20} tint="dark" style={styles.statCard}>
+            <BlurView intensity={20} tint="light" style={styles.statCard}>
               <Users size={20} color={THEME.colors.text.secondary} />
               <Text style={styles.statValue}>{incident?.estimated_population || "4.5K"}</Text>
               <Text style={styles.statLabel}>RESIDENTS PROTECTED</Text>
             </BlurView>
-            <BlurView intensity={20} tint="dark" style={styles.statCard}>
+            <BlurView intensity={20} tint="light" style={styles.statCard}>
               <Clock size={20} color={THEME.colors.text.secondary} />
               <Text style={styles.statValue}>45s</Text>
               <Text style={styles.statLabel}>MEAN DETECTION TIME</Text>
@@ -138,7 +138,7 @@ export default function OutcomeScreen({ route, navigation }: any) {
 
           {/* Detailed Breakdown */}
           <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.reportCardContainer}>
-            <BlurView intensity={20} tint="dark" style={styles.reportCard}>
+            <BlurView intensity={20} tint="light" style={styles.reportCard}>
               <Text style={styles.reportCardTitle}>SUMMARY ANALYSIS</Text>
               
               <View style={styles.reportItem}>

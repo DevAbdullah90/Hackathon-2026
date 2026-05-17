@@ -43,3 +43,12 @@ triage_agent = Agent(
         logging_agent
     ]
 )
+
+# Dynamically register the triage agent in each specialist's handoffs
+# to allow reporting back to the triage agent once their respective workflows complete.
+for specialist in triage_agent.handoffs:
+    if not hasattr(specialist, "handoffs") or specialist.handoffs is None:
+        specialist.handoffs = []
+    if triage_agent not in specialist.handoffs:
+        specialist.handoffs.append(triage_agent)
+

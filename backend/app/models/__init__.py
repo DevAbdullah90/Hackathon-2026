@@ -5,7 +5,7 @@ from .incidents import Incident
 from .resources import Resource
 from .actions import Action
 from .notifications import Notification
-from .reasoning_logs import ReasoningLog
+from .reasoning_logs import ReasoningLog, ChainOfThought
 
 # Export all models for easier access
 __all__ = [
@@ -15,4 +15,5 @@ __all__ = [
     "Action",
     "Notification",
     "ReasoningLog",
+    "ChainOfThought",
 ]

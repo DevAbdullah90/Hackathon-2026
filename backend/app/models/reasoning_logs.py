@@ -39,3 +39,26 @@ class ReasoningLog(SQLModel, table=True):
         default_factory=datetime.utcnow,
         nullable=False,
     )
+
+
+class ChainOfThought(SQLModel, table=True):
+    __tablename__ = "chain_of_thought_logs"
+
+    id: uuid.UUID = Field(
+        default_factory=uuid.uuid4,
+        primary_key=True,
+        index=True,
+        nullable=False,
+    )
+    incident_id: Optional[uuid.UUID] = Field(
+        default=None,
+        index=True,
+        description="FK to incidents.id; null until an incident is confirmed",
+    )
+    agent_name: str = Field(description="Originating agent name")
+    cot_steps: str = Field(description="JSON or raw text storing CoT reasoning chain steps")
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        nullable=False,
+    )
+

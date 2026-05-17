@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 # Import models to ensure they are registered with SQLModel.metadata
 from app.models.signals import Signal
 from app.models.incidents import Incident
-from app.models.reasoning_logs import ReasoningLog
+from app.models.reasoning_logs import ReasoningLog, ChainOfThought
 
 load_dotenv()
 

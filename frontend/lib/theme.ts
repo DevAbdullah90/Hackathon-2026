@@ -1,29 +1,29 @@
 export const THEME = {
   colors: {
-    // 60% Black / Deep Charcoal Backgrounds
-    background: "#050505",
-    surface: "#0D0D0D",
-    surfaceElevated: "#141414",
-    surfaceBorder: "#222222", 
-    glass: "rgba(20, 20, 20, 0.6)",
-    glassBorder: "rgba(255, 255, 255, 0.08)",
+    // Peaceful Light-Mode Backgrounds (White/Emerald Mist)
+    background: "#FFFFFF",
+    surface: "#F7F9F8",
+    surfaceElevated: "#EDF2F0",
+    surfaceBorder: "#E2EBE6", 
+    glass: "rgba(255, 255, 255, 0.88)",
+    glassBorder: "rgba(6, 78, 59, 0.12)",
     
-    // 30% White / Muted Text
+    // High-End Black Typography
     text: {
-      primary: "#FFFFFF",
-      secondary: "#A1A1AA", // Zinc 400
-      muted: "#52525B", // Zinc 600
+      primary: "#09090B",      // Pure Velvet Black
+      secondary: "#3F3F46",    // Charcoal
+      muted: "#71717A",        // Cool Grey
     },
 
-    // 10% Green Emphasis
-    primary: "#00E676", // Neon Green for active/confirmed action
-    primaryDark: "#004D40", 
-    accent: "#00FF9D", // Glow color
+    // Premium Dark Green Branding Elements
+    primary: "#064E3B",        // Deep Forest Green
+    primaryDark: "#022C22",    // Obsidian Green
+    accent: "#059669",         // Vibrant Emerald Accent
     
     status: {
-      success: "#00E676", 
-      warning: "#F59E0B", 
-      critical: "#EF4444", 
+      success: "#059669", 
+      warning: "#D97706", 
+      critical: "#DC2626", 
     },
   },
   spacing: {
@@ -49,18 +49,18 @@ export const THEME = {
   },
   shadows: {
     glow: {
-      shadowColor: "#00FF9D",
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.4,
-      shadowRadius: 15,
-      elevation: 10,
+      shadowColor: "#064E3B",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      elevation: 5,
     },
     card: {
       shadowColor: "#000000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.5,
-      shadowRadius: 24,
-      elevation: 5,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.05,
+      shadowRadius: 16,
+      elevation: 3,
     }
   }
 };

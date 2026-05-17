@@ -25,11 +25,11 @@ const getAgentAbbreviation = (name: string): string => {
 
 const getAgentColor = (abbr: string): string => {
   switch (abbr) {
-    case "TRG": return "#F59E0B"; // Gold/Warning
-    case "DET": return "#60A5FA"; // Blue/Info
-    case "NTF": return "#10B981"; // Emerald Green
-    case "SIM": return "#A78BFA"; // Lavender
-    case "SYS": return "#EC4899"; // System Pink
+    case "TRG": return "#D97706"; // Rich Gold/Amber
+    case "DET": return "#2563EB"; // Deep Intel Blue
+    case "NTF": return "#059669"; // Emerald Green
+    case "SIM": return "#7C3AED"; // Royal Violet
+    case "SYS": return "#DB2777"; // Deep Rose
     default: return THEME.colors.text.secondary;
   }
 };

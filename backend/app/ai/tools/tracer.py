@@ -10,12 +10,11 @@ from uuid import UUID
 from typing import Optional
 
 from app.db.session import async_session_factory
-from app.models.reasoning_logs import ReasoningLog
+from app.models.reasoning_logs import ReasoningLog, ChainOfThought
 from app.api.api_v1.endpoints.websocket import manager
 from agents import function_tool
 
-@function_tool
-async def emit_log(
+async def _emit_log(
     agent_name: str,
     log_text: str,
     incident_id: Optional[str] = None,
@@ -23,21 +22,12 @@ async def emit_log(
 ) -> str:
     """
     Saves an agent reasoning log to the database and broadcasts it via WebSocket.
-    
-    Args:
-        agent_name: Name of the agent (e.g. 'signal_agent', 'detection_agent')
-        log_text: The Markdown content produced by the Logging Agent
-        incident_id: UUID of the incident (optional if pre-confirmation)
-        log_level: 'INFO', 'WARNING', or 'CRITICAL'
     """
-    
-    # Try to convert to UUID for database, otherwise use None
     db_incident_id = None
     if incident_id:
         try:
             db_incident_id = UUID(incident_id)
         except ValueError:
-            # Not a valid UUID (e.g. 'triage' or malformed string)
             db_incident_id = None
 
     log_entry = ReasoningLog(
@@ -54,7 +44,6 @@ async def emit_log(
         await session.refresh(log_entry)
     
     # 2. Broadcast to WebSocket
-    # If incident_id is None, we could broadcast to a 'global' or 'triage' channel
     target_id = incident_id if incident_id else "triage"
     
     payload = {
@@ -69,3 +58,49 @@ async def emit_log(
     await manager.broadcast(target_id, payload)
     
     return f"Log emitted for {agent_name} (ID: {log_entry.id})"
+
+# Decorate for agents
+emit_log = function_tool(_emit_log)
+emit_log.description = (
+    "Saves an agent reasoning log to the database and broadcasts it via WebSocket. "
+    "Use this tool to submit user-facing reasoning logs."
+)
+
+
+async def _persist_chain_of_thought(
+    agent_name: str,
+    cot_steps: str,
+    incident_id: Optional[str] = None
+) -> str:
+    """
+    Saves a detailed LLM chain-of-thought (CoT) step-by-step reasoning trace to the database.
+    This is used for detailed deep-dive observability of the agent pipeline.
+    """
+    db_incident_id = None
+    if incident_id:
+        try:
+            db_incident_id = UUID(incident_id)
+        except ValueError:
+            db_incident_id = None
+
+    cot_entry = ChainOfThought(
+        incident_id=db_incident_id,
+        agent_name=agent_name,
+        cot_steps=cot_steps
+    )
+    
+    async with async_session_factory() as session:
+        session.add(cot_entry)
+        await session.commit()
+        await session.refresh(cot_entry)
+        
+    return f"Chain of Thought persisted for {agent_name} (ID: {cot_entry.id})"
+
+# Decorate for agents
+persist_chain_of_thought = function_tool(_persist_chain_of_thought)
+persist_chain_of_thought.description = (
+    "Saves a detailed LLM chain-of-thought (CoT) step-by-step reasoning trace to the database. "
+    "This is used for detailed deep-dive observability of the agent pipeline."
+)
+
+

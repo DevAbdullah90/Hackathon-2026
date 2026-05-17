@@ -38,6 +38,15 @@ export interface ReasoningLog {
   created_at: string;
 }
 
+export interface ChainOfThought {
+  id: string;
+  incident_id: string;
+  agent_name: string;
+  cot_steps: string;
+  created_at: string;
+}
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. ERROR STRUCTURES & HANDLERS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -142,6 +151,41 @@ const MOCK_REASONING_LOGS: Record<string, ReasoningLog[]> = {
       agent_name: "notification_agent",
       log_text: "Utility and traffic authority notifications queued with reduced severity priority.",
       log_level: "INFO",
+      created_at: now(),
+    },
+  ],
+};
+
+const MOCK_COT_LOGS: Record<string, ChainOfThought[]> = {
+  "inc-g10": [
+    {
+      id: "cot-1",
+      incident_id: "inc-g10",
+      agent_name: "signal_agent",
+      cot_steps: "1. Scan incoming user GPS coords: lat=33.6675, lng=73.0303.\n2. Match with historical flooding points in sector G-10.\n3. Trigger high confidence (96%) alert.",
+      created_at: now(),
+    },
+    {
+      id: "cot-2",
+      incident_id: "inc-g10",
+      agent_name: "severity_agent",
+      cot_steps: "1. Pull affected radius: 1.8km.\n2. Calculate population density mapping -> estimated 6,400 people.\n3. Check critical assets in radius -> 1 Hospital (nearby), 2 schools.\n4. Synthesize final severity score: 8.9 (Critical Crisis Level).",
+      created_at: now(),
+    },
+  ],
+  "inc-g13": [
+    {
+      id: "cot-1b",
+      incident_id: "inc-g13",
+      agent_name: "signal_agent",
+      cot_steps: "1. Scan incoming user GPS coords: lat=33.6872, lng=73.0156.\n2. Minor ponding reported near G-13 market area.\n3. Trigger medium confidence (89%) alert.",
+      created_at: now(),
+    },
+    {
+      id: "cot-2b",
+      incident_id: "inc-g13",
+      agent_name: "severity_agent",
+      cot_steps: "1. Pull affected radius: 1.1km.\n2. Calculate population density mapping -> estimated 3,100 people.\n3. Check critical assets in radius -> 1 local clinic, 1 highway link.\n4. Synthesize final severity score: 6.2 (Moderate Level).",
       created_at: now(),
     },
   ],
@@ -429,6 +473,25 @@ export const api = {
     } catch (err) {
       console.log(`🛡️ [API FALLBACK] getReasoningLogs(${incidentId}) -> Serving mock narrative logs.`);
       return MOCK_REASONING_LOGS[incidentId] || [];
+    }
+  },
+
+  /**
+   * Fetch detailed step-by-step Chain of Thought (CoT) logs for an incident.
+   */
+  async getChainOfThought(incidentId: string): Promise<ChainOfThought[]> {
+    try {
+      const data = await makeRequest<any[]>(`/api/v1/incidents/${incidentId}/cot`);
+      return data.map((item) => ({
+        id: String(item.id),
+        incident_id: String(item.incident_id),
+        agent_name: item.agent_name,
+        cot_steps: item.cot_steps,
+        created_at: item.created_at,
+      }));
+    } catch (err) {
+      console.log(`🛡️ [API FALLBACK] getChainOfThought(${incidentId}) -> Serving mock CoT traces.`);
+      return MOCK_COT_LOGS[incidentId] || [];
     }
   },
 };

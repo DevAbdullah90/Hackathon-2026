@@ -79,7 +79,7 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, index, navigation }) 
         onPress={() => navigation.navigate("Reasoning", { incidentId: item.id, location: item.location })}
       >
         <Animated.View style={[animatedStyle]}>
-          <BlurView intensity={30} tint="dark" style={styles.card}>
+          <BlurView intensity={30} tint="light" style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderInfo}>
               <Text style={styles.cardLocation}>{item.location}</Text>
@@ -205,7 +205,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
         >
           {/* High-End KPI Dashboard */}
           <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.kpiContainer}>
-            <BlurView intensity={20} tint="dark" style={styles.kpiCard}>
+            <BlurView intensity={20} tint="light" style={styles.kpiCard}>
               <View style={styles.kpiIconWrapper}>
                 <Target size={16} color={THEME.colors.background} />
               </View>
@@ -214,7 +214,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 <Text style={styles.kpiLabel}>ACTIVE ZONES</Text>
               </View>
             </BlurView>
-            <BlurView intensity={20} tint="dark" style={styles.kpiCard}>
+            <BlurView intensity={20} tint="light" style={styles.kpiCard}>
               <View style={[styles.kpiIconWrapper, { backgroundColor: THEME.colors.surfaceElevated }]}>
                 <Users size={16} color={THEME.colors.text.primary} />
               </View>
@@ -233,7 +233,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 style={styles.actionCardContainer}
                 onPress={() => navigation.navigate("Map")}
               >
-                <BlurView intensity={30} tint="dark" style={styles.actionCard}>
+                <BlurView intensity={30} tint="light" style={styles.actionCard}>
                   <MapIcon size={20} color={THEME.colors.primary} />
                   <Text style={styles.actionTitle}>TACTICAL MAP</Text>
                 </BlurView>
@@ -247,7 +247,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                   }
                 }}
               >
-                <BlurView intensity={30} tint="dark" style={styles.actionCard}>
+                <BlurView intensity={30} tint="light" style={styles.actionCard}>
                   <Cpu size={20} color={THEME.colors.primary} />
                   <Text style={styles.actionTitle}>AI LOGSTREAM</Text>
                 </BlurView>
@@ -268,7 +268,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 <IncidentCard key={item.id} item={item} index={index} navigation={navigation} />
               ))
             ) : (
-              <BlurView intensity={20} tint="dark" style={styles.emptyState}>
+              <BlurView intensity={20} tint="light" style={styles.emptyState}>
                 <ShieldCheck size={32} color={THEME.colors.primary} strokeWidth={1.5} />
                 <Text style={styles.emptyTitle}>ALL CLEAR</Text>
                 <Text style={styles.emptySubtitle}>No active operational anomalies.</Text>
@@ -281,7 +281,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
 
         {/* Global Navigation Bar */}
         <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.navBarWrapper}>
-          <BlurView intensity={50} tint="dark" style={styles.navBar}>
+          <BlurView intensity={50} tint="light" style={styles.navBar}>
             <TouchableOpacity style={styles.navItem}>
               <LayoutDashboard size={20} color={THEME.colors.primary} strokeWidth={2.5} />
               <Text style={[styles.navLabel, { color: THEME.colors.primary }]}>DASHBOARD</Text>

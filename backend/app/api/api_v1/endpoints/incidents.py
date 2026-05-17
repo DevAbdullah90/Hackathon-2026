@@ -12,8 +12,8 @@ from sqlmodel import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.incidents import Incident
-from app.models.reasoning_logs import ReasoningLog
-from app.models.schemas import IncidentRead, ReasoningLogRead
+from app.models.reasoning_logs import ReasoningLog, ChainOfThought
+from app.models.schemas import IncidentRead, ReasoningLogRead, ChainOfThoughtRead
 from app.db.session import get_session
 
 router = APIRouter()
@@ -77,4 +77,24 @@ async def read_incident_logs(
     result = await session.execute(query)
     logs = result.scalars().all()
     return logs
+
+
+@router.get("/{incident_id}/cot", response_model=List[ChainOfThoughtRead])
+async def read_incident_cot(
+    *,
+    session: AsyncSession = Depends(get_session),
+    incident_id: UUID
+):
+    """
+    Retrieve all detailed AI Chain of Thought (CoT) steps associated with a specific incident.
+    """
+    query = (
+        select(ChainOfThought)
+        .where(ChainOfThought.incident_id == incident_id)
+        .order_by(ChainOfThought.created_at.asc())
+    )
+    result = await session.execute(query)
+    cots = result.scalars().all()
+    return cots
+
 

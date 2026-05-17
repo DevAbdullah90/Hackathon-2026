@@ -8,12 +8,14 @@ import {
   StatusBar,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import Animated, { FadeInDown, FadeInUp, useSharedValue, withRepeat, withSequence, withTiming, useAnimatedStyle } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import LiveLogStream from "../components/LiveLogStream";
 import { THEME } from "../lib/theme";
+import { api, ChainOfThought } from "../lib/api";
 import { 
   ChevronLeft, 
   Cpu, 
@@ -21,6 +23,8 @@ import {
   Play, 
   Layers,
   Terminal,
+  Brain,
+  CheckCircle,
 } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
@@ -28,6 +32,8 @@ const { width } = Dimensions.get("window");
 export default function ReasoningCenter({ route, navigation }: any) {
   const { incidentId, location } = route.params || { incidentId: "DEMO-001", location: "Active Sector" };
   const [agentsActive, setAgentsActive] = useState(["ORCHESTRATOR", "GEOSPATIAL", "LOGISTICS"]);
+  const [cotSteps, setCotSteps] = useState<ChainOfThought[]>([]);
+  const [loadingCot, setLoadingCot] = useState(true);
   
   const pulseOpacity = useSharedValue(1);
 
@@ -40,11 +46,25 @@ export default function ReasoningCenter({ route, navigation }: any) {
       -1,
       true
     );
-  }, []);
+    
+    // Fetch dynamic Chain of Thought logs
+    const fetchCot = async () => {
+      try {
+        const data = await api.getChainOfThought(incidentId);
+        setCotSteps(data);
+      } catch (err) {
+        console.warn("Failed to fetch CoT steps:", err);
+      } finally {
+        setLoadingCot(false);
+      }
+    };
+    fetchCot();
+  }, [incidentId]);
 
   const animatedPulseStyle = useAnimatedStyle(() => ({
     opacity: pulseOpacity.value
   }));
+
 
   return (
     <View style={styles.container}>
@@ -55,7 +75,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
       <SafeAreaView style={styles.safeArea}>
         {/* Top Mission Header */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <BlurView intensity={20} tint="dark" style={styles.header}>
+          <BlurView intensity={20} tint="light" style={styles.header}>
             <TouchableOpacity 
               style={styles.backButton} 
               onPress={() => navigation.goBack()}
@@ -77,7 +97,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
           <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.agentGrid}>
             {agentsActive.map((agent, index) => (
               <View key={agent} style={styles.agentCardContainer}>
-                <BlurView intensity={30} tint="dark" style={styles.agentCard}>
+                <BlurView intensity={30} tint="light" style={styles.agentCard}>
                   <View style={styles.agentIconContainer}>
                     {index === 0 ? <Cpu size={16} color={THEME.colors.primary} /> : <Layers size={16} color={THEME.colors.text.primary} />}
                   </View>
@@ -104,22 +124,56 @@ export default function ReasoningCenter({ route, navigation }: any) {
           </Animated.View>
 
           <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.logContainerContainer}>
-            <BlurView intensity={20} tint="dark" style={styles.logContainer}>
+            <BlurView intensity={20} tint="light" style={styles.logContainer}>
               <LiveLogStream incidentId={incidentId} />
             </BlurView>
           </Animated.View>
 
-          {/* Strategy Summary */}
+          {/* Strategy Summary / Chain of Thought Traces */}
           <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.strategyCardContainer}>
-            <BlurView intensity={20} tint="dark" style={styles.strategyCard}>
+            <BlurView intensity={25} tint="light" style={styles.strategyCard}>
               <View style={styles.strategyHeader}>
-                <Search size={16} color={THEME.colors.text.primary} />
-                <Text style={styles.strategyTitle}>STRATEGY SYNTHESIS</Text>
+                <Brain size={16} color={THEME.colors.primary} />
+                <Text style={styles.strategyTitle}>CHAIN OF THOUGHT TRACES</Text>
               </View>
-              <Text style={styles.strategyText}>
-                System is cross-referencing rainfall patterns with topography data. 
-                Agentic loops are calculating optimal evacuation routes and drainage priorities.
-              </Text>
+              
+              {loadingCot ? (
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="small" color={THEME.colors.primary} />
+                  <Text style={styles.loadingText}>FETCHING AGENT REASONING...</Text>
+                </View>
+              ) : cotSteps.length === 0 ? (
+                <Text style={styles.strategyText}>
+                  Listening for deep-dive cognitive chain-of-thought traces. Confirming flood signal validation...
+                </Text>
+              ) : (
+                <View style={styles.cotTimeline}>
+                  {cotSteps.map((step, idx) => (
+                    <Animated.View 
+                      entering={FadeInDown.delay(idx * 150).duration(800)}
+                      key={step.id || idx} 
+                      style={[
+                        styles.cotStepContainer,
+                        idx === cotSteps.length - 1 ? styles.lastCotStep : null
+                      ]}
+                    >
+                      <View style={styles.cotIndicator}>
+                        <View style={styles.cotDot} />
+                        {idx < cotSteps.length - 1 && <View style={styles.cotLine} />}
+                      </View>
+                      
+                      <View style={styles.cotContent}>
+                        <Text style={styles.cotAgentHeader}>
+                          🤖 {step.agent_name.toUpperCase()} (CoT Trace)
+                        </Text>
+                        <Text style={styles.cotText}>
+                          {step.cot_steps}
+                        </Text>
+                      </View>
+                    </Animated.View>
+                  ))}
+                </View>
+              )}
             </BlurView>
           </Animated.View>
 
@@ -346,5 +400,67 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: THEME.fonts.heading,
     letterSpacing: 2,
+  },
+  loaderContainer: {
+    paddingVertical: THEME.spacing.xl,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: THEME.spacing.sm,
+  },
+  loadingText: {
+    color: THEME.colors.text.muted,
+    fontSize: 10,
+    fontFamily: THEME.fonts.mono,
+    letterSpacing: 1,
+  },
+  cotTimeline: {
+    marginTop: THEME.spacing.md,
+  },
+  cotStepContainer: {
+    flexDirection: "row",
+    gap: THEME.spacing.md,
+    marginBottom: THEME.spacing.lg,
+  },
+  lastCotStep: {
+    marginBottom: 0,
+  },
+  cotIndicator: {
+    alignItems: "center",
+    width: 16,
+  },
+  cotDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: THEME.colors.primary,
+    marginTop: 4,
+  },
+  cotLine: {
+    width: 1,
+    flex: 1,
+    backgroundColor: THEME.colors.primary,
+    opacity: 0.2,
+    marginTop: 4,
+  },
+  cotContent: {
+    flex: 1,
+    backgroundColor: "rgba(6, 78, 59, 0.03)",
+    borderWidth: 1,
+    borderColor: "rgba(6, 78, 59, 0.08)",
+    borderRadius: THEME.borderRadius.md,
+    padding: THEME.spacing.md,
+  },
+  cotAgentHeader: {
+    color: THEME.colors.primary,
+    fontSize: 10,
+    fontFamily: THEME.fonts.heading,
+    letterSpacing: 1,
+    marginBottom: THEME.spacing.sm,
+  },
+  cotText: {
+    color: THEME.colors.text.secondary,
+    fontSize: 11,
+    fontFamily: THEME.fonts.mono,
+    lineHeight: 18,
   },
 });

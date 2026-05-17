@@ -27,7 +27,7 @@ from .tools import (
     allocate_resource,
     create_action,
 )
-from .tools.tracer import emit_log
+from .tools.tracer import emit_log, persist_chain_of_thought
 
 # Use factory to assign models to agents. 
 # We can use different providers for different agents (Multimodel)
@@ -75,7 +75,7 @@ verification_agent = Agent(
 logging_agent = Agent(
     name="Logging Agent",
     instructions=LOGGING_AGENT_INSTRUCTIONS,
-    tools=[emit_log],
+    tools=[emit_log, persist_chain_of_thought],
     model=fast_model,
 )
 

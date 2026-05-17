@@ -72,7 +72,7 @@ export default function SimView({ route, navigation }: any) {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <BlurView intensity={20} tint="dark" style={styles.header}>
+          <BlurView intensity={20} tint="light" style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <ChevronLeft size={20} color={THEME.colors.text.primary} />
             </TouchableOpacity>
@@ -91,7 +91,7 @@ export default function SimView({ route, navigation }: any) {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Summary Card */}
           <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.summaryCardContainer}>
-            <BlurView intensity={25} tint="dark" style={styles.summaryCard}>
+            <BlurView intensity={25} tint="light" style={styles.summaryCard}>
               <View style={styles.summaryHeader}>
                 <View style={styles.iconCircle}>
                   <Shield size={20} color={THEME.colors.background} />

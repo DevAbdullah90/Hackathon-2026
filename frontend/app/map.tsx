@@ -116,7 +116,7 @@ export default function FloodMap({ route, navigation }: any) {
         initialRegion={CONFIG.ISLAMABAD_CENTER}
         showsUserLocation={true}
         mapType="mutedStandard"
-        userInterfaceStyle="dark"
+        userInterfaceStyle="light"
         customMapStyle={MAP_STYLE}
       >
         <MapOverlay incidents={incidents} />
@@ -149,7 +149,7 @@ export default function FloodMap({ route, navigation }: any) {
 
       <SafeAreaView style={styles.overlay} pointerEvents="box-none">
         <Reanimated.View entering={FadeInDown.delay(200).springify()} style={{ margin: THEME.spacing.md, borderRadius: THEME.borderRadius.md, overflow: "hidden" }}>
-          <BlurView intensity={30} tint="dark" style={styles.header}>
+          <BlurView intensity={30} tint="light" style={styles.header}>
             <TouchableOpacity 
               style={styles.iconButton} 
               onPress={() => navigation.goBack()}
@@ -202,7 +202,7 @@ export default function FloodMap({ route, navigation }: any) {
                   activeOpacity={0.9}
                   onPress={() => handleIncidentPress(incident)}
                 >
-                  <BlurView intensity={40} tint="dark" style={[
+                  <BlurView intensity={40} tint="light" style={[
                     styles.miniCard, 
                     selectedIncident?.id === incident.id && styles.activeCard
                   ]}>
@@ -240,8 +240,8 @@ export default function FloodMap({ route, navigation }: any) {
         animationType="slide" 
         onRequestClose={() => setIsModalVisible(false)}
       >
-        <BlurView intensity={20} tint="dark" style={styles.modalOverlay}>
-          <BlurView intensity={50} tint="dark" style={styles.modalContent}>
+        <BlurView intensity={20} tint="light" style={styles.modalOverlay}>
+          <BlurView intensity={50} tint="light" style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderInfo}>
                 <Activity size={14} color={THEME.colors.primary} />
@@ -295,29 +295,29 @@ export default function FloodMap({ route, navigation }: any) {
   );
 }
 
-// Ultra dark map style
+// Light emerald blueprint map style
 const MAP_STYLE = [
-  { "elementType": "geometry", "stylers": [{ "color": "#0a0a0a" }] },
+  { "elementType": "geometry", "stylers": [{ "color": "#F7F9F8" }] },
   { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
-  { "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
-  { "elementType": "labels.text.stroke", "stylers": [{ "color": "#0a0a0a" }] },
-  { "featureType": "administrative", "elementType": "geometry", "stylers": [{ "color": "#757575" }] },
-  { "featureType": "administrative.country", "elementType": "labels.text.fill", "stylers": [{ "color": "#9e9e9e" }] },
+  { "elementType": "labels.text.fill", "stylers": [{ "color": "#064E3B" }] },
+  { "elementType": "labels.text.stroke", "stylers": [{ "color": "#FFFFFF" }] },
+  { "featureType": "administrative", "elementType": "geometry", "stylers": [{ "color": "#E2EBE6" }] },
+  { "featureType": "administrative.country", "elementType": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
   { "featureType": "administrative.land_parcel", "stylers": [{ "visibility": "off" }] },
-  { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#bdbdbd" }] },
-  { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
-  { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#121212" }] },
-  { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
-  { "featureType": "poi.park", "elementType": "labels.text.stroke", "stylers": [{ "color": "#1b1b1b" }] },
-  { "road": "geometry.fill", "stylers": [{ "color": "#171717" }] },
-  { "road": "labels.text.fill", "stylers": [{ "color": "#8a8a8a" }] },
-  { "featureType": "road.arterial", "elementType": "geometry", "stylers": [{ "color": "#262626" }] },
-  { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#262626" }] },
-  { "featureType": "road.highway.controlled_access", "elementType": "geometry", "stylers": [{ "color": "#2c2c2c" }] },
-  { "featureType": "road.local", "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
-  { "featureType": "transit", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
-  { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#000000" }] },
-  { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#3d3d3d" }] }
+  { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#3F3F46" }] },
+  { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
+  { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#EDF2F0" }] },
+  { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#3F3F46" }] },
+  { "featureType": "poi.park", "elementType": "labels.text.stroke", "stylers": [{ "color": "#FFFFFF" }] },
+  { "road": "geometry.fill", "stylers": [{ "color": "#FFFFFF" }] },
+  { "road": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
+  { "featureType": "road.arterial", "elementType": "geometry", "stylers": [{ "color": "#E2EBE6" }] },
+  { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#E2EBE6" }] },
+  { "featureType": "road.highway.controlled_access", "elementType": "geometry", "stylers": [{ "color": "#D1DBD5" }] },
+  { "featureType": "road.local", "elementType": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
+  { "featureType": "transit", "elementType": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
+  { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#D1DBD5" }] },
+  { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#064E3B" }] }
 ];
 
 const styles = StyleSheet.create({
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(10, 10, 10, 0.9)",
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
     justifyContent: "flex-end",
   },
   modalContent: {

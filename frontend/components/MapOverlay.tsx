@@ -10,21 +10,21 @@ interface MapOverlayProps {
 const MapOverlay: React.FC<MapOverlayProps> = ({ incidents }) => {
   const getSeverityColors = (score: number) => {
     if (score >= 7.5) {
-      // Critical: Stark white outline with slight white fill to keep the theme strict
+      // Critical: Stark red alert fill with Velvet Black outline
       return {
-        fill: "rgba(255, 255, 255, 0.15)",
+        fill: "rgba(220, 38, 38, 0.12)",
         stroke: THEME.colors.text.primary
       };
     } else if (score >= 4.5) {
-      // Elevated: Muted grey/white
+      // Elevated: Soft zinc fill with cool grey outline
       return {
-        fill: "rgba(163, 163, 163, 0.1)",
+        fill: "rgba(9, 9, 11, 0.05)",
         stroke: THEME.colors.text.muted
       };
     }
-    // Nominal: Green
+    // Nominal: Delicate forest green fill with branding green outline
     return {
-      fill: "rgba(16, 185, 129, 0.1)",
+      fill: "rgba(6, 78, 59, 0.08)",
       stroke: THEME.colors.primary
     };
   };

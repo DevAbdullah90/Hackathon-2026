@@ -11,7 +11,7 @@ const SeverityBadge: React.FC<SeverityBadgeProps> = ({ score }) => {
     if (score >= 7.5) {
       return { 
         label: "CRITICAL", 
-        color: THEME.colors.text.primary, 
+        color: THEME.colors.background, 
         bg: THEME.colors.status.critical, // Using red sparingly for true critical
       };
     } else if (score >= 4.5) {

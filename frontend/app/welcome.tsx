@@ -57,7 +57,7 @@ export default function WelcomeScreen({ navigation }: any) {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.headerArea}>
-            <BlurView intensity={20} tint="dark" style={styles.badge}>
+            <BlurView intensity={20} tint="light" style={styles.badge}>
               <Activity size={12} color={THEME.colors.primary} />
               <Text style={styles.badgeText}>SECURE CONNECTION</Text>
             </BlurView>
@@ -65,7 +65,7 @@ export default function WelcomeScreen({ navigation }: any) {
 
           <View style={styles.heroSection}>
             <Animated.View entering={ZoomIn.delay(400).springify()} style={{ marginBottom: THEME.spacing.xl }}>
-              <BlurView intensity={40} tint="dark" style={styles.logoContainer}>
+              <BlurView intensity={40} tint="light" style={styles.logoContainer}>
                 <Globe size={48} color={THEME.colors.text.primary} strokeWidth={1} />
               </BlurView>
             </Animated.View>
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: THEME.spacing.xl,
-    shadowColor: THEME.colors.accent,
+    shadowColor: THEME.colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 16,
     elevation: 8,
