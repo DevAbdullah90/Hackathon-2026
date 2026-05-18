@@ -39,30 +39,23 @@
 
 ### 📁 `frontend/components/`
 - `SeverityBadge.tsx`: Reusable badge component for risk visualization.
+- `MapOverlay.tsx`: Interactive overlays and controls on the flood map.
+- `LiveLogStream.tsx`: Streaming UI for live notifications and telemetry.
+- `ExecutionTimeline.tsx`: Detailed timeline showing agent execution steps.
 
 ### 📁 `frontend/app/`
-- `index.tsx`: Dashboard screen with live indicators and incident list.
-- `map.tsx`: Live Karachi map utilizing `react-native-maps`.
+- `index.tsx`: Core Dashboard with status KPIs and list of active incidents.
+- `welcome.tsx`: Welcome and initial setup screen for CIRO.
+- `map.tsx`: Live Karachi map utilizing `react-native-maps` with animated polygons.
+- `reasoning.tsx`: Professional AI Reasoning screen with pulsing indicators.
+- `simulation.tsx`: Live simulation details and drainage metrics view.
+- `outcome.tsx`: Mission Outcome screen showing final impact statistics.
 
-<<<<<<< HEAD
-### 📄 `frontend/app/constants/config.ts`
-- **Description**: Added `KARACHI_CENTER` configuration.
-=======
-### Frontend (Redesigned)
-- `frontend/App.tsx`
-- `frontend/app/welcome.tsx`
-- `frontend/app/index.tsx`
-- `frontend/app/map.tsx`
-- `frontend/app/reasoning.tsx`
-- `frontend/app/simulation.tsx`
-- `frontend/app/outcome.tsx`
-- `frontend/components/SeverityBadge.tsx`
-- `frontend/components/MapOverlay.tsx`
-- `frontend/components/LiveLogStream.tsx`
-- `frontend/components/ExecutionTimeline.tsx`
-- `frontend/app/constants/config.ts`
-- `frontend/lib/theme.ts`
->>>>>>> origin/quratulain_shah
+### 📁 `frontend/constants/`
+- `config.ts`: Regional configurations and central Karachi map center.
+
+### 📁 `frontend/lib/`
+- `theme.ts`: Unified black, white, and dark-green command center design palette.
 
 ---
 
@@ -82,12 +75,87 @@
 
 ## Generated Artifacts (Task-006: Master Merge & E2E)
 
-### ?? .antigravity/uneeza_logs/task-006-full-pipeline-verification.log
+### 📄 `.antigravity/uneeza_logs/task-006-full-pipeline-verification.log`
 - **Type**: Session Log
 - **Description**: Documents the full end-to-end pipeline verification, the integration of new agents/tools, database schema hotfix for reasoning_logs.phase, and the successful end-to-end Notification Agent pipeline test.
 - **Generated At**: 2026-05-16T20:29:41Z
 
-### ?? ackend/fix_db.py
+### 📄 `backend/fix_db.py`
 - **Type**: Database Hotfix
-- **Description**: Async python script manually executed to alter the Neon PostgreSQL 
-easoning_logs table by injecting the missing phase column, fixing the schema divergence from the master merge.
+- **Description**: Async python script manually executed to alter the Neon PostgreSQL reasoning_logs table by injecting the missing phase column, fixing the schema divergence from the master merge.
+
+---
+
+## Generated Artifacts (Task-016: Kemetra Setup)
+
+### 📄 `.antigravity/ayesha_logs/task-016-web-dashboard-setup.log`
+- **Type**: Session Log
+- **Description**: Documents the installation of recharts/lucide-react, setting up Kemetra dashboard directory layout, and configuring Tailwind CSS v4 custom theme colors in Next.js web_frontend.
+
+### 📄 `web_frontend/app/dashboard/page.tsx`
+- **Type**: Skeleton Dashboard Page
+- **Description**: Setup of standard Kemetra dashboard landing route.
+
+---
+
+## Generated Artifacts (Task-017: TopBar Component)
+
+### 📄 `.antigravity/ayesha_logs/task-017-topbar-component.log`
+- **Type**: Session Log
+- **Description**: Documents the creation of Kemetra TopBar.tsx with location selector pills, overview tabs, notification counts, and user profile metadata details.
+
+### 📄 `web_frontend/components/dashboard/TopBar.tsx`
+- **Type**: UI Component
+- **Description**: Kemetra Traffic Management Dashboard header navigation TopBar.
+
+---
+
+## Generated Artifacts (Task-018: MapPanel Component)
+
+### 📄 `.antigravity/ayesha_logs/task-018-leaflet-map.log`
+- **Type**: Session Log
+- **Description**: Documents the integration of leaflet packages, css animation configurations, and client-side map rendering containing custom Leaflet DivIcon pulsing anchors.
+
+### 📄 `web_frontend/components/dashboard/MapPanel.tsx`
+- **Type**: UI Component
+- **Description**: Leaflet MapPanel viewport containing location trackers, zoom overlays, and reset actions.
+
+---
+
+## Generated Artifacts (Task-019: MetricsGrid Component)
+
+### 📄 `.antigravity/ayesha_logs/task-019-metrics-grid.log`
+- **Type**: Session Log
+- **Description**: Documents the creation of Kemetra MetricsGrid.tsx displaying 6 telemetry and emergency event indicators.
+
+### 📄 `web_frontend/components/dashboard/MetricsGrid.tsx`
+- **Type**: UI Component
+- **Description**: Kemetra Traffic Management Dashboard Metrics Grid telemetry component.
+
+---
+
+## Generated Artifacts (Task-020: TrafficInsights Component)
+
+### 📄 `.antigravity/ayesha_logs/task-020-traffic-insights.log`
+- **Type**: Session Log
+- **Description**: Documents the creation of Kemetra TrafficInsights.tsx displaying Area charts for Vehicle Count and Speed tracking.
+
+### 📄 `web_frontend/components/dashboard/TrafficInsights.tsx`
+- **Type**: UI Component
+- **Description**: Kemetra Traffic Management Dashboard Traffic Insights charting component.
+
+---
+
+## Generated Artifacts (Task-021: Events & CTECC Panels)
+
+### 📄 `.antigravity/ayesha_logs/task-021-events-ctecc.log`
+- **Type**: Session Log
+- **Description**: Documents the creation of EventsPanel.tsx and CTECCPanel.tsx showing accident metrics and dispatcher statuses.
+
+### 📄 `web_frontend/components/dashboard/EventsPanel.tsx`
+- **Type**: UI Component
+- **Description**: Kemetra Traffic Management Dashboard Events panel featuring detailed accident tracking.
+
+### 📄 `web_frontend/components/dashboard/CTECCPanel.tsx`
+- **Type**: UI Component
+- **Description**: Kemetra Traffic Management Dashboard CTECC dispatcher status panel.
