@@ -7,10 +7,8 @@ import {
   SafeAreaView, 
   StatusBar,
   ScrollView,
-  Dimensions,
   ActivityIndicator,
 } from "react-native";
-import Animated, { FadeInDown, FadeInUp, useSharedValue, withRepeat, withSequence, withTiming, useAnimatedStyle } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import LiveLogStream from "../components/LiveLogStream";
@@ -19,34 +17,19 @@ import { api, ChainOfThought } from "../lib/api";
 import { 
   ChevronLeft, 
   Cpu, 
-  Search, 
-  Play, 
+  Play,
   Layers,
   Terminal,
   Brain,
-  CheckCircle,
 } from "lucide-react-native";
-
-const { width } = Dimensions.get("window");
 
 export default function ReasoningCenter({ route, navigation }: any) {
   const { incidentId, location } = route.params || { incidentId: "DEMO-001", location: "Active Sector" };
   const [agentsActive, setAgentsActive] = useState(["ORCHESTRATOR", "GEOSPATIAL", "LOGISTICS"]);
   const [cotSteps, setCotSteps] = useState<ChainOfThought[]>([]);
   const [loadingCot, setLoadingCot] = useState(true);
-  
-  const pulseOpacity = useSharedValue(1);
 
   useEffect(() => {
-    pulseOpacity.value = withRepeat(
-      withSequence(
-        withTiming(0.3, { duration: 800 }),
-        withTiming(1, { duration: 800 })
-      ),
-      -1,
-      true
-    );
-    
     // Fetch dynamic Chain of Thought logs
     const fetchCot = async () => {
       try {
@@ -61,20 +44,16 @@ export default function ReasoningCenter({ route, navigation }: any) {
     fetchCot();
   }, [incidentId]);
 
-  const animatedPulseStyle = useAnimatedStyle(() => ({
-    opacity: pulseOpacity.value
-  }));
-
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      <Animated.View entering={FadeInDown.duration(1500)} style={StyleSheet.absoluteFill}>
+      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.background} />
+      <View style={StyleSheet.absoluteFill}>
         <AtmosphericBackground />
-      </Animated.View>
+      </View>
       <SafeAreaView style={styles.safeArea}>
         {/* Top Mission Header */}
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
+        <View>
           <BlurView intensity={20} tint="light" style={styles.header}>
             <TouchableOpacity 
               style={styles.backButton} 
@@ -92,7 +71,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
               </Text>
             </View>
           </BlurView>
-        </Animated.View>
+        </View>
 
         <ScrollView 
           style={styles.content} 
@@ -100,7 +79,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
           contentContainerStyle={{ paddingBottom: 140, paddingTop: THEME.spacing.lg }}
         >
           {/* Agent Status Grid */}
-          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.agentGrid}>
+          <View style={styles.agentGrid}>
             {agentsActive.map((agent, index) => (
               <View key={agent} style={styles.agentCardContainer}>
                 <BlurView intensity={30} tint="light" style={styles.agentCard}>
@@ -109,34 +88,34 @@ export default function ReasoningCenter({ route, navigation }: any) {
                   </View>
                   <Text style={styles.agentName}>{agent}</Text>
                   <View style={styles.agentStatusRow}>
-                    <Animated.View style={[styles.agentStatusDot, index === 0 ? animatedPulseStyle : null]} />
+                    <View style={styles.agentStatusDot} />
                     <Text style={styles.agentStatus}>ONLINE</Text>
                   </View>
                 </BlurView>
               </View>
             ))}
-          </Animated.View>
+          </View>
 
           {/* Reasoning Console */}
-          <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.consoleHeader}>
+          <View style={styles.consoleHeader}>
             <View style={styles.consoleTitleRow}>
               <Terminal size={14} color={THEME.colors.text.muted} />
               <Text style={styles.consoleTitle}>AI LOGSTREAM</Text>
             </View>
             <View style={styles.liveBadge}>
-              <Animated.View style={[styles.pulseDot, animatedPulseStyle]} />
+              <View style={styles.pulseDot} />
               <Text style={styles.liveText}>LIVE</Text>
             </View>
-          </Animated.View>
+          </View>
 
-          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.logContainerContainer}>
+          <View style={styles.logContainerContainer}>
             <BlurView intensity={20} tint="light" style={styles.logContainer}>
               <LiveLogStream incidentId={incidentId} />
             </BlurView>
-          </Animated.View>
+          </View>
 
           {/* Strategy Summary / Chain of Thought Traces */}
-          <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.strategyCardContainer}>
+          <View style={styles.strategyCardContainer}>
             <BlurView intensity={25} tint="light" style={styles.strategyCard}>
               <View style={styles.strategyHeader}>
                 <Brain size={16} color={THEME.colors.primary} />
@@ -155,9 +134,8 @@ export default function ReasoningCenter({ route, navigation }: any) {
               ) : (
                 <View style={styles.cotTimeline}>
                   {cotSteps.map((step, idx) => (
-                    <Animated.View 
-                      entering={FadeInDown.delay(idx * 150).duration(800)}
-                      key={step.id || idx} 
+                    <View
+                      key={step.id || idx}
                       style={[
                         styles.cotStepContainer,
                         idx === cotSteps.length - 1 ? styles.lastCotStep : null
@@ -176,18 +154,18 @@ export default function ReasoningCenter({ route, navigation }: any) {
                           {step.cot_steps}
                         </Text>
                       </View>
-                    </Animated.View>
+                    </View>
                   ))}
                 </View>
               )}
             </BlurView>
-          </Animated.View>
+          </View>
 
           <View style={{ height: 20 }} />
         </ScrollView>
 
         {/* Action Footer */}
-        <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.footer}>
+        <View style={styles.footer}>
           <TouchableOpacity 
             style={styles.simulationButton}
             onPress={() => navigation.navigate("Simulation", { incidentId, location })}
@@ -196,7 +174,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
             <Play size={16} color={THEME.colors.background} fill={THEME.colors.background} />
             <Text style={styles.simulationButtonText}>INITIATE SIMULATION</Text>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -215,20 +193,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: THEME.spacing.lg,
     paddingVertical: THEME.spacing.lg,
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     gap: THEME.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: THEME.colors.glassBorder,
+    borderBottomColor: THEME.colors.surfaceBorder,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.surfaceSoft,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   headerInfo: {
     flex: 1,
@@ -247,12 +225,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   missionId: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.surface,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: THEME.borderRadius.sm,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   missionIdText: {
     color: THEME.colors.text.muted,
@@ -274,10 +252,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   agentCard: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     padding: THEME.spacing.md,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
     alignItems: "center",
   },
   agentIconContainer: {
@@ -348,11 +326,11 @@ const styles = StyleSheet.create({
     marginBottom: THEME.spacing.xl,
   },
   logContainer: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     padding: THEME.spacing.sm,
     height: 300,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   strategyCardContainer: {
     borderRadius: THEME.borderRadius.md,
@@ -360,10 +338,10 @@ const styles = StyleSheet.create({
     marginBottom: THEME.spacing.xl,
   },
   strategyCard: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   strategyHeader: {
     flexDirection: "row",
@@ -390,19 +368,21 @@ const styles = StyleSheet.create({
     right: 0,
     padding: THEME.spacing.lg,
     paddingBottom: 40,
-    backgroundColor: "transparent",
+    backgroundColor: THEME.colors.background,
   },
   simulationButton: {
-    backgroundColor: THEME.colors.text.primary,
+    backgroundColor: THEME.colors.accentSoft,
     height: 56,
     borderRadius: THEME.borderRadius.sm,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 12,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.18)",
   },
   simulationButtonText: {
-    color: THEME.colors.background,
+    color: THEME.colors.primary,
     fontSize: 12,
     fontFamily: THEME.fonts.heading,
     letterSpacing: 2,
@@ -450,9 +430,9 @@ const styles = StyleSheet.create({
   },
   cotContent: {
     flex: 1,
-    backgroundColor: "rgba(6, 78, 59, 0.03)",
+    backgroundColor: THEME.colors.surface,
     borderWidth: 1,
-    borderColor: "rgba(6, 78, 59, 0.08)",
+    borderColor: THEME.colors.surfaceBorder,
     borderRadius: THEME.borderRadius.md,
     padding: THEME.spacing.md,
   },

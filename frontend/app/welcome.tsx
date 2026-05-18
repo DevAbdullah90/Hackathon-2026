@@ -1,171 +1,118 @@
-import React, { useEffect } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  StatusBar,
-  Dimensions
-} from "react-native";
-import Animated, { 
-  FadeIn, 
-  FadeInDown, 
-  ZoomIn,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  withSequence,
-  useAnimatedStyle
-} from "react-native-reanimated";
+import React from "react";
+import { View, Text, StyleSheet, StatusBar, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Droplets } from "lucide-react-native";
 import { THEME } from "../lib/theme";
-import { Shield } from "lucide-react-native";
-
-const { width } = Dimensions.get("window");
 
 export default function WelcomeScreen({ navigation }: any) {
-  const pulseScale = useSharedValue(1);
-  const glowOpacity = useSharedValue(0.6);
-
-  useEffect(() => {
-    // Elegant breathing micro-animation
-    pulseScale.value = withRepeat(
-      withSequence(
-        withTiming(1.08, { duration: 1200 }),
-        withTiming(1, { duration: 1200 })
-      ),
-      -1,
-      true
-    );
-
-    glowOpacity.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 1200 }),
-        withTiming(0.6, { duration: 1200 })
-      ),
-      -1,
-      true
-    );
-
-    // Automated 2.2-second transition to Dashboard
-    const timer = setTimeout(() => {
-      navigation.replace("Dashboard");
-    }, 2200);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  const animatedLogoStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
-
-  const animatedGlowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-    transform: [{ scale: pulseScale.value * 1.3 }],
-  }));
-
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={THEME.colors.primary} />
-      
-      {/* Centered Brand Presentation */}
-      <View style={styles.centerArea}>
-        {/* Glowing Logo Aura */}
-        <Animated.View style={[styles.logoGlow, animatedGlowStyle]} />
+    <Pressable style={styles.container} onPress={() => navigation.replace("Dashboard")}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.surfaceSoft} />
 
-        {/* Minimalist White Logo */}
-        <Animated.View entering={ZoomIn.duration(800).springify()} style={[styles.logoContainer, animatedLogoStyle]}>
-          <Shield size={64} color="#FFFFFF" strokeWidth={1.5} />
-        </Animated.View>
-
-        {/* Premium Typography */}
-        <Animated.Text entering={FadeInDown.delay(300).duration(600)} style={styles.title}>
-          CIRO
-        </Animated.Text>
-        <Animated.Text entering={FadeInDown.delay(550).duration(600)} style={styles.subtitle}>
-          CRISIS INTEL & ORCHESTRATION
-        </Animated.Text>
+        <View style={styles.brandBlock}>
+        <View style={styles.logoFrame}>
+          <View style={styles.logoHalo} />
+          <View style={styles.logoCore}>
+            <View style={styles.logoBlobTop} />
+            <View style={styles.logoBlobSide} />
+            <View style={styles.logoCenter}>
+              <Droplets size={32} color={THEME.colors.background} strokeWidth={2.2} />
+            </View>
+            <View style={styles.logoWave} />
+          </View>
+        </View>
+        <Text style={styles.appName}>CIRO</Text>
       </View>
-
-      {/* System Status Loading Indicator */}
-      <Animated.View entering={FadeIn.delay(800).duration(1000)} style={styles.loaderArea}>
-        <View style={styles.spinner} />
-        <Text style={styles.loaderText}>INITIALIZING COGNITIVE ENGINE...</Text>
-      </Animated.View>
-    </View>
+      </SafeAreaView>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: THEME.colors.primary, // Solid premium deep green `#064E3B`
+    backgroundColor: THEME.colors.surfaceSoft,
+  },
+  safeArea: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  centerArea: {
-    justifyContent: "center",
+  brandBlock: {
     alignItems: "center",
+    justifyContent: "center",
   },
-  logoContainer: {
+  logoFrame: {
+    width: 128,
+    height: 128,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: THEME.spacing.lg,
+  },
+  logoHalo: {
+    position: "absolute",
     width: 120,
     height: 120,
-    borderRadius: THEME.borderRadius.xl,
+    borderRadius: 60,
+    backgroundColor: "rgba(15, 118, 110, 0.06)",
+  },
+  logoCore: {
+    width: 96,
+    height: 96,
+    borderRadius: 30,
+    backgroundColor: THEME.colors.primary,
+    borderWidth: 1,
+    borderColor: "rgba(15, 118, 110, 0.18)",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.24)",
-    shadowColor: "#FFFFFF",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
-    elevation: 10,
-    zIndex: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    overflow: "hidden",
   },
-  logoGlow: {
+  logoBlobTop: {
     position: "absolute",
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
-    zIndex: 1,
+    top: -8,
+    left: 14,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
   },
-  title: {
-    color: "#FFFFFF",
-    fontSize: 48,
-    fontFamily: THEME.fonts.heading,
-    letterSpacing: 8,
-    marginTop: THEME.spacing.xl,
-    fontWeight: "900",
-    textShadowColor: "rgba(255, 255, 255, 0.2)",
-    textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 10,
-  },
-  subtitle: {
-    color: "rgba(255, 255, 255, 0.65)",
-    fontSize: 10,
-    fontFamily: THEME.fonts.mono,
-    letterSpacing: 4,
-    marginTop: THEME.spacing.sm,
-    textAlign: "center",
-  },
-  loaderArea: {
+  logoBlobSide: {
     position: "absolute",
-    bottom: 60,
+    bottom: 14,
+    right: 10,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+  },
+  logoCenter: {
+    position: "absolute",
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    justifyContent: "center",
     alignItems: "center",
-    gap: THEME.spacing.sm,
   },
-  spinner: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    borderTopColor: "#FFFFFF",
+  logoWave: {
+    position: "absolute",
+    bottom: 18,
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
   },
-  loaderText: {
-    color: "rgba(255, 255, 255, 0.4)",
-    fontSize: 8,
-    fontFamily: THEME.fonts.mono,
-    letterSpacing: 2,
+  appName: {
+    fontSize: 26,
+    fontFamily: THEME.fonts.heading,
+    color: THEME.colors.text.primary,
+    letterSpacing: 1.2,
+    fontWeight: "800",
   },
 });

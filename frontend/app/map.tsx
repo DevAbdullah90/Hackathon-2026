@@ -10,9 +10,7 @@ import {
   Alert,
   StatusBar,
   ActivityIndicator,
-  Animated,
 } from "react-native";
-import Reanimated, { FadeInUp, FadeInDown, FadeIn } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import MapView, { Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
@@ -22,16 +20,14 @@ import { THEME } from "../lib/theme";
 import { api, Incident } from "../lib/api";
 import SeverityBadge from "../components/SeverityBadge";
 import MapOverlay from "../components/MapOverlay";
-import { 
-  ChevronLeft, 
-  MapPin, 
-  AlertCircle, 
-  Navigation, 
-  Activity, 
-  Users, 
-  Cpu, 
+import {
+  ChevronLeft,
+  Navigation,
+  Activity,
+  Users,
+  Cpu,
   X,
-  Target
+  Target,
 } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
@@ -43,8 +39,6 @@ export default function FloodMap({ route, navigation }: any) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reporting, setReporting] = useState(false);
-  
-  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const selectedIncidentId = route.params?.selectedIncidentId;
 
@@ -64,25 +58,20 @@ export default function FloodMap({ route, navigation }: any) {
   useEffect(() => {
     fetchIncidents();
     const interval = setInterval(fetchIncidents, 10000);
-    
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.2, duration: 1000, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
-      ])
-    ).start();
-
     return () => clearInterval(interval);
   }, [selectedIncidentId]);
 
   const handleIncidentPress = (incident: Incident) => {
     setSelectedIncident(incident);
-    mapRef.current?.animateToRegion({
-      latitude: incident.lat,
-      longitude: incident.lng,
-      latitudeDelta: 0.015,
-      longitudeDelta: 0.015,
-    }, 1000);
+    mapRef.current?.animateToRegion(
+      {
+        latitude: incident.lat,
+        longitude: incident.lng,
+        latitudeDelta: 0.015,
+        longitudeDelta: 0.015,
+      },
+      0
+    );
   };
 
   const handleReportPress = () => {
@@ -90,22 +79,10 @@ export default function FloodMap({ route, navigation }: any) {
       "TRANSMIT TELEMETRY",
       "Select telemetry source to feed into the multi-agent orchestration pipeline:",
       [
-        {
-          text: "Civilian GPS Report",
-          onPress: () => sendTelemetry("user_gps"),
-        },
-        {
-          text: "Weather API (Auto-confirm)",
-          onPress: () => sendTelemetry("weather_api"),
-        },
-        {
-          text: "Traffic API (Auto-confirm)",
-          onPress: () => sendTelemetry("traffic_api"),
-        },
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Civilian GPS Report", onPress: () => sendTelemetry("user_gps") },
+        { text: "Weather API (Auto-confirm)", onPress: () => sendTelemetry("weather_api") },
+        { text: "Traffic API (Auto-confirm)", onPress: () => sendTelemetry("traffic_api") },
+        { text: "Cancel", style: "cancel" },
       ]
     );
   };
@@ -113,8 +90,11 @@ export default function FloodMap({ route, navigation }: any) {
   const sendTelemetry = async (source: string) => {
     setReporting(true);
     try {
-      let coords = { latitude: CONFIG.ISLAMABAD_CENTER.latitude, longitude: CONFIG.ISLAMABAD_CENTER.longitude };
-      
+      let coords = {
+        latitude: CONFIG.ISLAMABAD_CENTER.latitude,
+        longitude: CONFIG.ISLAMABAD_CENTER.longitude,
+      };
+
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === "granted") {
@@ -124,7 +104,7 @@ export default function FloodMap({ route, navigation }: any) {
           coords = position.coords;
         }
       } catch (locError) {
-        console.log("⚠️ GPS position fetch timed out or failed, using default coordinates:", locError);
+        console.log("GPS position fetch timed out or failed, using default coordinates:", locError);
       }
 
       const success = await api.reportFlood(coords.latitude, coords.longitude, source);
@@ -145,137 +125,150 @@ export default function FloodMap({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.background} />
 
-      <MapView
-        ref={mapRef}
-        style={styles.map}
-        initialRegion={CONFIG.ISLAMABAD_CENTER}
-        showsUserLocation={true}
-        mapType="standard"
-        userInterfaceStyle="light"
-      >
-        <MapOverlay incidents={incidents} />
-
-        {incidents.map((incident) => (
-          <Marker
-            key={`marker-${incident.id}`}
-            coordinate={{ latitude: incident.lat, longitude: incident.lng }}
-            onPress={() => handleIncidentPress(incident)}
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.mapSection}>
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            initialRegion={CONFIG.ISLAMABAD_CENTER}
+            showsUserLocation
+            mapType="standard"
+            userInterfaceStyle="light"
           >
-            <Animated.View style={[
-              styles.markerContainer, 
-              { borderColor: incident.severity_score >= 7.5 ? THEME.colors.text.primary : THEME.colors.primary },
-              selectedIncident?.id === incident.id && { transform: [{ scale: pulseAnim }] }
-            ]}>
-              <Target size={14} color={incident.severity_score >= 7.5 ? THEME.colors.text.primary : THEME.colors.primary} />
-            </Animated.View>
-            <Callout tooltip onPress={() => {
-              setSelectedIncident(incident);
-              setIsModalVisible(true);
-            }}>
-              <View style={styles.calloutContainer}>
-                <Text style={styles.calloutTitle}>{incident.location}</Text>
-                <Text style={styles.calloutAction}>VIEW DATA →</Text>
+            <MapOverlay incidents={incidents} />
+
+            {incidents.map((incident) => (
+              <Marker
+                key={`marker-${incident.id}`}
+                coordinate={{ latitude: incident.lat, longitude: incident.lng }}
+                onPress={() => handleIncidentPress(incident)}
+              >
+                <View
+                  style={[
+                    styles.markerContainer,
+                    {
+                      borderColor:
+                        incident.severity_score >= 7.5 ? THEME.colors.text.primary : THEME.colors.primary,
+                    },
+                    selectedIncident?.id === incident.id && styles.markerSelected,
+                  ]}
+                >
+                  <Target
+                    size={14}
+                    color={incident.severity_score >= 7.5 ? THEME.colors.text.primary : THEME.colors.primary}
+                  />
+                </View>
+                <Callout
+                  tooltip
+                  onPress={() => {
+                    setSelectedIncident(incident);
+                    setIsModalVisible(true);
+                  }}
+                >
+                  <View style={styles.calloutContainer}>
+                    <Text style={styles.calloutTitle}>{incident.location}</Text>
+                    <Text style={styles.calloutAction}>VIEW DATA →</Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
+          </MapView>
+
+          <View style={styles.mapHeaderWrap}>
+            <BlurView intensity={24} tint="light" style={styles.mapHeader}>
+              <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
+                <ChevronLeft size={20} color={THEME.colors.text.primary} />
+              </TouchableOpacity>
+              <View style={styles.headerContent}>
+                <Text style={styles.headerTitle}>LIVE FLOOD MAP</Text>
+                <Text style={styles.headerSubtitle}>Tap a marker to review details.</Text>
+                <View style={styles.statusRow}>
+                  <View style={[styles.statusDot, { backgroundColor: THEME.colors.primary }]} />
+                  <Text style={styles.statusText}>{incidents.length} active incidents</Text>
+                </View>
               </View>
-            </Callout>
-          </Marker>
-        ))}
-      </MapView>
+              {loading && <ActivityIndicator color={THEME.colors.primary} size="small" />}
+            </BlurView>
+          </View>
+        </View>
 
-      <SafeAreaView style={styles.overlay} pointerEvents="box-none">
-        <Reanimated.View entering={FadeInDown.delay(200).springify()} style={{ margin: THEME.spacing.md, borderRadius: THEME.borderRadius.md, overflow: "hidden" }}>
-          <BlurView intensity={30} tint="light" style={styles.header}>
-            <TouchableOpacity 
-              style={styles.iconButton} 
-              onPress={() => navigation.goBack()}
-            >
-              <ChevronLeft size={20} color={THEME.colors.text.primary} />
-            </TouchableOpacity>
-            
-            <View style={styles.headerContent}>
-              <Text style={styles.headerTitle}>TACTICAL MAP</Text>
-              <View style={styles.statusRow}>
-                <View style={[styles.statusDot, { backgroundColor: THEME.colors.primary }]} />
-                <Text style={styles.statusText}>{incidents.length} TARGETS ACQUIRED</Text>
-              </View>
-            </View>
-
-            {loading && <ActivityIndicator color={THEME.colors.primary} size="small" />}
-          </BlurView>
-        </Reanimated.View>
-
-        <Reanimated.View entering={FadeInUp.delay(300).springify()} style={[styles.reportFab, reporting && styles.disabledFab]}>
-          <TouchableOpacity 
+        <View style={styles.contentSection}>
+          <TouchableOpacity
             onPress={handleReportPress}
             disabled={reporting}
-            activeOpacity={0.8}
-            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            activeOpacity={0.85}
+            style={[styles.reportButton, reporting && styles.disabledFab]}
           >
             {reporting ? (
-              <ActivityIndicator color={THEME.colors.background} />
+              <ActivityIndicator color={THEME.colors.primary} />
             ) : (
               <>
-                <Navigation size={16} color={THEME.colors.background} />
-                <Text style={styles.reportFabText}>TRANSMIT TELEMETRY</Text>
+                <Navigation size={16} color={THEME.colors.primary} />
+                <Text style={styles.reportFabText}>REPORT FLOOD</Text>
               </>
             )}
           </TouchableOpacity>
-        </Reanimated.View>
 
-        {incidents.length > 0 && (
-          <Reanimated.View entering={FadeInUp.delay(400).springify()} style={styles.bottomContainer}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.cardList}
-              snapToInterval={width * 0.8 + THEME.spacing.md}
-              decelerationRate="fast"
-            >
-              {incidents.map((incident) => (
-                <TouchableOpacity
-                  key={`card-${incident.id}`}
-                  activeOpacity={0.9}
-                  onPress={() => handleIncidentPress(incident)}
-                >
-                  <BlurView intensity={40} tint="light" style={[
-                    styles.miniCard, 
-                    selectedIncident?.id === incident.id && styles.activeCard
-                  ]}>
-                    <View style={styles.miniCardTop}>
-                      <Text style={styles.miniCardLocation} numberOfLines={1}>
-                        {incident.location}
-                      </Text>
-                      <SeverityBadge score={incident.severity_score} />
-                    </View>
-                    
-                    <View style={styles.miniCardFooter}>
-                      <View style={styles.miniCardStat}>
-                        <Users size={12} color={THEME.colors.text.muted} />
-                        <Text style={styles.miniCardStatText}>{incident.estimated_population}</Text>
+          {incidents.length > 0 && (
+            <View style={styles.cardsWrap}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.cardList}
+                snapToInterval={width * 0.75 + 16}
+                decelerationRate="fast"
+              >
+                {incidents.map((incident) => (
+                  <TouchableOpacity
+                    key={`card-${incident.id}`}
+                    activeOpacity={0.9}
+                    onPress={() => handleIncidentPress(incident)}
+                  >
+                    <BlurView
+                      intensity={24}
+                      tint="light"
+                      style={[
+                        styles.miniCard,
+                        selectedIncident?.id === incident.id && styles.activeCard,
+                      ]}
+                    >
+                      <View style={styles.miniCardTop}>
+                        <Text style={styles.miniCardLocation} numberOfLines={1}>
+                          {incident.location}
+                        </Text>
+                        <SeverityBadge score={incident.severity_score} />
                       </View>
-                      <TouchableOpacity 
-                        style={styles.miniCardAction}
-                        onPress={() => navigation.navigate("Reasoning", { incidentId: incident.id, location: incident.location })}
-                      >
-                        <Cpu size={12} color={THEME.colors.background} />
-                        <Text style={styles.miniCardActionText}>ENGAGE AI</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </BlurView>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </Reanimated.View>
-        )}
+
+                      <View style={styles.miniCardFooter}>
+                        <View style={styles.miniCardStat}>
+                          <Users size={12} color={THEME.colors.text.muted} />
+                          <Text style={styles.miniCardStatText}>{incident.estimated_population}</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.miniCardAction}
+                          onPress={() =>
+                            navigation.navigate("Reasoning", {
+                              incidentId: incident.id,
+                              location: incident.location,
+                            })
+                          }
+                        >
+                          <Cpu size={12} color={THEME.colors.primary} />
+                          <Text style={styles.miniCardActionText}>OPEN DETAILS</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </BlurView>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
       </SafeAreaView>
 
-      <Modal 
-        visible={isModalVisible} 
-        transparent 
-        animationType="slide" 
-        onRequestClose={() => setIsModalVisible(false)}
-      >
+      <Modal visible={isModalVisible} transparent animationType="none" onRequestClose={() => setIsModalVisible(false)}>
         <BlurView intensity={20} tint="light" style={styles.modalOverlay}>
           <BlurView intensity={50} tint="light" style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -287,18 +280,25 @@ export default function FloodMap({ route, navigation }: any) {
                 <X size={20} color={THEME.colors.text.secondary} />
               </TouchableOpacity>
             </View>
-            
+
             {selectedIncident && (
               <View style={styles.modalBody}>
                 <Text style={styles.modalTitle}>{selectedIncident.location}</Text>
-                
+
                 <View style={styles.modalStatsRow}>
                   <View style={styles.modalStatItem}>
                     <Text style={styles.modalStatLabel}>SEVERITY</Text>
-                    <Text style={[
-                      styles.modalStatValue, 
-                      { color: selectedIncident.severity_score >= 7.5 ? THEME.colors.status.critical : THEME.colors.primary }
-                    ]}>
+                    <Text
+                      style={[
+                        styles.modalStatValue,
+                        {
+                          color:
+                            selectedIncident.severity_score >= 7.5
+                              ? THEME.colors.status.critical
+                              : THEME.colors.primary,
+                        },
+                      ]}
+                    >
                       {selectedIncident.severity_score.toFixed(1)}
                     </Text>
                   </View>
@@ -312,14 +312,17 @@ export default function FloodMap({ route, navigation }: any) {
                   </View>
                 </View>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.modalPrimaryAction}
                   onPress={() => {
                     setIsModalVisible(false);
-                    navigation.navigate("Reasoning", { incidentId: selectedIncident.id, location: selectedIncident.location });
+                    navigation.navigate("Reasoning", {
+                      incidentId: selectedIncident.id,
+                      location: selectedIncident.location,
+                    });
                   }}
                 >
-                  <Cpu size={18} color={THEME.colors.background} />
+                  <Cpu size={18} color={THEME.colors.primary} />
                   <Text style={styles.modalActionText}>INITIALIZE ORCHESTRATOR</Text>
                 </TouchableOpacity>
               </View>
@@ -331,57 +334,44 @@ export default function FloodMap({ route, navigation }: any) {
   );
 }
 
-// Light emerald blueprint map style
-const MAP_STYLE = [
-  { "elementType": "geometry", "stylers": [{ "color": "#F7F9F8" }] },
-  { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
-  { "elementType": "labels.text.fill", "stylers": [{ "color": "#064E3B" }] },
-  { "elementType": "labels.text.stroke", "stylers": [{ "color": "#FFFFFF" }] },
-  { "featureType": "administrative", "elementType": "geometry", "stylers": [{ "color": "#E2EBE6" }] },
-  { "featureType": "administrative.country", "elementType": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
-  { "featureType": "administrative.land_parcel", "stylers": [{ "visibility": "off" }] },
-  { "featureType": "administrative.locality", "elementType": "labels.text.fill", "stylers": [{ "color": "#3F3F46" }] },
-  { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
-  { "featureType": "poi.park", "elementType": "geometry", "stylers": [{ "color": "#EDF2F0" }] },
-  { "featureType": "poi.park", "elementType": "labels.text.fill", "stylers": [{ "color": "#3F3F46" }] },
-  { "featureType": "poi.park", "elementType": "labels.text.stroke", "stylers": [{ "color": "#FFFFFF" }] },
-  { "road": "geometry.fill", "stylers": [{ "color": "#FFFFFF" }] },
-  { "road": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
-  { "featureType": "road.arterial", "elementType": "geometry", "stylers": [{ "color": "#E2EBE6" }] },
-  { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#E2EBE6" }] },
-  { "featureType": "road.highway.controlled_access", "elementType": "geometry", "stylers": [{ "color": "#D1DBD5" }] },
-  { "featureType": "road.local", "elementType": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
-  { "featureType": "transit", "elementType": "labels.text.fill", "stylers": [{ "color": "#71717A" }] },
-  { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#D1DBD5" }] },
-  { "featureType": "water", "elementType": "labels.text.fill", "stylers": [{ "color": "#064E3B" }] }
-];
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: THEME.colors.background,
   },
+  safeArea: {
+    flex: 1,
+    backgroundColor: THEME.colors.background,
+  },
+  mapSection: {
+    height: "72%",
+    position: "relative",
+    backgroundColor: THEME.colors.background,
+  },
   map: {
     ...StyleSheet.absoluteFillObject,
   },
-  overlay: {
-    flex: 1,
-    justifyContent: "space-between",
+  mapHeaderWrap: {
+    position: "absolute",
+    top: THEME.spacing.md,
+    left: THEME.spacing.md,
+    right: THEME.spacing.md,
   },
-  header: {
+  mapHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     padding: THEME.spacing.md,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
+    borderRadius: THEME.borderRadius.md,
     gap: THEME.spacing.md,
   },
   iconButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.surfaceSoft,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
@@ -392,14 +382,20 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: THEME.colors.text.primary,
-    fontSize: 12,
-    fontFamily: THEME.fonts.heading,
-    letterSpacing: 2,
+    fontSize: 13,
+    fontFamily: THEME.fonts.subheading,
+    letterSpacing: 1,
+    marginBottom: 2,
+  },
+  headerSubtitle: {
+    color: THEME.colors.text.muted,
+    fontSize: 10,
+    fontFamily: THEME.fonts.body,
+    marginBottom: 6,
   },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 2,
     gap: 6,
   },
   statusDot: {
@@ -409,45 +405,54 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: THEME.colors.primary,
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 1,
   },
-  reportFab: {
-    position: "absolute",
-    right: THEME.spacing.md,
-    bottom: 160,
-    backgroundColor: THEME.colors.text.primary,
+  contentSection: {
+    flex: 0,
+    backgroundColor: THEME.colors.background,
+    paddingHorizontal: THEME.spacing.md,
+    paddingTop: 2,
+    paddingBottom: 0,
+  },
+  reportButton: {
+    minHeight: 44,
+    borderRadius: THEME.borderRadius.sm,
+    backgroundColor: THEME.colors.accentSoft,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: THEME.borderRadius.sm,
+    justifyContent: "center",
     gap: 8,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.18)",
+    marginBottom: 4,
+  },
+  reportFabText: {
+    color: THEME.colors.primary,
+    fontFamily: THEME.fonts.subheading,
+    fontSize: 10,
+    letterSpacing: 1,
   },
   disabledFab: {
     opacity: 0.6,
   },
-  reportFabText: {
-    color: THEME.colors.background,
-    fontFamily: THEME.fonts.heading,
-    fontSize: 10,
-    letterSpacing: 1,
-  },
-  bottomContainer: {
-    paddingBottom: 40,
+  cardsWrap: {
+    flexGrow: 0,
   },
   cardList: {
-    paddingHorizontal: THEME.spacing.md,
-    gap: THEME.spacing.md,
+    paddingHorizontal: 15,
+    paddingBottom: 0,
   },
   miniCard: {
-    backgroundColor: THEME.colors.glass,
-    width: width * 0.8,
+    backgroundColor: THEME.colors.background,
+    width: width * 0.70,
     borderRadius: THEME.borderRadius.md,
-    padding: THEME.spacing.lg,
+    padding: 10,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
+    marginHorizontal: 6,
   },
   activeCard: {
     borderColor: THEME.colors.primary,
@@ -456,11 +461,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: THEME.spacing.lg,
+    marginBottom: 6,
   },
   miniCardLocation: {
     color: THEME.colors.text.primary,
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: THEME.fonts.heading,
     flex: 1,
     marginRight: 10,
@@ -485,15 +490,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: THEME.colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: THEME.colors.accentSoft,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: THEME.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.18)",
   },
   miniCardActionText: {
-    color: THEME.colors.background,
-    fontSize: 9,
-    fontFamily: THEME.fonts.heading,
+    color: THEME.colors.primary,
+    fontSize: 7,
+    fontFamily: THEME.fonts.subheading,
     letterSpacing: 1,
   },
   markerContainer: {
@@ -505,10 +512,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  markerSelected: {
+    borderWidth: 3,
+    transform: [{ scale: 1.08 }],
+  },
   calloutContainer: {
     width: 140,
     padding: 10,
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.background,
     borderRadius: THEME.borderRadius.sm,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
@@ -532,13 +543,13 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     borderTopLeftRadius: THEME.borderRadius.lg,
     borderTopRightRadius: THEME.borderRadius.lg,
     padding: THEME.spacing.xl,
     paddingBottom: 60,
     borderTopWidth: 1,
-    borderTopColor: THEME.colors.glassBorder,
+    borderTopColor: THEME.colors.surfaceBorder,
   },
   modalHeader: {
     flexDirection: "row",
@@ -573,12 +584,12 @@ const styles = StyleSheet.create({
   modalStatsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.surface,
     borderRadius: THEME.borderRadius.sm,
     padding: THEME.spacing.lg,
     marginBottom: THEME.spacing.xl,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   modalStatItem: {
     alignItems: "center",
@@ -597,16 +608,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   modalPrimaryAction: {
-    backgroundColor: THEME.colors.primary,
+    backgroundColor: THEME.colors.accentSoft,
     height: 56,
     borderRadius: THEME.borderRadius.sm,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 12,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.18)",
   },
   modalActionText: {
-    color: THEME.colors.background,
+    color: THEME.colors.primary,
     fontSize: 12,
     fontFamily: THEME.fonts.heading,
     letterSpacing: 2,

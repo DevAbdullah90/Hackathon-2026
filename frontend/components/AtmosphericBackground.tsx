@@ -4,6 +4,6 @@ import { THEME } from "../lib/theme";
 
 export default function AtmosphericBackground() {
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: "#F8FAFC" }]} />
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: THEME.colors.surfaceWarm }]} />
   );
 }

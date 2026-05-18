@@ -9,15 +9,6 @@ import {
   ScrollView, 
   Dimensions
 } from "react-native";
-import Animated, { 
-  FadeInDown, 
-  FadeInUp, 
-  ZoomIn,
-  useSharedValue, 
-  withTiming, 
-  withDelay,
-  useAnimatedStyle 
-} from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import { api, Incident } from "../lib/api";
@@ -39,37 +30,31 @@ const { width } = Dimensions.get("window");
 export default function OutcomeScreen({ route, navigation }: any) {
   const { incidentId, location } = route.params || { incidentId: "INC-DEMO", location: "Active Crisis" };
   const [incident, setIncident] = useState<Incident | null>(null);
-  
-  const bar1 = useSharedValue(0);
-  const bar2 = useSharedValue(0);
-  const bar3 = useSharedValue(0);
+  const [bar1, setBar1] = useState(0);
+  const [bar2, setBar2] = useState(0);
+  const [bar3, setBar3] = useState(0);
 
   useEffect(() => {
     const fetchIncident = async () => {
       const data = await api.getIncident(incidentId);
       setIncident(data);
-      
-      bar1.value = withDelay(500, withTiming(85, { duration: 1000 }));
-      bar2.value = withDelay(700, withTiming(95, { duration: 1000 }));
-      bar3.value = withDelay(900, withTiming(60, { duration: 1000 }));
+      setBar1(85);
+      setBar2(95);
+      setBar3(60);
     };
     fetchIncident();
   }, [incidentId]);
 
-  const animatedBar1 = useAnimatedStyle(() => ({ height: `${bar1.value}%` }));
-  const animatedBar2 = useAnimatedStyle(() => ({ height: `${bar2.value}%` }));
-  const animatedBar3 = useAnimatedStyle(() => ({ height: `${bar3.value}%` }));
-
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <Animated.View entering={FadeInDown.duration(1500)} style={StyleSheet.absoluteFill}>
+      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.background} />
+      <View style={StyleSheet.absoluteFill}>
         <AtmosphericBackground />
-      </Animated.View>
+      </View>
 
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
+        <View>
           <BlurView intensity={20} tint="light" style={styles.header}>
             <TouchableOpacity onPress={() => navigation.popToTop()} style={styles.iconButton}>
               <Home size={18} color={THEME.colors.text.primary} />
@@ -77,19 +62,19 @@ export default function OutcomeScreen({ route, navigation }: any) {
             <Text style={styles.headerTitle}>MISSION REPORT</Text>
             <View style={{ width: 36 }} /> 
           </BlurView>
-        </Animated.View>
+        </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.successBanner}>
-            <Animated.View entering={ZoomIn.delay(300).springify()} style={styles.bannerIconContainer}>
+          <View style={styles.successBanner}>
+            <View style={styles.bannerIconContainer}>
               <ShieldCheck size={36} color={THEME.colors.background} strokeWidth={1.5} />
-            </Animated.View>
+            </View>
             <Text style={styles.successTitle}>SITUATION RESOLVED</Text>
             <Text style={styles.successSubtitle}>AGENTIC LOOP TERMINATED SUCCESSFULLY</Text>
-          </Animated.View>
+          </View>
 
           {/* Impact Visualizer */}
-          <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.chartCardContainer}>
+          <View style={styles.chartCardContainer}>
             <BlurView intensity={25} tint="light" style={styles.chartCard}>
               <View style={styles.chartHeader}>
                 <BarChart2 size={16} color={THEME.colors.text.muted} />
@@ -97,23 +82,23 @@ export default function OutcomeScreen({ route, navigation }: any) {
               </View>
               <View style={styles.chartBody}>
                 <View style={styles.barGroup}>
-                  <Animated.View style={[styles.barFill, animatedBar1]} />
+                  <View style={[styles.barFill, { height: `${bar1}%` }]} />
                   <Text style={styles.barLabel}>TRAFFIC</Text>
                 </View>
                 <View style={styles.barGroup}>
-                  <Animated.View style={[styles.barFill, { backgroundColor: THEME.colors.primary }, animatedBar2]} />
+                  <View style={[styles.barFill, { backgroundColor: THEME.colors.primary, height: `${bar2}%` }]} />
                   <Text style={styles.barLabel}>SAFETY</Text>
                 </View>
                 <View style={styles.barGroup}>
-                  <Animated.View style={[styles.barFill, animatedBar3]} />
+                  <View style={[styles.barFill, { height: `${bar3}%` }]} />
                   <Text style={styles.barLabel}>RESPONSE</Text>
                 </View>
               </View>
             </BlurView>
-          </Animated.View>
+          </View>
 
           {/* Stats Grid */}
-          <Animated.View entering={FadeInUp.delay(500).springify()} style={styles.statsGrid}>
+          <View style={styles.statsGrid}>
             <BlurView intensity={20} tint="light" style={styles.statCard}>
               <Car size={20} color={THEME.colors.text.secondary} />
               <Text style={styles.statValue}>50+</Text>
@@ -134,10 +119,10 @@ export default function OutcomeScreen({ route, navigation }: any) {
               <Text style={styles.statValue}>45s</Text>
               <Text style={styles.statLabel}>MEAN DETECTION TIME</Text>
             </BlurView>
-          </Animated.View>
+          </View>
 
           {/* Detailed Breakdown */}
-          <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.reportCardContainer}>
+          <View style={styles.reportCardContainer}>
             <BlurView intensity={20} tint="light" style={styles.reportCard}>
               <Text style={styles.reportCardTitle}>SUMMARY ANALYSIS</Text>
               
@@ -161,16 +146,16 @@ export default function OutcomeScreen({ route, navigation }: any) {
                 </View>
               </View>
             </BlurView>
-          </Animated.View>
+          </View>
 
-          <Animated.View entering={FadeInUp.delay(700).springify()} style={{ width: '100%' }}>
+          <View style={{ width: "100%" }}>
             <TouchableOpacity 
               style={styles.doneButton}
               onPress={() => navigation.popToTop()}
             >
               <Text style={styles.doneButtonText}>RETURN TO COMMAND CENTER</Text>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
           
           <View style={{ height: 40 }} />
         </ScrollView>
@@ -193,19 +178,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: THEME.spacing.lg,
     paddingVertical: THEME.spacing.lg,
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: THEME.colors.glassBorder,
+    borderBottomColor: THEME.colors.surfaceBorder,
   },
   iconButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.surfaceSoft,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   headerTitle: {
     color: THEME.colors.text.primary,
@@ -226,7 +211,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: THEME.colors.primary,
+    backgroundColor: THEME.colors.accentSoft,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: THEME.spacing.lg,
@@ -257,10 +242,10 @@ const styles = StyleSheet.create({
     marginBottom: THEME.spacing.lg,
   },
   chartCard: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   chartHeader: {
     flexDirection: "row",
@@ -307,13 +292,13 @@ const styles = StyleSheet.create({
     marginBottom: THEME.spacing.xl,
   },
   statCard: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     width: (width - THEME.spacing.lg * 2 - THEME.spacing.md) / 2,
     padding: THEME.spacing.lg,
     borderRadius: THEME.borderRadius.md,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
     overflow: "hidden",
   },
   statValue: {
@@ -337,10 +322,10 @@ const styles = StyleSheet.create({
     marginBottom: THEME.spacing.xl,
   },
   reportCard: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   reportCardTitle: {
     color: THEME.colors.text.muted,
@@ -358,11 +343,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.surfaceSoft,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   reportItemContent: {
     flex: 1,
@@ -380,16 +365,18 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   doneButton: {
-    backgroundColor: THEME.colors.primary,
+    backgroundColor: THEME.colors.accentSoft,
     width: "100%",
     height: 56,
     borderRadius: THEME.borderRadius.sm,
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.18)",
     ...THEME.shadows.glow,
   },
   doneButtonText: {
-    color: THEME.colors.background,
+    color: THEME.colors.primary,
     fontSize: 12,
     fontFamily: THEME.fonts.heading,
     letterSpacing: 2,

@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import SeverityBadge from "../components/SeverityBadge";
 import { api, Incident } from "../lib/api";
+import { THEME } from "../lib/theme";
 
 const { width } = Dimensions.get("window");
 
@@ -82,7 +83,7 @@ export default function FloodMapWeb({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.background} />
 
       <SafeAreaView style={styles.overlay}>
         <View style={styles.header}>
@@ -90,14 +91,14 @@ export default function FloodMapWeb({ route, navigation }: any) {
             <Text style={styles.backText}>⬅️</Text>
           </TouchableOpacity>
           <View style={styles.headerInfo}>
-            <Text style={styles.headerTitle}>Live Crisis Map</Text>
+            <Text style={styles.headerTitle}>Live Flood Map</Text>
             <Text style={styles.headerSubtitle}>{incidents.length} Active Incidents</Text>
           </View>
           {loading && <ActivityIndicator color="#FFFFFF" size="small" />}
         </View>
 
         <View style={styles.mapCard}>
-          <Text style={styles.mapCardTitle}>Mock Crisis Map</Text>
+          <Text style={styles.mapCardTitle}>Flood Overview</Text>
           <Text style={styles.mapCardSubtitle}>Web fallback active. Native map is available on mobile builds.</Text>
           <View style={styles.mapStage}>
             <View style={styles.mapGridLines} />
@@ -171,7 +172,7 @@ export default function FloodMapWeb({ route, navigation }: any) {
         )}
       </SafeAreaView>
 
-      <Modal visible={isModalVisible} transparent animationType="slide" onRequestClose={() => setIsModalVisible(false)}>
+      <Modal visible={isModalVisible} transparent animationType="none" onRequestClose={() => setIsModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Crisis Intelligence</Text>
@@ -188,7 +189,7 @@ export default function FloodMapWeb({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0F172A",
+    backgroundColor: THEME.colors.background,
   },
   overlay: {
     flex: 1,
@@ -197,12 +198,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(15, 23, 42, 0.9)",
+    backgroundColor: THEME.colors.glass,
     margin: 15,
     padding: 15,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: THEME.colors.glassBorder,
   },
   backButton: {
     padding: 5,
@@ -215,40 +216,40 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    color: "#FFFFFF",
+    color: THEME.colors.text.primary,
     fontSize: 16,
     fontWeight: "bold",
   },
   headerSubtitle: {
-    color: "#94A3B8",
+    color: THEME.colors.text.muted,
     fontSize: 12,
   },
   mapCard: {
     marginHorizontal: 15,
-    marginTop: 4,
-    padding: 18,
+    marginTop: 2,
+    padding: 16,
     borderRadius: 24,
-    backgroundColor: "rgba(15, 23, 42, 0.95)",
+    backgroundColor: THEME.colors.glass,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: THEME.colors.glassBorder,
   },
   mapCardTitle: {
-    color: "#FFFFFF",
+    color: THEME.colors.text.primary,
     fontSize: 18,
     fontWeight: "800",
   },
   mapCardSubtitle: {
-    color: "#94A3B8",
+    color: THEME.colors.text.muted,
     fontSize: 12,
     marginTop: 4,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   mapStage: {
-    height: 280,
+    height: 372,
     borderRadius: 22,
-    backgroundColor: "#08101F",
+    backgroundColor: THEME.colors.surface,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: THEME.colors.surfaceBorder,
     overflow: "hidden",
     position: "relative",
   },
@@ -257,9 +258,9 @@ const styles = StyleSheet.create({
     inset: 0,
     backgroundColor: "transparent",
     borderTopWidth: 1,
-    borderTopColor: "rgba(148, 163, 184, 0.12)",
+    borderTopColor: THEME.colors.surfaceBorder,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(148, 163, 184, 0.12)",
+    borderBottomColor: THEME.colors.surfaceBorder,
     marginTop: 70,
     marginBottom: 70,
   },
@@ -269,7 +270,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 1,
-    backgroundColor: "rgba(148, 163, 184, 0.12)",
+    backgroundColor: THEME.colors.surfaceBorder,
   },
   pin: {
     position: "absolute",
@@ -278,13 +279,13 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(59, 130, 246, 0.18)",
+    backgroundColor: "rgba(6, 78, 59, 0.08)",
     borderWidth: 1,
-    borderColor: "rgba(59, 130, 246, 0.55)",
+    borderColor: "rgba(6, 78, 59, 0.35)",
   },
   activePin: {
-    backgroundColor: "rgba(239, 68, 68, 0.22)",
-    borderColor: "#EF4444",
+    backgroundColor: "rgba(220, 38, 38, 0.14)",
+    borderColor: THEME.colors.status.critical,
   },
   mapNodeEmoji: {
     fontSize: 20,
@@ -294,35 +295,35 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 16,
     width: 170,
-    backgroundColor: "rgba(15, 23, 42, 0.92)",
+    backgroundColor: THEME.colors.background,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
+    borderColor: THEME.colors.surfaceBorder,
     padding: 12,
   },
   mapInfoTitle: {
-    color: "#FFFFFF",
+    color: THEME.colors.text.primary,
     fontSize: 14,
     fontWeight: "800",
     marginBottom: 4,
   },
   mapInfoText: {
-    color: "#94A3B8",
+    color: THEME.colors.text.muted,
     fontSize: 12,
     lineHeight: 16,
   },
   reportContainer: {
     alignItems: "center",
-    marginVertical: 18,
+    marginVertical: 8,
   },
   reportButton: {
-    backgroundColor: "#EF4444",
+    backgroundColor: THEME.colors.text.primary,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 30,
   },
   reportText: {
-    color: "#FFFFFF",
+    color: THEME.colors.background,
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -330,22 +331,22 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   bottomContainer: {
-    paddingBottom: 24,
+    paddingBottom: 8,
   },
   cardList: {
     paddingHorizontal: 15,
   },
   miniCard: {
-    backgroundColor: "rgba(15, 23, 42, 0.95)",
-    width: width * 0.75,
+    backgroundColor: THEME.colors.glass,
+    width: width * 0.70,
     borderRadius: 20,
-    padding: 15,
+    padding: 10,
     marginHorizontal: 8,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: THEME.colors.glassBorder,
   },
   activeCard: {
-    borderColor: "#3B82F6",
+    borderColor: THEME.colors.primary,
     borderWidth: 2,
   },
   miniCardHeader: {
@@ -355,8 +356,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   miniCardTitle: {
-    color: "#FFFFFF",
-    fontSize: 16,
+    color: THEME.colors.text.primary,
+    fontSize: 13,
     fontWeight: "bold",
     flex: 1,
     marginRight: 10,
@@ -367,37 +368,37 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   miniCardInfo: {
-    color: "#94A3B8",
+    color: THEME.colors.text.muted,
     fontSize: 12,
     fontWeight: "600",
   },
   reasoningBtn: {
-    backgroundColor: "rgba(59, 130, 246, 0.1)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: "rgba(6, 78, 59, 0.08)",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "rgba(59, 130, 246, 0.2)",
+    borderColor: "rgba(6, 78, 59, 0.15)",
   },
   reasoningBtnText: {
-    color: "#3B82F6",
-    fontSize: 11,
+    color: THEME.colors.primary,
+    fontSize: 9,
     fontWeight: "bold",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.8)",
+    backgroundColor: "rgba(255,255,255,0.75)",
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#1E293B",
+    backgroundColor: THEME.colors.background,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     padding: 25,
     paddingBottom: 50,
   },
   modalTitle: {
-    color: "#94A3B8",
+    color: THEME.colors.text.secondary,
     fontSize: 14,
     fontWeight: "bold",
     textTransform: "uppercase",
