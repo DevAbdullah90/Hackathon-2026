@@ -15,8 +15,13 @@ interface ExecutionTimelineProps {
 }
 
 const ExecutionTimeline: React.FC<ExecutionTimelineProps> = ({ actions }) => {
+  const parseUTC = (str: string) => {
+    if (!str) return new Date();
+    return new Date(str.endsWith("Z") || str.includes("+") ? str : str + "Z");
+  };
+
   const sortedActions = [...actions].sort(
-    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+    (a, b) => parseUTC(b.updated_at).getTime() - parseUTC(a.updated_at).getTime()
   );
 
   return (
@@ -57,7 +62,7 @@ const ExecutionTimeline: React.FC<ExecutionTimelineProps> = ({ actions }) => {
                   {action.type.toUpperCase()}
                 </Text>
                 <Text style={styles.timestamp}>
-                  {new Date(action.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {parseUTC(action.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
               

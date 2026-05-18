@@ -86,7 +86,7 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, index, navigation }) 
               <View style={styles.cardTimestamp}>
                 <Clock size={10} color={THEME.colors.text.muted} />
                 <Text style={styles.cardTimeText}>
-                  {new Date(item.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(item.created_at.endsWith("Z") || item.created_at.includes("+") ? item.created_at : item.created_at + "Z").toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </Text>
               </View>
             </View>

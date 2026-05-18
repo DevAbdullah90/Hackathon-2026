@@ -42,16 +42,41 @@ export default function FloodMapWeb({ route, navigation }: any) {
     fetchIncidents();
   }, [selectedIncidentId]);
 
-  const handleReportPress = async () => {
+  const handleReportPress = () => {
+    Alert.alert(
+      "TRANSMIT TELEMETRY",
+      "Select telemetry source to feed into the multi-agent orchestration pipeline:",
+      [
+        {
+          text: "Civilian GPS Report",
+          onPress: () => sendTelemetry("user_gps"),
+        },
+        {
+          text: "Weather API (Auto-confirm)",
+          onPress: () => sendTelemetry("weather_api"),
+        },
+        {
+          text: "Traffic API (Auto-confirm)",
+          onPress: () => sendTelemetry("traffic_api"),
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ]
+    );
+  };
+
+  const sendTelemetry = async (source: string) => {
     setReporting(true);
-    const success = await api.reportFlood(33.6844, 73.0479);
+    const success = await api.reportFlood(33.6844, 73.0479, source);
     setReporting(false);
 
     if (success) {
-      Alert.alert("Flood Reported", "Mock GPS coordinates were queued for the demo.", [{ text: "OK" }]);
+      Alert.alert("TELEMETRY INJECTED", `A simulated ${source} alert at coordinates [33.6844, 73.0479] has been fed into the multi-agent pipeline.`);
       fetchIncidents();
     } else {
-      Alert.alert("Error", "Failed to submit mock report.");
+      Alert.alert("Error", "Failed to submit telemetry report.");
     }
   };
 
@@ -111,7 +136,7 @@ export default function FloodMapWeb({ route, navigation }: any) {
             onPress={handleReportPress}
             disabled={reporting}
           >
-            {reporting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.reportText}>🚨 Report Flood at GPS</Text>}
+            {reporting ? <ActivityIndicator color="#FFFFFF" /> : <Text style={styles.reportText}>🚨 Transmit Telemetry</Text>}
           </TouchableOpacity>
         </View>
 

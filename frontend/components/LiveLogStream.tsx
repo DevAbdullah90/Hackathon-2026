@@ -163,7 +163,7 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
       <Animated.View key={item.id} entering={FadeInUp.springify().mass(0.4)} style={styles.logRow}>
         <View style={styles.timeContainer}>
           <Text style={styles.logTime}>
-            {new Date(item.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            {new Date(item.timestamp.endsWith("Z") || item.timestamp.includes("+") ? item.timestamp : item.timestamp + "Z").toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </Text>
         </View>
         <Text style={[styles.logAgent, { color: agentColor }]}>

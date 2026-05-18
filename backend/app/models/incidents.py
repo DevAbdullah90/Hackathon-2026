@@ -6,7 +6,7 @@ SQLModel ORM model for the incidents table.
 
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlmodel import Column, Field, JSON, SQLModel
 
@@ -38,7 +38,7 @@ class Incident(SQLModel, table=True):
         default="monitoring",
         description="'monitoring' | 'confirmed' | 'resolved' | 'retracted'",
     )
-    risk_factors: Optional[Dict[str, Any]] = Field(
+    risk_factors: Optional[List[str]] = Field(
         default=None,
         sa_column=Column(JSON),
     )

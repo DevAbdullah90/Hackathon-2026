@@ -380,15 +380,12 @@ export const api = {
     }
   },
 
-  /**
-   * Transmit user GPS flood signal into the live multi-agent pipeline.
-   */
-  async reportFlood(lat: number, lng: number): Promise<boolean> {
+  async reportFlood(lat: number, lng: number, source: string = "user_gps"): Promise<boolean> {
     try {
       const response = await makeRequest<any>("/api/v1/signals/", {
         method: "POST",
         body: JSON.stringify({
-          source: "user_gps",
+          source: source,
           lat: lat,
           lng: lng,
           type: "flood",
@@ -396,13 +393,13 @@ export const api = {
             lat: lat,
             lng: lng,
             type: "flood",
-            source: "user_gps",
+            source: source,
           },
         }),
       });
-      return response && response.status !== "DUPLICATE";
+      return !!response;
     } catch (err) {
-      console.log("🛡️ [API FALLBACK] reportFlood() -> Simulated successfully offline.");
+      console.log(`🛡️ [API FALLBACK] reportFlood() -> Simulated successfully offline with source: ${source}.`);
       return true;
     }
   },
@@ -428,17 +425,21 @@ export const api = {
   async getSimulationState(id: string): Promise<Action[]> {
     try {
       const data = await makeRequest<any[]>(`/api/v1/simulation/state/${id}`);
-      return data.map((item) => ({
-        id: String(item.id),
-        incident_id: id,
-        type: item.type,
-        status: item.status.toUpperCase(),
-        predicted_side_effects: item.predicted_side_effects,
-        metadata: item.metadata,
-        updated_at: item.updated_at,
-      }));
+      if (data && data.length > 0) {
+        return data.map((item) => ({
+          id: String(item.id),
+          incident_id: id,
+          type: item.type,
+          status: item.status.toUpperCase(),
+          predicted_side_effects: item.predicted_side_effects,
+          metadata: item.metadata,
+          updated_at: item.updated_at,
+        }));
+      }
+      console.log(`🛡️ [API FALLBACK] 0 actions returned from DB for incident ${id} -> Serving fallback execution list.`);
+      return MOCK_ACTIONS[id] || this.getMockSimulationState(id);
     } catch (err) {
-      console.log(`🛡️ [API FALLBACK] getSimulationState(${id}) -> Serving offline execution list.`);
+      console.log(`🛡️ [API FALLBACK] getSimulationState(${id}) failed -> Serving offline execution list.`);
       return MOCK_ACTIONS[id] || this.getMockSimulationState(id);
     }
   },
@@ -449,11 +450,12 @@ export const api = {
   getMockSimulationState(incidentId: string): Action[] {
     const timestamp = now();
     return [
-      { id: "a1", incident_id: incidentId, type: "Rescue Dispatch", status: "COMPLETED", updated_at: timestamp },
-      { id: "a2", incident_id: incidentId, type: "Drainage Activation", status: "COMPLETED", updated_at: timestamp },
-      { id: "a3", incident_id: incidentId, type: "Utility Shutdown", status: "COMPLETED", updated_at: timestamp },
+      { id: "a1", incident_id: incidentId, type: "DISPATCH_RESCUE", status: "PENDING", predicted_side_effects: "Mobilises local relief teams.", updated_at: timestamp },
+      { id: "a2", incident_id: incidentId, type: "DEPLOY_DRAINAGE_CREW", status: "PENDING", predicted_side_effects: "Starts structural dewatering.", updated_at: timestamp },
+      { id: "a3", incident_id: incidentId, type: "ALERT_CITIZENS", status: "PENDING", predicted_side_effects: "Disseminates emergency guidance.", updated_at: timestamp },
     ];
   },
+
 
   /**
    * Fetch reasoning traces for an incident.

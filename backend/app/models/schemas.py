@@ -50,7 +50,7 @@ class IncidentRead(BaseModel):
     estimated_population: Optional[int] = None
     peak_impact_eta: Optional[str] = None
     status: str
-    risk_factors: Optional[Dict[str, Any]] = None
+    risk_factors: Optional[List[str]] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

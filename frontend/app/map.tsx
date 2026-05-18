@@ -85,22 +85,59 @@ export default function FloodMap({ route, navigation }: any) {
     }, 1000);
   };
 
-  const handleReportPress = async () => {
+  const handleReportPress = () => {
+    Alert.alert(
+      "TRANSMIT TELEMETRY",
+      "Select telemetry source to feed into the multi-agent orchestration pipeline:",
+      [
+        {
+          text: "Civilian GPS Report",
+          onPress: () => sendTelemetry("user_gps"),
+        },
+        {
+          text: "Weather API (Auto-confirm)",
+          onPress: () => sendTelemetry("weather_api"),
+        },
+        {
+          text: "Traffic API (Auto-confirm)",
+          onPress: () => sendTelemetry("traffic_api"),
+        },
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+      ]
+    );
+  };
+
+  const sendTelemetry = async (source: string) => {
     setReporting(true);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      const coords = status === "granted" 
-        ? (await Location.getCurrentPositionAsync({})).coords 
-        : { latitude: CONFIG.ISLAMABAD_CENTER.latitude, longitude: CONFIG.ISLAMABAD_CENTER.longitude };
+      let coords = { latitude: CONFIG.ISLAMABAD_CENTER.latitude, longitude: CONFIG.ISLAMABAD_CENTER.longitude };
+      
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const position = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          coords = position.coords;
+        }
+      } catch (locError) {
+        console.log("⚠️ GPS position fetch timed out or failed, using default coordinates:", locError);
+      }
 
-      const success = await api.reportFlood(coords.latitude, coords.longitude);
+      const success = await api.reportFlood(coords.latitude, coords.longitude, source);
 
       if (success) {
-        Alert.alert("SIGNAL TRANSMITTED", "Operational data has been sent to CIRO Orchestrator.");
+        Alert.alert(
+          "TELEMETRY INJECTED",
+          `A simulated ${source} alert at coordinates [${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}] has been fed into the multi-agent pipeline.`
+        );
         fetchIncidents();
       }
     } catch (error) {
-      Alert.alert("COMMUNICATION ERROR", "Failed to transmit signal to command center.");
+      Alert.alert("TRANSMISSION FAILED", "Failed to feed signal to command center.");
     } finally {
       setReporting(false);
     }
@@ -117,7 +154,6 @@ export default function FloodMap({ route, navigation }: any) {
         showsUserLocation={true}
         mapType="standard"
         userInterfaceStyle="light"
-        customMapStyle={MAP_STYLE}
       >
         <MapOverlay incidents={incidents} />
 
@@ -181,7 +217,7 @@ export default function FloodMap({ route, navigation }: any) {
             ) : (
               <>
                 <Navigation size={16} color={THEME.colors.background} />
-                <Text style={styles.reportFabText}>TRANSMIT GPS</Text>
+                <Text style={styles.reportFabText}>TRANSMIT TELEMETRY</Text>
               </>
             )}
           </TouchableOpacity>

@@ -82,8 +82,8 @@ def create_model(
 def _create_openai_model(model: str | None = None) -> OpenAIChatCompletionsModel:
     """Create OpenAI model instance."""
     api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable is required when LLM_PROVIDER=openai")
+    if not api_key or "placeholder" in api_key.lower():
+        raise ValueError("OPENAI_API_KEY environment variable is required or is a placeholder when LLM_PROVIDER=openai")
 
     client = AsyncOpenAI(api_key=api_key)
     model_name = model or os.getenv("OPENAI_DEFAULT_MODEL", "gpt-4o-mini")

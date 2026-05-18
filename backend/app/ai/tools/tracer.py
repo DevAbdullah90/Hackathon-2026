@@ -14,14 +14,15 @@ from app.models.reasoning_logs import ReasoningLog, ChainOfThought
 from app.api.api_v1.endpoints.websocket import manager
 from agents import function_tool
 
-async def _emit_log(
+@function_tool
+async def emit_log(
     agent_name: str,
     log_text: str,
     incident_id: Optional[str] = None,
     log_level: str = "INFO"
 ) -> str:
-    """
-    Saves an agent reasoning log to the database and broadcasts it via WebSocket.
+    """Saves an agent reasoning log to the database and broadcasts it via WebSocket.
+    Use this tool to submit user-facing reasoning logs.
     """
     db_incident_id = None
     if incident_id:
@@ -59,21 +60,14 @@ async def _emit_log(
     
     return f"Log emitted for {agent_name} (ID: {log_entry.id})"
 
-# Decorate for agents
-emit_log = function_tool(_emit_log)
-emit_log.description = (
-    "Saves an agent reasoning log to the database and broadcasts it via WebSocket. "
-    "Use this tool to submit user-facing reasoning logs."
-)
 
-
-async def _persist_chain_of_thought(
+@function_tool
+async def persist_chain_of_thought(
     agent_name: str,
     cot_steps: str,
     incident_id: Optional[str] = None
 ) -> str:
-    """
-    Saves a detailed LLM chain-of-thought (CoT) step-by-step reasoning trace to the database.
+    """Saves a detailed LLM chain-of-thought (CoT) step-by-step reasoning trace to the database.
     This is used for detailed deep-dive observability of the agent pipeline.
     """
     db_incident_id = None
@@ -96,11 +90,5 @@ async def _persist_chain_of_thought(
         
     return f"Chain of Thought persisted for {agent_name} (ID: {cot_entry.id})"
 
-# Decorate for agents
-persist_chain_of_thought = function_tool(_persist_chain_of_thought)
-persist_chain_of_thought.description = (
-    "Saves a detailed LLM chain-of-thought (CoT) step-by-step reasoning trace to the database. "
-    "This is used for detailed deep-dive observability of the agent pipeline."
-)
 
 

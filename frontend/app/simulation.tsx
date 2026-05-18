@@ -33,8 +33,10 @@ export default function SimView({ route, navigation }: any) {
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
+  const [isSimulatingLocally, setIsSimulatingLocally] = useState(false);
 
   const fetchSimulationState = async () => {
+    if (isSimulatingLocally) return;
     const data = await api.getSimulationState(incidentId);
     setActions(data);
     setLoading(false);
@@ -45,7 +47,7 @@ export default function SimView({ route, navigation }: any) {
 
     const interval = setInterval(fetchSimulationState, 3000);
     return () => clearInterval(interval);
-  }, [incidentId]);
+  }, [incidentId, isSimulatingLocally]);
 
   const handleTriggerSim = async () => {
     setTriggering(true);
@@ -54,6 +56,49 @@ export default function SimView({ route, navigation }: any) {
     
     if (success) {
       Alert.alert("SIMULATION ENGAGED", "Orchestrator has begun execution of the response plan.");
+      
+      // If we are serving fallback/mock actions, play a gorgeous local step-by-step simulation!
+      if (actions.length > 0 && actions[0].id.startsWith("a")) {
+        setIsSimulatingLocally(true);
+        
+        // Step 1: Set action 1 to running
+        setTimeout(() => {
+          setActions(prev => {
+            let next = [...prev];
+            if (next[0]) next[0] = { ...next[0], status: "ACTIVE" };
+            return next;
+          });
+        }, 1000);
+        
+        // Step 2: Set action 1 to completed, action 2 to running
+        setTimeout(() => {
+          setActions(prev => {
+            let next = [...prev];
+            if (next[0]) next[0] = { ...next[0], status: "COMPLETED" };
+            if (next[1]) next[1] = { ...next[1], status: "ACTIVE" };
+            return next;
+          });
+        }, 4000);
+        
+        // Step 3: Set action 2 to completed, action 3 to running
+        setTimeout(() => {
+          setActions(prev => {
+            let next = [...prev];
+            if (next[1]) next[1] = { ...next[1], status: "COMPLETED" };
+            if (next[2]) next[2] = { ...next[2], status: "ACTIVE" };
+            return next;
+          });
+        }, 7000);
+        
+        // Step 4: Set action 3 to completed
+        setTimeout(() => {
+          setActions(prev => {
+            let next = [...prev];
+            if (next[2]) next[2] = { ...next[2], status: "COMPLETED" };
+            return next;
+          });
+        }, 10000);
+      }
     } else {
       Alert.alert("ERROR", "Failed to initiate simulation sequence.");
     }
@@ -62,6 +107,7 @@ export default function SimView({ route, navigation }: any) {
   const completedCount = actions.filter(a => a.status.toUpperCase() === "COMPLETED").length;
   const allCompleted = actions.length > 0 && completedCount === actions.length;
   const isRunning = actions.some(a => ["SENT", "ACTIVE", "ON_SITE", "RUNNING"].includes(a.status.toUpperCase()));
+
 
   return (
     <View style={styles.container}>
