@@ -1,0 +1,670 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.0.3, pluggy-1.6.0 -- D:\Hackathon-2026\backend\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\Hackathon-2026\backend
+configfile: pyproject.toml
+plugins: anyio-4.13.0, asyncio-1.3.0, mock-3.15.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 9 items
+
+app/tests/test_full_pipeline_live.py::test_mock_signal_data_quality 
+============================================================
+  PART 1: Mock Signal Data Quality Check
+============================================================
+
+  Checking ISLAMABAD (3 signals)...
+    [OK] Signal 1: source=social_mock lat=33.7294 lng=73.0931
+    [OK] Signal 2: source=traffic_api lat=33.73 lng=73.094
+    [OK] Signal 3: source=user_gps lat=33.684 lng=73.047
+
+  Checking KARACHI (3 signals)...
+    [OK] Signal 1: source=weather_api lat=24.8138 lng=67.0336
+    [OK] Signal 2: source=traffic_api lat=24.815 lng=67.035
+    [OK] Signal 3: source=user_gps lat=24.8145 lng=67.034
+
+  [OK] All mock signal data is valid.
+PASSED
+app/tests/test_full_pipeline_live.py::test_google_maps_geocoding_api 
+============================================================
+  PART 2a: Google Maps Geocoding API (reverse_geocode)
+============================================================
+  Input: lat=24.8138, lng=67.0336
+  Result: Plot 50, Block 5 Old Clifton, Karachi, 75600, Pakistan
+  [OK] Geocode result: Plot 50, Block 5 Old Clifton, Karachi, 75600, Pakistan
+PASSED
+app/tests/test_full_pipeline_live.py::test_google_maps_traffic_api 
+============================================================
+  PART 2b: Google Maps Distance Matrix API (get_traffic_matrix)
+============================================================
+  Origin: 24.8138,67.0336, Destination: 24.8600,67.0100
+  Result: {
+  "status": "real",
+  "distance": "6.8 km",
+  "duration": "18 mins",
+  "duration_in_traffic": "17 mins",
+  "raw": {
+    "destination_addresses": [
+      "MS Office Building, Chand Bibi Rd, New Labour Colony Nanakwara, Karachi, Pakistan"
+    ],
+    "origin_addresses": [
+      "Plot 50, Block 5 Old Clifton, Karachi, 75600, Pakistan"
+    ],
+    "rows": [
+      {
+        "elements": [
+          {
+            "distance": {
+              "text": "6.8 km",
+              "value": 6822
+            },
+            "duration": {
+              "text": "18 mins",
+              "value": 1058
+            },
+            "duration_in_traffic": {
+              "text": "17 mins",
+              "value": 1013
+            },
+            "status": "OK"
+          }
+        ]
+      }
+    ],
+    "status": "OK"
+  }
+}
+  [OK] Traffic API responded with status=real
+PASSED
+app/tests/test_full_pipeline_live.py::test_serp_api_news_search 
+============================================================
+  PART 2c: SerpApi News Search (search_local_news)
+============================================================
+  Query: 'Karachi flood alert monsoon'
+  Result type: <class 'list'> | Sample: [{'title': 'Advisories', 'snippet': 'FLASH FLOOD WARNING - (7th & 8th April 2026). 06-04-2026. View · MORE RAIN-WINDSTORM/ THUNDERSTORM (WITH ISOLATED HEAVY FALLS/ HAILSTORMS) PREDICTED DURING ...', '
+  [OK] SerpApi responded successfully.
+PASSED
+app/tests/test_full_pipeline_live.py::test_signal_agent_weather 
+============================================================
+  PART 3a: Signal Agent -- weather_api signal
+============================================================
+  Input: {
+  "source": "weather_api",
+  "lat": 24.8138,
+  "lng": 67.0336,
+  "type": "flood_risk",
+  "raw_payload": {
+    "alert": "Extreme Precipitation",
+    "intensity_mm_hr": 45.0,
+    "description": "Red Alert: Severe monsoon system over Clifton"
+  }
+}
+  Output: {
+  "signal_id": "e9f9f8b8-cd73-4d8a-bb63-01e0493fef25",
+  "location": "Plot 50, Block 5 Old Clifton, Karachi",
+  "coordinates": [
+    24.8138,
+    67.0336
+  ],
+  "type": "flood_risk",
+  "source": "weather_api",
+  "credibility_score": 0.95,
+  "conflict_flag": false,
+  "conflict_note": null,
+  "raw_payload": {
+    "alert": "Extreme Precipitation",
+    "intensity_mm_hr": 45,
+    "description": "Red Alert: Severe monsoon system over Clifton"
+  },
+  "processed_at": "2023-10-05T12:34:56Z",
+  "agent": "signal_agent",
+  "status": "PROCESSED"
+}
+  [OK] Signal Agent correctly scored weather_api signal.
+PASSED
+app/tests/test_full_pipeline_live.py::test_signal_agent_gps 
+============================================================
+  PART 3b: Signal Agent -- user_gps signal with reverse geocode
+============================================================
+  Input: {
+  "source": "user_gps",
+  "lat": 24.8145,
+  "lng": 67.034,
+  "type": "flood",
+  "raw_payload": {
+    "comment": "Cars floating near Sea View"
+  }
+}
+  Output: {
+  "signal_id": "fb7f6544-5eaf-4dcb-849c-59a886f0d1bc",
+  "location": "Old Clifton Karachi",
+  "coordinates": [
+    24.8145,
+    67.034
+  ],
+  "type": "flood",
+  "source": "user_gps",
+  "credibility_score": 0.7,
+  "conflict_flag": false,
+  "conflict_note": null,
+  "raw_payload": {
+    "source": "user_gps",
+    "lat": 24.8145,
+    "lng": 67.034,
+    "type": "flood",
+    "raw_payload": {
+      "comment": "Cars floating near Sea View"
+    }
+  },
+  "processed_at": "2023-10-03T10:15:45Z",
+  "agent": "signal_agent",
+  "status": "PROCESSED"
+}
+  [OK] Signal Agent geocoded GPS to: Old Clifton Karachi
+PASSED
+app/tests/test_full_pipeline_live.py::test_full_pipeline_karachi 
+============================================================
+  PART 4: FULL PIPELINE E2E -- SCENARIO_KARACHI
+============================================================
+
+  [Step 1] Injecting SCENARIO_KARACHI signals into DB...
+2026-05-17 21:28:50,703 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+2026-05-17 21:28:50,703 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-05-17 21:28:51,689 INFO sqlalchemy.engine.Engine select current_schema()
+2026-05-17 21:28:51,689 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-05-17 21:28:52,915 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+2026-05-17 21:28:52,915 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-05-17 21:28:53,835 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:28:53,848 INFO sqlalchemy.engine.Engine INSERT INTO signals (id, source, type, lat, lng, location, raw_payload, credibility_score, conflict_flag, structured_json, created_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::FLOAT, $5::FLOAT, $6::VARCHAR, $7::JSON, $8::FLOAT, $9::BOOLEAN, $10::JSON, $11::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:28:53,849 INFO sqlalchemy.engine.Engine [generated in 0.00105s] (UUID('470ab998-0265-40bd-88a9-78d4ff29e493'), 'weather_api', 'flood_risk', 24.8138, 67.0336, None, '{"alert": "Extreme Precipitation", "intensity_mm_hr": 45.0, "description": "Red Alert: Severe monsoon system over Clifton"}', None, False, '{}', datetime.datetime(2026, 5, 17, 16, 28, 47, 181882))
+2026-05-17 21:28:54,560 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:28:54,867 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:28:54,877 INFO sqlalchemy.engine.Engine SELECT signals.id, signals.source, signals.type, signals.lat, signals.lng, signals.location, signals.raw_payload, signals.credibility_score, signals.conflict_flag, signals.structured_json, signals.created_at 
+FROM signals 
+WHERE signals.id = $1::UUID
+2026-05-17 21:28:54,878 INFO sqlalchemy.engine.Engine [generated in 0.00088s] (UUID('470ab998-0265-40bd-88a9-78d4ff29e493'),)
+    [OK] Inserted: weather_api (ID: 470ab998-0265-40bd-88a9-78d4ff29e493)
+2026-05-17 21:28:55,702 INFO sqlalchemy.engine.Engine INSERT INTO signals (id, source, type, lat, lng, location, raw_payload, credibility_score, conflict_flag, structured_json, created_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::FLOAT, $5::FLOAT, $6::VARCHAR, $7::JSON, $8::FLOAT, $9::BOOLEAN, $10::JSON, $11::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:28:55,702 INFO sqlalchemy.engine.Engine [cached since 1.855s ago] (UUID('0be2434c-6215-46a5-a129-b6b39e368f77'), 'traffic_api', 'traffic_blockage', 24.815, 67.035, None, '{"status": "BLOCKED", "congestion": "Critical", "location": "Khayaban-e-Iqbal"}', None, False, '{}', datetime.datetime(2026, 5, 17, 16, 28, 55, 700408))
+2026-05-17 21:28:55,950 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:28:56,193 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:28:56,194 INFO sqlalchemy.engine.Engine SELECT signals.id, signals.source, signals.type, signals.lat, signals.lng, signals.location, signals.raw_payload, signals.credibility_score, signals.conflict_flag, signals.structured_json, signals.created_at 
+FROM signals 
+WHERE signals.id = $1::UUID
+2026-05-17 21:28:56,194 INFO sqlalchemy.engine.Engine [cached since 1.317s ago] (UUID('0be2434c-6215-46a5-a129-b6b39e368f77'),)
+    [OK] Inserted: traffic_api (ID: 0be2434c-6215-46a5-a129-b6b39e368f77)
+2026-05-17 21:28:56,811 INFO sqlalchemy.engine.Engine INSERT INTO signals (id, source, type, lat, lng, location, raw_payload, credibility_score, conflict_flag, structured_json, created_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::FLOAT, $5::FLOAT, $6::VARCHAR, $7::JSON, $8::FLOAT, $9::BOOLEAN, $10::JSON, $11::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:28:56,812 INFO sqlalchemy.engine.Engine [cached since 2.964s ago] (UUID('e4bceb98-6ac1-4183-ac71-f81d05ea0ac2'), 'user_gps', 'flood', 24.8145, 67.034, None, '{"comment": "Cars floating near Sea View"}', None, False, '{}', datetime.datetime(2026, 5, 17, 16, 28, 56, 810374))
+2026-05-17 21:28:57,119 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:28:57,426 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:28:57,428 INFO sqlalchemy.engine.Engine SELECT signals.id, signals.source, signals.type, signals.lat, signals.lng, signals.location, signals.raw_payload, signals.credibility_score, signals.conflict_flag, signals.structured_json, signals.created_at 
+FROM signals 
+WHERE signals.id = $1::UUID
+2026-05-17 21:28:57,429 INFO sqlalchemy.engine.Engine [cached since 2.551s ago] (UUID('e4bceb98-6ac1-4183-ac71-f81d05ea0ac2'),)
+    [OK] Inserted: user_gps (ID: e4bceb98-6ac1-4183-ac71-f81d05ea0ac2)
+2026-05-17 21:28:58,038 INFO sqlalchemy.engine.Engine ROLLBACK
+
+  [Step 2] Running Signal Agent for each signal...
+    [OK] Signal Agent: source=weather_api credibility=0.95
+    [OK] Signal Agent: source=traffic_api credibility=0.9
+    [OK] Signal Agent: source=user_gps credibility=0.7
+
+  [Step 3] Running Detection Agent...
+    Confirmed: True
+    Confidence: 0.95
+    Location: Old Clifton, Karachi
+    Status: CONFIRMED
+
+  [Step 4] Running Severity Agent...
+    Severity Score: 7.5
+    Affected Radius: 1.2 km
+    Peak ETA: 30–45 mins
+    Risk Factors: ['Traffic blockage reported (+2)', 'Rainfall intensity 28.4mm/hr (+1)', 'Detection confidence 0.95 (+1)', 'Extreme precipitation alert issued (+1)', 'Major road or arterial highway likely blocked (+2)', 'High-density area nearby (+1)']
+
+  [Step 5] Persisting Incident to DB...
+2026-05-17 21:29:40,618 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:40,622 INFO sqlalchemy.engine.Engine INSERT INTO incidents (id, location, lat, lng, severity_score, confidence, affected_radius_km, estimated_population, peak_impact_eta, status, risk_factors, created_at) VALUES ($1::UUID, $2::VARCHAR, $3::FLOAT, $4::FLOAT, $5::FLOAT, $6::FLOAT, $7::FLOAT, $8::INTEGER, $9::VARCHAR, $10::VARCHAR, $11::JSON, $12::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:29:40,622 INFO sqlalchemy.engine.Engine [generated in 0.00061s] (UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'Old Clifton, Karachi', 24.8145, 67.034, 7.5, 0.95, 1.2, 0, None, 'confirmed', 'null', datetime.datetime(2026, 5, 17, 16, 29, 40, 617985))
+2026-05-17 21:29:41,551 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:29:41,862 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:41,865 INFO sqlalchemy.engine.Engine SELECT incidents.id, incidents.location, incidents.lat, incidents.lng, incidents.severity_score, incidents.confidence, incidents.affected_radius_km, incidents.estimated_population, incidents.peak_impact_eta, incidents.status, incidents.risk_factors, incidents.created_at 
+FROM incidents 
+WHERE incidents.id = $1::UUID
+2026-05-17 21:29:41,866 INFO sqlalchemy.engine.Engine [generated in 0.00069s] (UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'),)
+    [OK] Incident created: ID=a65dffe8-ffdd-4188-83c2-853e2941c79a
+2026-05-17 21:29:42,796 INFO sqlalchemy.engine.Engine INSERT INTO reasoning_logs (id, incident_id, agent_name, phase, log_text, log_level, created_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:29:42,796 INFO sqlalchemy.engine.Engine [generated in 0.00054s] (UUID('07dc8fdf-a661-497a-91c4-2da1ca3fc086'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'severity_agent', 'SEVERITY', 'Detected flood risk confirmed in Old Clifton, Karachi. The weather API indicates a Heavy Rainfall alert with an intensity of 28.4 mm/hr, expected to  ... (361 characters truncated) ... 1, normalized to a severity score of 7.5. The affected radius is estimated at 1.2 km in radius, with population density in the area being 10,000/km².', 'CRITICAL', datetime.datetime(2026, 5, 17, 16, 29, 42, 792964))
+2026-05-17 21:29:43,317 INFO sqlalchemy.engine.Engine COMMIT
+    [OK] Reasoning log persisted.
+
+  [Step 6] Running Resource Allocation Agent...
+2026-05-17 21:29:46,831 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:46,835 INFO sqlalchemy.engine.Engine INSERT INTO resources (id, type, total_count, available_count, assigned_to_incident, location, updated_at) VALUES ($1::UUID, $2::VARCHAR, $3::INTEGER, $4::INTEGER, $5::UUID, $6::VARCHAR, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:29:46,835 INFO sqlalchemy.engine.Engine [generated in 0.00069s] (UUID('d442e797-d8b8-4bee-9010-8cf01be468bd'), 'drainage_crew', 3, 0, UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'En Route', datetime.datetime(2026, 5, 17, 16, 29, 46, 830802))
+2026-05-17 21:29:47,494 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:29:47,800 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:47,804 INFO sqlalchemy.engine.Engine SELECT resources.id, resources.type, resources.total_count, resources.available_count, resources.assigned_to_incident, resources.location, resources.updated_at 
+FROM resources 
+WHERE resources.id = $1::UUID
+2026-05-17 21:29:47,805 INFO sqlalchemy.engine.Engine [generated in 0.00164s] (UUID('d442e797-d8b8-4bee-9010-8cf01be468bd'),)
+2026-05-17 21:29:48,945 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-17 21:29:50,360 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:50,361 INFO sqlalchemy.engine.Engine INSERT INTO resources (id, type, total_count, available_count, assigned_to_incident, location, updated_at) VALUES ($1::UUID, $2::VARCHAR, $3::INTEGER, $4::INTEGER, $5::UUID, $6::VARCHAR, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:29:50,362 INFO sqlalchemy.engine.Engine [cached since 3.527s ago] (UUID('ddb0ecbc-8645-4fa8-878a-460941d96f56'), 'police_unit', 4, 0, UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'En Route', datetime.datetime(2026, 5, 17, 16, 29, 46, 859000))
+2026-05-17 21:29:50,364 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:50,365 INFO sqlalchemy.engine.Engine INSERT INTO resources (id, type, total_count, available_count, assigned_to_incident, location, updated_at) VALUES ($1::UUID, $2::VARCHAR, $3::INTEGER, $4::INTEGER, $5::UUID, $6::VARCHAR, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:29:50,366 INFO sqlalchemy.engine.Engine [cached since 3.531s ago] (UUID('dbb75ad8-f687-44f3-96d1-378ab630a4a1'), 'rescue_team', 3, 0, UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'En Route', datetime.datetime(2026, 5, 17, 16, 29, 46, 839852))
+2026-05-17 21:29:50,370 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:50,371 INFO sqlalchemy.engine.Engine INSERT INTO resources (id, type, total_count, available_count, assigned_to_incident, location, updated_at) VALUES ($1::UUID, $2::VARCHAR, $3::INTEGER, $4::INTEGER, $5::UUID, $6::VARCHAR, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:29:50,372 INFO sqlalchemy.engine.Engine [cached since 3.538s ago] (UUID('fb1ddced-3897-4ff7-a8ab-b632e35efdaf'), 'ambulance', 5, 0, UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'En Route', datetime.datetime(2026, 5, 17, 16, 29, 46, 848680))
+2026-05-17 21:29:51,389 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:29:51,389 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:29:51,395 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:29:51,694 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:51,696 INFO sqlalchemy.engine.Engine SELECT resources.id, resources.type, resources.total_count, resources.available_count, resources.assigned_to_incident, resources.location, resources.updated_at 
+FROM resources 
+WHERE resources.id = $1::UUID
+2026-05-17 21:29:51,696 INFO sqlalchemy.engine.Engine [cached since 3.894s ago] (UUID('ddb0ecbc-8645-4fa8-878a-460941d96f56'),)
+2026-05-17 21:29:51,701 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:51,703 INFO sqlalchemy.engine.Engine SELECT resources.id, resources.type, resources.total_count, resources.available_count, resources.assigned_to_incident, resources.location, resources.updated_at 
+FROM resources 
+WHERE resources.id = $1::UUID
+2026-05-17 21:29:51,704 INFO sqlalchemy.engine.Engine [cached since 3.901s ago] (UUID('fb1ddced-3897-4ff7-a8ab-b632e35efdaf'),)
+2026-05-17 21:29:51,706 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:29:51,707 INFO sqlalchemy.engine.Engine SELECT resources.id, resources.type, resources.total_count, resources.available_count, resources.assigned_to_incident, resources.location, resources.updated_at 
+FROM resources 
+WHERE resources.id = $1::UUID
+2026-05-17 21:29:51,708 INFO sqlalchemy.engine.Engine [cached since 3.905s ago] (UUID('dbb75ad8-f687-44f3-96d1-378ab630a4a1'),)
+2026-05-17 21:29:52,308 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-17 21:29:52,589 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-17 21:29:52,593 INFO sqlalchemy.engine.Engine ROLLBACK
+    Resource Agent output: {
+  "allocation_id": "cbf37f8a-1dd8-4b6e-91b6-a3b3e657b7a4",
+  "incident_id": "a65dffe8-ffdd-4188-83c2-853e2941c79a",
+  "allocations": {
+    "drainage_crew": 3,
+    "rescue_team": 3,
+    "ambulance": 
+
+  [Step 7] Running Planning Agent...
+2026-05-17 21:30:03,022 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:03,034 INFO sqlalchemy.engine.Engine INSERT INTO actions (id, incident_id, type, status, predicted_side_effects, action_metadata, updated_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::JSON, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:03,035 INFO sqlalchemy.engine.Engine [generated in 0.00127s] (UUID('f768605d-3ebe-45aa-8653-d83a20fdeca2'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'ALERT_CITIZENS', 'PENDING', '', '{}', datetime.datetime(2026, 5, 17, 16, 30, 3, 20296))
+2026-05-17 21:30:03,043 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:03,044 INFO sqlalchemy.engine.Engine INSERT INTO actions (id, incident_id, type, status, predicted_side_effects, action_metadata, updated_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::JSON, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:03,045 INFO sqlalchemy.engine.Engine [cached since 0.01145s ago] (UUID('c10d127d-044c-45f4-89fe-943788a27a43'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'REROUTE_TRAFFIC', 'PENDING', 'Will cause minor traffic backup on alternate route.', '{}', datetime.datetime(2026, 5, 17, 16, 30, 3, 40132))
+2026-05-17 21:30:03,049 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:03,050 INFO sqlalchemy.engine.Engine INSERT INTO actions (id, incident_id, type, status, predicted_side_effects, action_metadata, updated_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::JSON, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:03,051 INFO sqlalchemy.engine.Engine [cached since 0.01711s ago] (UUID('b8fab213-28e9-4dce-aad4-98de8afb7cd3'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'DISPATCH_DRAINAGE', 'PENDING', 'Potential delays in crew arrival due to traffic.', '{}', datetime.datetime(2026, 5, 17, 16, 30, 3, 48241))
+2026-05-17 21:30:03,056 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:03,059 INFO sqlalchemy.engine.Engine INSERT INTO actions (id, incident_id, type, status, predicted_side_effects, action_metadata, updated_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::JSON, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:03,060 INFO sqlalchemy.engine.Engine [cached since 0.02645s ago] (UUID('ab0ba76a-8507-479d-8e3b-4b2833eae451'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'DISPATCH_RESCUE', 'PENDING', 'Will strain available medical resources.', '{}', datetime.datetime(2026, 5, 17, 16, 30, 3, 54201))
+2026-05-17 21:30:03,884 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:03,885 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:03,889 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:03,892 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:04,110 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:04,113 INFO sqlalchemy.engine.Engine SELECT actions.id, actions.incident_id, actions.type, actions.status, actions.predicted_side_effects, actions.action_metadata, actions.updated_at 
+FROM actions 
+WHERE actions.id = $1::UUID
+2026-05-17 21:30:04,114 INFO sqlalchemy.engine.Engine [generated in 0.00072s] (UUID('c10d127d-044c-45f4-89fe-943788a27a43'),)
+2026-05-17 21:30:04,118 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:04,119 INFO sqlalchemy.engine.Engine SELECT actions.id, actions.incident_id, actions.type, actions.status, actions.predicted_side_effects, actions.action_metadata, actions.updated_at 
+FROM actions 
+WHERE actions.id = $1::UUID
+2026-05-17 21:30:04,119 INFO sqlalchemy.engine.Engine [cached since 0.005756s ago] (UUID('f768605d-3ebe-45aa-8653-d83a20fdeca2'),)
+2026-05-17 21:30:04,124 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:04,126 INFO sqlalchemy.engine.Engine SELECT actions.id, actions.incident_id, actions.type, actions.status, actions.predicted_side_effects, actions.action_metadata, actions.updated_at 
+FROM actions 
+WHERE actions.id = $1::UUID
+2026-05-17 21:30:04,126 INFO sqlalchemy.engine.Engine [cached since 0.01308s ago] (UUID('b8fab213-28e9-4dce-aad4-98de8afb7cd3'),)
+2026-05-17 21:30:04,130 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:04,131 INFO sqlalchemy.engine.Engine SELECT actions.id, actions.incident_id, actions.type, actions.status, actions.predicted_side_effects, actions.action_metadata, actions.updated_at 
+FROM actions 
+WHERE actions.id = $1::UUID
+2026-05-17 21:30:04,131 INFO sqlalchemy.engine.Engine [cached since 0.01792s ago] (UUID('ab0ba76a-8507-479d-8e3b-4b2833eae451'),)
+2026-05-17 21:30:04,837 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-17 21:30:04,845 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-17 21:30:04,846 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-17 21:30:04,858 INFO sqlalchemy.engine.Engine ROLLBACK
+    Planning Agent output: {
+  "plan_id": "c8b68d76-b6d5-4eb6-ae1d-6a6b19a2e09f",
+  "incident_id": "a65dffe8-ffdd-4188-83c2-853e2941c79a",
+  "actions_created": [
+    {
+      "type": "ALERT_CITIZENS",
+      "metadata": "Warning: Heavy rain and flooding in G-10 Sector. Take necessary precautions."
+    },
+    {
+      "type": "RE
+
+  [Step 8] Running Notification Agent...
+2026-05-17 21:30:22,358 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:22,364 INFO sqlalchemy.engine.Engine INSERT INTO notifications (id, incident_id, stakeholder, message, sent_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:22,364 INFO sqlalchemy.engine.Engine [generated in 0.00126s] (UUID('9f6da358-bbd0-4a9d-9554-4571adfbfef4'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'public', 'Flood alert in Old Clifton, Karachi. Avoid main roads. Use nearby alternate routes.', datetime.datetime(2026, 5, 17, 16, 30, 22, 354100))
+2026-05-17 21:30:22,376 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:22,378 INFO sqlalchemy.engine.Engine INSERT INTO notifications (id, incident_id, stakeholder, message, sent_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:22,378 INFO sqlalchemy.engine.Engine [cached since 0.01526s ago] (UUID('8ce40848-33b5-4974-b1c5-b6f98e4c743e'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'hospital', 'Prepare 10 trauma/hypothermia beds. Flood victims may arrive in 30–45 mins.', datetime.datetime(2026, 5, 17, 16, 30, 22, 375055))
+2026-05-17 21:30:22,382 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:22,383 INFO sqlalchemy.engine.Engine INSERT INTO notifications (id, incident_id, stakeholder, message, sent_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:22,383 INFO sqlalchemy.engine.Engine [cached since 0.02029s ago] (UUID('9b094099-1398-4a03-b7ea-e32a6512b54e'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'utility', 'Water mains suspected in Old Clifton area. Dispatch inspection team for assessment.', datetime.datetime(2026, 5, 17, 16, 30, 22, 381989))
+2026-05-17 21:30:22,388 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:22,389 INFO sqlalchemy.engine.Engine INSERT INTO notifications (id, incident_id, stakeholder, message, sent_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:22,390 INFO sqlalchemy.engine.Engine [cached since 0.02679s ago] (UUID('d5572703-43bf-47ad-8ebb-9723e78e4d67'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'traffic_auth', 'Activate alternate routing: Old Clifton main roads -> surrounding secondary routes.', datetime.datetime(2026, 5, 17, 16, 30, 22, 385928))
+2026-05-17 21:30:23,130 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:23,132 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:23,162 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:23,164 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:25,602 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:25,602 INFO sqlalchemy.engine.Engine INSERT INTO notifications (id, incident_id, stakeholder, message, sent_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:25,603 INFO sqlalchemy.engine.Engine [cached since 3.24s ago] (UUID('f51b2d36-3b31-4680-a25a-94730a61a6a1'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'emergency_services', 'Deploy 2 rescue teams to GPS: 24.8552, 67.0419. Incident ID: a65dffe8-ffdd-4188-83c2-853e2941c79a.', datetime.datetime(2026, 5, 17, 16, 30, 22, 393183))
+2026-05-17 21:30:25,660 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:25,661 INFO sqlalchemy.engine.Engine INSERT INTO notifications (id, incident_id, stakeholder, message, sent_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:25,661 INFO sqlalchemy.engine.Engine [cached since 3.298s ago] (UUID('6028caca-1c8a-4cd2-aa1f-cae4d49fd162'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'command_center', 'Crisis Level 7.5 declared. Old Clifton Urban Flood. 12,000 residents affected. Response activated.', datetime.datetime(2026, 5, 17, 16, 30, 22, 401387))
+2026-05-17 21:30:26,532 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:26,812 INFO sqlalchemy.engine.Engine COMMIT
+    Notification result (first 400 chars): The following notifications have been sent successfully for the flood incident in Old Clifton, Karachi:
+
+1. **Public**: "Flood alert in Old Clifton, Karachi. Avoid main roads. Use nearby alternate routes."
+2. **Hospital**: "Prepare 10 trauma/hypothermia beds. Flood victims may arrive in 30–45 mins."
+3. **Utility Company**: "Water mains suspected in Old Clifton area. Dispatch inspection team for as
+
+  [Step 9] Verifying DB state...
+2026-05-17 21:30:32,256 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:32,265 INFO sqlalchemy.engine.Engine SELECT incidents.id, incidents.location, incidents.lat, incidents.lng, incidents.severity_score, incidents.confidence, incidents.affected_radius_km, incidents.estimated_population, incidents.peak_impact_eta, incidents.status, incidents.risk_factors, incidents.created_at 
+FROM incidents
+2026-05-17 21:30:32,266 INFO sqlalchemy.engine.Engine [generated in 0.00143s] ()
+2026-05-17 21:30:33,095 INFO sqlalchemy.engine.Engine SELECT reasoning_logs.id, reasoning_logs.incident_id, reasoning_logs.agent_name, reasoning_logs.phase, reasoning_logs.log_text, reasoning_logs.log_level, reasoning_logs.created_at 
+FROM reasoning_logs
+2026-05-17 21:30:33,095 INFO sqlalchemy.engine.Engine [generated in 0.00044s] ()
+2026-05-17 21:30:33,632 INFO sqlalchemy.engine.Engine SELECT actions.id, actions.incident_id, actions.type, actions.status, actions.predicted_side_effects, actions.action_metadata, actions.updated_at 
+FROM actions
+2026-05-17 21:30:33,633 INFO sqlalchemy.engine.Engine [generated in 0.00235s] ()
+2026-05-17 21:30:34,431 INFO sqlalchemy.engine.Engine SELECT resources.id, resources.type, resources.total_count, resources.available_count, resources.assigned_to_incident, resources.location, resources.updated_at 
+FROM resources
+2026-05-17 21:30:34,431 INFO sqlalchemy.engine.Engine [generated in 0.00044s] ()
+    Total incidents in DB: 6
+    Total reasoning logs in DB: 7
+    Total actions in DB: 19
+    Total resources in DB: 16
+2026-05-17 21:30:34,897 INFO sqlalchemy.engine.Engine ROLLBACK
+
+  [Step 10] Triggering Simulation Engine...
+2026-05-17 21:30:35,120 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:35,123 INFO sqlalchemy.engine.Engine INSERT INTO actions (id, incident_id, type, status, predicted_side_effects, action_metadata, updated_at) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::JSON, $7::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:30:35,128 INFO sqlalchemy.engine.Engine [cached since 32.1s ago] (UUID('bea93b12-e31a-46fe-9f93-8566922ad72c'), UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), 'ALERT_CITIZENS', 'PENDING', 'May cause evacuation traffic on alternate routes.', '{}', datetime.datetime(2026, 5, 17, 16, 30, 35, 119014))
+2026-05-17 21:30:35,579 INFO sqlalchemy.engine.Engine COMMIT
+2026-05-17 21:30:35,802 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:35,803 INFO sqlalchemy.engine.Engine SELECT actions.id, actions.incident_id, actions.type, actions.status, actions.predicted_side_effects, actions.action_metadata, actions.updated_at 
+FROM actions 
+WHERE actions.id = $1::UUID
+2026-05-17 21:30:35,803 INFO sqlalchemy.engine.Engine [cached since 31.69s ago] (UUID('bea93b12-e31a-46fe-9f93-8566922ad72c'),)
+    [OK] Created test action: bea93b12-e31a-46fe-9f93-8566922ad72c
+2026-05-17 21:30:36,262 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO: [SIM] Starting lifecycle simulation for incident a65dffe8-ffdd-4188-83c2-853e2941c79a
+2026-05-17 21:30:36,493 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:36,494 INFO sqlalchemy.engine.Engine SELECT actions.id, actions.incident_id, actions.type, actions.status, actions.predicted_side_effects, actions.action_metadata, actions.updated_at 
+FROM actions 
+WHERE actions.incident_id = $1::UUID AND actions.id IN ($2::UUID)
+2026-05-17 21:30:36,495 INFO sqlalchemy.engine.Engine [generated in 0.00037s] (UUID('a65dffe8-ffdd-4188-83c2-853e2941c79a'), UUID('bea93b12-e31a-46fe-9f93-8566922ad72c'))
+INFO: [SIM] Transitioning 1 actions to: SENT
+2026-05-17 21:30:39,186 INFO sqlalchemy.engine.Engine UPDATE actions SET status=$1::VARCHAR, updated_at=$2::TIMESTAMP WITHOUT TIME ZONE WHERE actions.id = $3::UUID
+2026-05-17 21:30:39,188 INFO sqlalchemy.engine.Engine [generated in 0.00294s] ('SENT', datetime.datetime(2026, 5, 17, 16, 30, 39, 182579), UUID('bea93b12-e31a-46fe-9f93-8566922ad72c'))
+2026-05-17 21:30:39,729 INFO sqlalchemy.engine.Engine COMMIT
+EVENT_BROADCAST: [2026-05-17T16:30:39.949307] Incident a65dffe8-ffdd-4188-83c2-853e2941c79a -> SENT for actions [UUID('bea93b12-e31a-46fe-9f93-8566922ad72c')]
+INFO: [SIM] Transitioning 1 actions to: ACTIVE
+2026-05-17 21:30:41,961 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:41,962 INFO sqlalchemy.engine.Engine UPDATE actions SET status=$1::VARCHAR, updated_at=$2::TIMESTAMP WITHOUT TIME ZONE WHERE actions.id = $3::UUID
+2026-05-17 21:30:41,963 INFO sqlalchemy.engine.Engine [cached since 2.777s ago] ('ACTIVE', datetime.datetime(2026, 5, 17, 16, 30, 41, 961328), UUID('bea93b12-e31a-46fe-9f93-8566922ad72c'))
+2026-05-17 21:30:42,793 INFO sqlalchemy.engine.Engine COMMIT
+EVENT_BROADCAST: [2026-05-17T16:30:43.020537] Incident a65dffe8-ffdd-4188-83c2-853e2941c79a -> ACTIVE for actions [UUID('bea93b12-e31a-46fe-9f93-8566922ad72c')]
+INFO: [SIM] Transitioning 1 actions to: ON_SITE
+2026-05-17 21:30:45,027 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:45,028 INFO sqlalchemy.engine.Engine UPDATE actions SET status=$1::VARCHAR, updated_at=$2::TIMESTAMP WITHOUT TIME ZONE WHERE actions.id = $3::UUID
+2026-05-17 21:30:45,029 INFO sqlalchemy.engine.Engine [cached since 5.844s ago] ('ON_SITE', datetime.datetime(2026, 5, 17, 16, 30, 45, 27191), UUID('bea93b12-e31a-46fe-9f93-8566922ad72c'))
+2026-05-17 21:30:45,972 INFO sqlalchemy.engine.Engine COMMIT
+EVENT_BROADCAST: [2026-05-17T16:30:46.190505] Incident a65dffe8-ffdd-4188-83c2-853e2941c79a -> ON_SITE for actions [UUID('bea93b12-e31a-46fe-9f93-8566922ad72c')]
+INFO: [SIM] Transitioning 1 actions to: COMPLETED
+2026-05-17 21:30:48,197 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:48,198 INFO sqlalchemy.engine.Engine UPDATE actions SET status=$1::VARCHAR, updated_at=$2::TIMESTAMP WITHOUT TIME ZONE WHERE actions.id = $3::UUID
+2026-05-17 21:30:48,198 INFO sqlalchemy.engine.Engine [cached since 9.013s ago] ('COMPLETED', datetime.datetime(2026, 5, 17, 16, 30, 48, 195709), UUID('bea93b12-e31a-46fe-9f93-8566922ad72c'))
+2026-05-17 21:30:49,080 INFO sqlalchemy.engine.Engine COMMIT
+EVENT_BROADCAST: [2026-05-17T16:30:49.338738] Incident a65dffe8-ffdd-4188-83c2-853e2941c79a -> COMPLETED for actions [UUID('bea93b12-e31a-46fe-9f93-8566922ad72c')]
+INFO: [SIM] Lifecycle simulation for incident a65dffe8-ffdd-4188-83c2-853e2941c79a has reached COMPLETED state.
+2026-05-17 21:30:49,340 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:30:49,345 INFO sqlalchemy.engine.Engine SELECT actions.id, actions.incident_id, actions.type, actions.status, actions.predicted_side_effects, actions.action_metadata, actions.updated_at 
+FROM actions 
+WHERE actions.id = $1::UUID
+2026-05-17 21:30:49,346 INFO sqlalchemy.engine.Engine [generated in 0.00162s] (UUID('bea93b12-e31a-46fe-9f93-8566922ad72c'),)
+    Final action status: COMPLETED
+2026-05-17 21:30:49,950 INFO sqlalchemy.engine.Engine ROLLBACK
+
+  [OK] FULL PIPELINE VERIFIED -- Karachi Scenario PASSED.
+PASSED
+app/tests/test_full_pipeline_live.py::test_verification_agent_false_alarm 
+============================================================
+  PART 5: Verification Agent -- False Alarm Retraction
+============================================================
+  Input: {
+  "trigger": "CONFLICT_FLAG",
+  "incident_location": "G-10 Sector, Islamabad",
+  "incident_center_lat": 33.6844,
+  "incident_center_lng": 73.0479,
+  "detection_confidence": 0.45,
+  "conflicting_signals": [
+    {
+      "type": "flood",
+      "source": "user_gps",
+      "credibility_score": 0.7
+    },
+    {
+      "type": "water_main_burst",
+      "source": "user_gps",
+      "credibility_score": 0.7
+    }
+  ],
+  "detection_id": "3b277282-8a74-4c21-b463-4dbc45db64c7"
+}
+  Output: {
+  "verification_id": "9d6ccf3d-6d43-46f1-8c3f-a3bd891c57f8",
+  "detection_id": "3b277282-8a74-4c21-b463-4dbc45db64c7",
+  "verdict": "CONFIRM",
+  "verification_score": 0.55,
+  "incident_type_confirmed": "flood",
+  "incident_type_override": null,
+  "reclassification_note": null,
+  "retract_alert": false,
+  "evidence_used": [
+    "News confirms flooding in G-10, Islamabad: Heavy rainfall led to severe waterlogging in G-10, operations disrupted (+0.30)",
+    "Traffic fully blocked in G-10 due to flooding conditions (speed = 0 km/h) (+0.35)"
+  ],
+  "reason": "Flooding has been confirmed by local news reports and traffic conditions indicate severe disruptions typical of flooding.",
+  "recommended_action": "Route to appropriate flood response teams.",
+  "processed_at": "2023-10-09T12:45:00Z",
+  "agent": "verification_agent"
+}
+  [OK] Verification Agent verdict: CONFIRM -- Flooding has been confirmed by local news reports and traffic conditions indicate severe disruptions typical of flooding.
+PASSED
+app/tests/test_full_pipeline_live.py::test_full_pipeline_lahore_edge_case 
+============================================================
+  PART 6: FULL PIPELINE E2E — SCENARIO_LAHORE_EDGE_CASE
+============================================================
+
+  [Step 1] Injecting SCENARIO_LAHORE_EDGE_CASE signals...
+2026-05-17 21:31:09,048 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-17 21:31:09,049 INFO sqlalchemy.engine.Engine INSERT INTO signals (id, source, type, lat, lng, location, raw_payload, credibility_score, conflict_flag, structured_json, created_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::FLOAT, $5::FLOAT, $6::VARCHAR, $7::JSON, $8::FLOAT, $9::BOOLEAN, $10::JSON, $11::TIMESTAMP WITHOUT TIME ZONE)
+2026-05-17 21:31:09,050 INFO sqlalchemy.engine.Engine [cached since 135.2s ago] (UUID('2608adad-ff73-4437-bdaf-59b427b8ac75'), 'social_mock', 'flood', None, None, None, '{"text": "Gulberg Main Boulevard is completely underwater. Cars are stuck.", "platform": "twitter", "hashtags": ["#LahoreRain", "#GulbergFlood"]}', None, False, '{}', datetime.datetime(2026, 5, 17, 16, 31, 9, 46860))
+2026-05-17 21:31:09,059 INFO sqlalchemy.engine.Engine ROLLBACK
+FAILED
+
+================================== FAILURES ===================================
+_____________________ test_full_pipeline_lahore_edge_case _____________________
+
+self = <ProactorEventLoop running=False closed=True debug=False>
+callback = <bound method BaseProtocol._on_waiter_completed of <asyncpg.protocol.protocol.Protocol object at 0x00000214352CBB70>>
+context = <_contextvars.Context object at 0x0000021435751880>
+args = (<Future finished exception=RuntimeError('Event loop is closed')>,)
+
+    def call_soon(self, callback, *args, context=None):
+        """Arrange for a callback to be called as soon as possible.
+    
+        This operates as a FIFO queue: callbacks are called in the
+        order in which they are registered.  Each callback will be
+        called exactly once.
+    
+        Any positional arguments after the callback will be passed to
+        the callback when it is called.
+        """
+>       self._check_closed()
+
+C:\Users\Cyb3r\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:833: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <ProactorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+C:\Users\Cyb3r\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:556: RuntimeError
+
+During handling of the above exception, another exception occurred:
+
+    @pytest.mark.asyncio
+    async def test_full_pipeline_lahore_edge_case():
+        """
+        Full E2E pipeline test with SCENARIO_LAHORE_EDGE_CASE:
+        Tests missing data, bad coordinates, empty types, and non-flood events.
+        """
+        section("PART 6: FULL PIPELINE E2E — SCENARIO_LAHORE_EDGE_CASE")
+    
+        from app.simulation.seed_signals import SCENARIO_LAHORE_EDGE_CASE
+    
+        print("\n  [Step 1] Injecting SCENARIO_LAHORE_EDGE_CASE signals...")
+        signal_payloads = []
+        async with async_session_factory() as session:
+            for sig_data in SCENARIO_LAHORE_EDGE_CASE:
+                # For the first signal with null lat/lng, we just insert as is
+                signal = Signal(**sig_data)
+                session.add(signal)
+>               await session.commit()
+
+app\tests\test_full_pipeline_live.py:391: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+venv\Lib\site-packages\sqlalchemy\ext\asyncio\session.py:1000: in commit
+    await greenlet_spawn(self.sync_session.commit)
+venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:201: in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\sqlalchemy\orm\session.py:2030: in commit
+    trans.commit(_to_root=True)
+<string>:2: in commit
+    ???
+venv\Lib\site-packages\sqlalchemy\orm\state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\sqlalchemy\orm\session.py:1311: in commit
+    self._prepare_impl()
+<string>:2: in _prepare_impl
+    ???
+venv\Lib\site-packages\sqlalchemy\orm\state_changes.py:137: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\sqlalchemy\orm\session.py:1286: in _prepare_impl
+    self.session.flush()
+venv\Lib\site-packages\sqlalchemy\orm\session.py:4331: in flush
+    self._flush(objects)
+venv\Lib\site-packages\sqlalchemy\orm\session.py:4466: in _flush
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\sqlalchemy\util\langhelpers.py:121: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+venv\Lib\site-packages\sqlalchemy\orm\session.py:4427: in _flush
+    flush_context.execute()
+venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py:466: in execute
+    rec.execute(self)
+venv\Lib\site-packages\sqlalchemy\orm\unitofwork.py:642: in execute
+    util.preloaded.orm_persistence.save_obj(
+venv\Lib\site-packages\sqlalchemy\orm\persistence.py:93: in save_obj
+    _emit_insert_statements(
+venv\Lib\site-packages\sqlalchemy\orm\persistence.py:1048: in _emit_insert_statements
+    result = connection.execute(
+venv\Lib\site-packages\sqlalchemy\engine\base.py:1419: in execute
+    return meth(
+venv\Lib\site-packages\sqlalchemy\sql\elements.py:527: in _execute_on_connection
+    return connection._execute_clauseelement(
+venv\Lib\site-packages\sqlalchemy\engine\base.py:1641: in _execute_clauseelement
+    ret = self._execute_context(
+venv\Lib\site-packages\sqlalchemy\engine\base.py:1846: in _execute_context
+    return self._exec_single_context(
+venv\Lib\site-packages\sqlalchemy\engine\base.py:1986: in _exec_single_context
+    self._handle_dbapi_exception(
+venv\Lib\site-packages\sqlalchemy\engine\base.py:2366: in _handle_dbapi_exception
+    raise exc_info[1].with_traceback(exc_info[2])
+venv\Lib\site-packages\sqlalchemy\engine\base.py:1967: in _exec_single_context
+    self.dialect.do_execute(
+venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:585: in execute
+    self._adapt_connection.await_(
+venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:132: in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:196: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:520: in _prepare_and_execute
+    await adapt_connection._start_transaction()
+venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:850: in _start_transaction
+    self._handle_exception(error)
+venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:799: in _handle_exception
+    raise error
+venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:848: in _start_transaction
+    await self._transaction.start()
+venv\Lib\site-packages\asyncpg\transaction.py:146: in start
+    await self._connection.execute(query)
+venv\Lib\site-packages\asyncpg\connection.py:349: in execute
+    result = await self._protocol.query(query, timeout)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+asyncpg\\protocol\\protocol.pyx:375: in query
+    ???
+asyncpg\\protocol\\protocol.pyx:368: in asyncpg.protocol.protocol.BaseProtocol.query
+    ???
+asyncpg\\protocol\\coreproto.pyx:1174: in asyncpg.protocol.protocol.CoreProtocol._simple_query
+    ???
+asyncpg\\protocol\\protocol.pyx:967: in asyncpg.protocol.protocol.BaseProtocol._write
+    ???
+C:\Users\Cyb3r\AppData\Local\Programs\Python\Python313\Lib\asyncio\sslproto.py:222: in write
+    self._ssl_protocol._write_appdata((data,))
+C:\Users\Cyb3r\AppData\Local\Programs\Python\Python313\Lib\asyncio\sslproto.py:700: in _write_appdata
+    self._fatal_error(ex, 'Fatal error on SSL protocol')
+C:\Users\Cyb3r\AppData\Local\Programs\Python\Python313\Lib\asyncio\sslproto.py:918: in _fatal_error
+    self._transport._force_close(exc)
+C:\Users\Cyb3r\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py:152: in _force_close
+    self._loop.call_soon(self._call_connection_lost, exc)
+C:\Users\Cyb3r\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:833: in call_soon
+    self._check_closed()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <ProactorEventLoop running=False closed=True debug=False>
+
+    def _check_closed(self):
+        if self._closed:
+>           raise RuntimeError('Event loop is closed')
+E           RuntimeError: Event loop is closed
+
+C:\Users\Cyb3r\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py:556: RuntimeError
+------------------------------ Captured log call ------------------------------
+INFO     sqlalchemy.engine.Engine:base.py:2710 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1846 INSERT INTO signals (id, source, type, lat, lng, location, raw_payload, credibility_score, conflict_flag, structured_json, created_at) VALUES ($1::UUID, $2::VARCHAR, $3::VARCHAR, $4::FLOAT, $5::FLOAT, $6::VARCHAR, $7::JSON, $8::FLOAT, $9::BOOLEAN, $10::JSON, $11::TIMESTAMP WITHOUT TIME ZONE)
+INFO     sqlalchemy.engine.Engine:base.py:1846 [cached since 135.2s ago] (UUID('2608adad-ff73-4437-bdaf-59b427b8ac75'), 'social_mock', 'flood', None, None, None, '{"text": "Gulberg Main Boulevard is completely underwater. Cars are stuck.", "platform": "twitter", "hashtags": ["#LahoreRain", "#GulbergFlood"]}', None, False, '{}', datetime.datetime(2026, 5, 17, 16, 31, 9, 46860))
+INFO     sqlalchemy.engine.Engine:base.py:2713 ROLLBACK
+============================== warnings summary ===============================
+app/tests/test_full_pipeline_live.py: 21 warnings
+  D:\Hackathon-2026\backend\venv\Lib\site-packages\pydantic\_internal\_fields.py:727: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return fac()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED app/tests/test_full_pipeline_live.py::test_full_pipeline_lahore_edge_case
+============ 1 failed, 8 passed, 21 warnings in 179.06s (0:02:59) =============
