@@ -1,0 +1,308 @@
+================================================================================
+  ANTIGRAVITY AI AGENT — TASK SESSION LOG
+  Task: Dashboard API Design & Implementation — Web Dashboard Endpoints
+  Powered by Google DeepMind · Advanced Agentic Coding
+================================================================================
+
+Session ID      : 4bd2dcf5-0f1a-4ef5-a4ff-d592a20f61fd
+Agent Model     : Gemini 3.1 Pro (High)
+Branch          : uneeza-ismail
+Task Owner      : Uneeza (Backend API & Dashboard Lead)
+Started At      : 2026-05-18T09:14:00Z
+Completed At    : 2026-05-18T10:31:00Z
+
+--------------------------------------------------------------------------------
+TASK DESCRIPTION
+--------------------------------------------------------------------------------
+
+  Objective: Design and implement new backend API endpoints required to power
+             a web-based CIRO Command Dashboard for hackathon judge demonstration.
+             The dashboard must show the complete multi-agent pipeline working
+             from start to end — active incidents, agent states, live logs, and
+             tactical actions.
+
+  Scope    :
+    1. Read and understand the full project architecture (all endpoints, agents,
+       models, tools, frontend screens).
+    2. Audit existing APIs and identify what is already available.
+    3. Identify gaps in the API surface that prevent a complete dashboard view.
+    4. Design and implement 3 new dashboard endpoints.
+    5. Register the new router in the main API file.
+    6. Write and run tests to verify all 3 new endpoints return HTTP 200.
+    7. Analyze and document remaining gaps for future tasks.
+
+--------------------------------------------------------------------------------
+SKILLS INVOKED
+--------------------------------------------------------------------------------
+
+  None — this was a backend API design and implementation session.
+  Tools used: list_dir, view_file, write_to_file, replace_file_content,
+              run_command, command_status
+
+--------------------------------------------------------------------------------
+PROJECT ARCHITECTURE REVIEW
+--------------------------------------------------------------------------------
+
+  BACKEND (FastAPI + SQLModel + PostgreSQL/asyncpg):
+  ─────────────────────────────────────────────────
+  app/main.py                          FastAPI entry point, CORS, startup hooks
+  app/api/api_v1/api.py                Central router (registers all endpoint modules)
+  app/api/api_v1/endpoints/
+    signals.py                         POST / (ingest signal), GET / (list signals)
+    incidents.py                       GET /active, GET /{id}, GET /{id}/logs,
+                                       GET /{id}/cot
+    websocket.py                       WS /{incident_id} (real-time log streaming)
+    simulation.py                      POST /trigger/{id}, GET /state/{id}
+  app/ai/
+    specialists.py                     8 specialist agents definitions
+    factory.py                         Model factory (Groq / OpenAI / default)
+    prompts.py                         System prompts for all 8 agents
+    orchestrator.py                    Triage agent entrypoint
+    tools/
+      geo.py                           reverse_geocode (Google Maps API)
+      news.py                          search_local_news (SerpApi)
+      notify.py                        send_notification
+      traffic.py                       get_traffic_matrix
+      weather.py                       get_weather_alerts
+      nearby_signals.py                get_nearby_signals (DB query)
+      resource_manager.py              allocate_resource (DB write)
+      planner.py                       create_action (DB write)
+      tracer.py                        emit_log, persist_chain_of_thought
+  app/models/
+    signals.py                         Signal ORM model
+    incidents.py                       Incident ORM model
+    reasoning_logs.py                  ReasoningLog + ChainOfThought ORM models
+    actions.py                         Action ORM model
+    resources.py                       Resource ORM model
+    schemas.py                         Pydantic V2 request/response schemas
+
+  FRONTEND (React Native + Expo):
+  ────────────────────────────────
+  app/map.tsx                          Map screen — fetches active incidents, shows
+                                       markers, handles signal submission
+  components/LiveLogStream.tsx         Real-time WebSocket log viewer per incident
+  lib/api.ts                           Centralized API client
+  constants/config.ts + config.js      API base URL + Islamabad center coordinates
+
+  MULTI-AGENT PIPELINE (Sequential, run in background after POST /signals):
+  ─────────────────────────────────────────────────────────────────────────
+  Step 1: Signal Agent       → reverse_geocode (location extraction)
+  Step 2: Detection Agent    → search_local_news, get_traffic_matrix, get_nearby_signals
+  Step 2.5: Verification Agent → (conditional, only if low confidence / conflict)
+  Step 3: Severity Agent     → get_weather_alerts, get_traffic_matrix
+  Step 4: Resource Agent     → allocate_resource (writes to resources table)
+  Step 5: Planning Agent     → create_action (writes to actions table)
+  Step 6: Notification Agent → send_notification
+  Each step: Logging Agent   → emit_log (saves to reasoning_logs, broadcasts WS)
+
+--------------------------------------------------------------------------------
+API AUDIT — EXISTING ENDPOINTS
+--------------------------------------------------------------------------------
+
+  ROOT
+  ────
+  GET  /                               Health check (project info)
+  GET  /health                         Simple health ping
+
+  API V1 — /api/v1
+  ─────────────────
+  GET  /api/v1/ping                    Confirm v1 is alive
+
+  SIGNALS — /api/v1/signals
+  ──────────────────────────
+  POST /api/v1/signals/                Ingest new signal → triggers pipeline
+                                       (GPS deduplication within 5 min / 50m)
+                                       Returns: 201 SignalRead | 200 DUPLICATE
+  GET  /api/v1/signals/                List all signals (debug/admin)
+
+  INCIDENTS — /api/v1/incidents
+  ──────────────────────────────
+  GET  /api/v1/incidents/active        All confirmed/monitoring incidents
+  GET  /api/v1/incidents/{id}          Single incident detail
+  GET  /api/v1/incidents/{id}/logs     AI reasoning logs for incident
+  GET  /api/v1/incidents/{id}/cot      Chain of Thought traces for incident
+
+  WEBSOCKET — /api/v1/ws
+  ───────────────────────
+  WS   /api/v1/ws/{incident_id}        Real-time broadcast of emit_log calls
+
+  SIMULATION — /api/v1/simulation
+  ────────────────────────────────
+  POST /api/v1/simulation/trigger/{id} Trigger action lifecycle simulation
+  GET  /api/v1/simulation/state/{id}   Get current status of all actions
+
+  DASHBOARD — /api/v1/dashboard  [NEW — implemented this session]
+  ────────────────────────────────────────────────────────────────
+  GET  /api/v1/dashboard/stats         Tactical counters (signals, incidents, decisions)
+  GET  /api/v1/dashboard/agent-workforce  Live state of all 8 agents (IDLE/PROCESSING)
+  GET  /api/v1/dashboard/global-timeline  Last 15 reasoning logs across all incidents
+
+--------------------------------------------------------------------------------
+REASONING TRACE
+--------------------------------------------------------------------------------
+
+  1. FULL PROJECT READ: Agent read all key files — main.py, api.py, all endpoint
+     modules, signals.py (pipeline code), specialists.py, tracer.py, models —
+     to build a complete mental model of the system before proposing any changes.
+
+  2. API GAP ANALYSIS: Compared what the frontend mobile app was already using
+     vs what a web dashboard would need to show a complete demo to judges.
+     Found that 3 types of data had NO endpoint: dashboard counters, agent states,
+     and a global cross-incident log feed.
+
+  3. DASHBOARD STATS DESIGN: Decided to query 4 tables in a single endpoint:
+     - Signal table → total_signals (COUNT)
+     - Incident table → active_crisis_sectors (COUNT with status filter)
+     - ReasoningLog table → total_agent_decisions (COUNT)
+     - Resource table → allocated_ambulances + allocated_rescue_crews
+       (sum of total_count - available_count per resource type)
+
+  4. AGENT WORKFORCE DESIGN: Decided to infer live agent state from the
+     reasoning_logs table. For each of the 8 agents, fetch their most recent log.
+     If the log is < 15 seconds old → agent is PROCESSING. Otherwise → IDLE.
+     This approach requires no schema changes and uses existing data.
+     The 15-second cutoff was chosen to match the approximate time between
+     sequential agent steps in the pipeline.
+
+  5. GLOBAL TIMELINE DESIGN: Simple query — SELECT from reasoning_logs
+     ORDER BY created_at DESC LIMIT 15. Returns a cross-incident view of the
+     most recent 15 agent actions. Ideal for judge-facing dashboards.
+
+  6. FILE CREATION: Created dashboard.py with all 3 endpoints using the same
+     async SQLAlchemy session pattern as the other endpoint files.
+
+  7. ROUTER REGISTRATION: Updated api.py to import and register the new dashboard
+     router under the /dashboard prefix with "Dashboard" OpenAPI tag.
+
+  8. TEST EXECUTION: Wrote test_dashboard_apis.py using FastAPI TestClient with
+     context manager (required for proper startup event handling with async DB).
+     First run failed due to system Python not having sqlmodel installed.
+     Fixed: Used venv Python → .\venv\Scripts\python.exe test_dashboard_apis.py
+
+  9. TEST RESULT — ALL 3 ENDPOINTS PASSED HTTP 200:
+     - /dashboard/stats          → 200 OK ✅
+     - /dashboard/agent-workforce → 200 OK ✅
+     - /dashboard/global-timeline → 200 OK ✅
+
+     Script crashed AFTER successful API calls on the print() statement due to
+     Windows PowerShell cp1252 encoding rejecting emoji characters (📢, 🔍)
+     stored in the reasoning_logs from the AI agents. This is a terminal display
+     issue, NOT an API failure. All 3 APIs confirmed working.
+
+  10. ADDITIONAL GAP ANALYSIS: After implementing the 3 dashboard APIs, performed
+      a deeper analysis for judge-demo completeness. Found 3 remaining gaps:
+
+      GAP 1 — Actions Endpoint (MISSING):
+        The actions table has tactical operations from the Planning Agent
+        (DISPATCH_RESCUE_TEAM, REROUTE_TRAFFIC, etc.) but no GET endpoint exists
+        to retrieve them per incident. Without this, judges cannot see what
+        physical actions the system decided to take.
+        Needed: GET /api/v1/incidents/{id}/actions
+
+      GAP 2 — Resources Endpoint (MISSING):
+        The resources table tracks the current ambulance/rescue_crew pool but
+        has no GET endpoint. Dashboard cannot show the "14 ambulances allocated"
+        type of visual.
+        Needed: GET /api/v1/resources
+
+      GAP 3 — Pipeline Progress Gap (ARCHITECTURAL):
+        When a signal is submitted, the pipeline runs in the background.
+        The WebSocket broadcasts early agent logs (Signal → Detection → Severity)
+        to the "triage" channel, but the frontend LiveLogStream connects to a
+        specific incidentId WebSocket channel — which doesn't exist yet because
+        the incident is only created AFTER step 3 completes (~40-90 seconds later).
+        Result: All early agent logs are LOST from the frontend's perspective.
+        The blank screen at the start is caused by two separate issues:
+          (a) No incident in DB yet (pipeline running time — inherent delay)
+          (b) Frontend can't subscribe to "triage" channel without knowing signal_id
+        Fix approach: Return signal_id from POST /signals → frontend immediately
+        connects to ws/.../triage_{signal_id} → early logs stream live → when
+        incident is confirmed, switch to ws/.../incidentId.
+
+--------------------------------------------------------------------------------
+FILES MODIFIED / CREATED
+--------------------------------------------------------------------------------
+
+  backend/app/api/api_v1/endpoints/dashboard.py   <- CREATED (new router)
+  backend/app/api/api_v1/api.py                   <- MODIFIED (registered dashboard router)
+  backend/test_dashboard_apis.py                  <- CREATED (test script)
+  .antigravity/uneeza_logs/task-010-dashboard-api-design.log <- This file
+
+--------------------------------------------------------------------------------
+TOOL CALLS SUMMARY
+--------------------------------------------------------------------------------
+
+  [09:20Z] list_dir → d:\Hackathon-2026                              ✅
+  [09:20Z] list_dir → d:\Hackathon-2026\backend                      ✅
+  [09:20Z] list_dir → d:\Hackathon-2026\frontend                     ✅
+  [09:20Z] view_file → backend/app/main.py                           ✅
+  [09:21Z] view_file → backend/app/api/api_v1/api.py                 ✅
+  [09:21Z] view_file → frontend/components/LiveLogStream.tsx          ✅
+  [09:34Z] view_file → backend/app/api/api_v1/endpoints/incidents.py ✅
+  [09:34Z] view_file → backend/app/api/api_v1/endpoints/signals.py   ✅
+  [09:34Z] view_file → backend/app/api/api_v1/endpoints/websocket.py ✅
+  [09:36Z] view_file → frontend/app/map.tsx                          ✅
+  [09:36Z] list_dir → backend/app/ai                                 ✅
+  [09:36Z] view_file → backend/app/ai/specialists.py                 ✅
+  [09:36Z] list_dir → backend/app/ai/tools                           ✅
+  [09:52Z] list_dir → backend/app/models                             ✅
+  [09:52Z] view_file → backend/app/models/resources.py               ✅
+  [09:52Z] view_file → backend/app/models/reasoning_logs.py          ✅
+  [09:52Z] view_file → backend/app/models/schemas.py                 ✅
+  [09:53Z] view_file → backend/app/models/actions.py                 ✅
+  [09:56Z] write_to_file → endpoints/dashboard.py (CREATED)          ✅
+  [09:56Z] write_to_file → task.md (task tracking)                   ✅
+  [10:01Z] replace_file_content → api.py (registered dashboard router) ✅
+  [10:02Z] write_to_file → test_dashboard_apis.py                    ✅
+  [10:02Z] run_command → python test_dashboard_apis.py (system py)   ❌ (no sqlmodel)
+  [10:04Z] run_command → .\venv\Scripts\python.exe test_dashboard_apis.py ✅
+  [10:09Z] command_status → check test result (truncated output)     ⚠️
+  [10:09Z] replace_file_content → test_dashboard_apis.py (fix context mgr) ✅
+  [10:09Z] run_command → venv python test_dashboard_apis.py (retry)  ✅
+  [10:13Z] command_status → confirmed 200 OK all 3 endpoints         ✅
+  [10:25Z] view_file → backend/app/api/api_v1/endpoints/simulation.py ✅
+  [10:25Z] view_file → backend/app/ai/tools/tracer.py                ✅
+
+  Total Files Modified/Created : 4
+  New Endpoints Implemented    : 3
+  Endpoints Tested Successfully: 3
+  Open Architectural Gaps Found: 3
+
+--------------------------------------------------------------------------------
+FINAL TEST RESULTS
+--------------------------------------------------------------------------------
+
+  GET /api/v1/dashboard/stats              : HTTP 200 ✅ — returns counters
+  GET /api/v1/dashboard/agent-workforce    : HTTP 200 ✅ — returns 8 agent states
+  GET /api/v1/dashboard/global-timeline    : HTTP 200 ✅ — returns last 15 logs
+  DB Connection (Neon PostgreSQL)          : STABLE ✅
+  Router Registration in api.py            : CONFIRMED ✅
+
+--------------------------------------------------------------------------------
+CURRENT OPEN ISSUES / NEXT TASKS
+--------------------------------------------------------------------------------
+
+  Issue 1: Missing Actions Endpoint — MEDIUM PRIORITY
+  Description : Planning Agent writes tactical actions to the actions table but
+                there is no API endpoint to retrieve them per incident.
+  Fix needed  : GET /api/v1/incidents/{id}/actions
+
+  Issue 2: Missing Resources Endpoint — MEDIUM PRIORITY
+  Description : Resource pool data (ambulances, rescue crews) has no public
+                GET endpoint. Dashboard cannot display allocation visuals.
+  Fix needed  : GET /api/v1/resources
+
+  Issue 3: WebSocket Early Log Gap — HIGH PRIORITY (for live demo)
+  Description : Early pipeline logs (Signal Agent, Detection Agent, Severity Agent)
+                are broadcast to the "triage" WS channel. Frontend can't subscribe
+                to this channel because it doesn't know the signal_id before
+                the incident is confirmed. Early logs are lost.
+  Root Cause  : Two-phase disconnect between "pre-incident" and "post-incident"
+                agent steps vs. single incident-scoped WebSocket subscription.
+  Proposed Fix: POST /signals returns signal_id → frontend connects to
+                ws/.../triage to see all early logs → switch to incidentId WS
+                channel once confirmed.
+
+--------------------------------------------------------------------------------
+END OF TASK LOG
+================================================================================
