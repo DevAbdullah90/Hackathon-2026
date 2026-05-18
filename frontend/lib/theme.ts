@@ -1,12 +1,16 @@
+import { Platform } from "react-native";
+
 export const THEME = {
   colors: {
-    // Peaceful Light-Mode Backgrounds (White/Emerald Mist)
+    // Peaceful Light-Mode Backgrounds (White/Sage Mist)
     background: "#FFFFFF",
-    surface: "#F7F9F8",
-    surfaceElevated: "#EDF2F0",
-    surfaceBorder: "#E2EBE6", 
-    glass: "rgba(255, 255, 255, 0.88)",
-    glassBorder: "rgba(6, 78, 59, 0.12)",
+    surface: "#F8FAF8",
+    surfaceElevated: "#EFF4F0",
+    surfaceBorder: "#DCE7E0",
+    glass: "rgba(255, 255, 255, 0.94)",
+    glassBorder: "rgba(6, 78, 59, 0.08)",
+    surfaceSoft: "#F2F8F4",
+    surfaceWarm: "#FAFBF8",
     
     // High-End Black Typography
     text: {
@@ -15,10 +19,11 @@ export const THEME = {
       muted: "#71717A",        // Cool Grey
     },
 
-    // Premium Dark Green Branding Elements
-    primary: "#064E3B",        // Deep Forest Green
-    primaryDark: "#022C22",    // Obsidian Green
-    accent: "#059669",         // Vibrant Emerald Accent
+    // Premium Light Green Branding Elements
+    primary: "#0F766E",        // Deep teal-green
+    primaryDark: "#115E59",    // Darker teal
+    accent: "#10B981",         // Emerald Accent
+    accentSoft: "#DDF7EE",
     
     status: {
       success: "#059669", 
@@ -42,25 +47,25 @@ export const THEME = {
     full: 9999,
   },
   fonts: {
-    heading: "Inter_900Black",
-    subheading: "Inter_700Bold",
-    body: "Inter_400Regular",
-    mono: "JetBrainsMono_400Regular",
+    heading: Platform.select({ ios: "System", android: "Roboto", default: "System" }),
+    subheading: Platform.select({ ios: "System", android: "Roboto", default: "System" }),
+    body: Platform.select({ ios: "System", android: "Roboto", default: "System" }),
+    mono: Platform.select({ ios: "monospace", android: "monospace", default: "monospace" }),
   },
   shadows: {
     glow: {
-      shadowColor: "#064E3B",
+      shadowColor: "#0F766E",
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 12,
-      elevation: 5,
+      shadowOpacity: 0.08,
+      shadowRadius: 14,
+      elevation: 4,
     },
     card: {
       shadowColor: "#000000",
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.05,
-      shadowRadius: 16,
-      elevation: 3,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.04,
+      shadowRadius: 18,
+      elevation: 2,
     }
   }
 };

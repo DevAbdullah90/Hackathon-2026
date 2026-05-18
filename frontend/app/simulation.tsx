@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { 
+import {
   View, 
   Text, 
   StyleSheet, 
@@ -9,9 +9,7 @@ import {
   ScrollView, 
   ActivityIndicator, 
   Alert,
-  Dimensions,
 } from "react-native";
-import Animated, { FadeInDown, FadeInUp, FadeIn } from "react-native-reanimated";
 import { BlurView } from "expo-blur";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import ExecutionTimeline from "../components/ExecutionTimeline";
@@ -25,8 +23,6 @@ import {
   Zap,
   CheckCircle2
 } from "lucide-react-native";
-
-const { width } = Dimensions.get("window");
 
 export default function SimView({ route, navigation }: any) {
   const { incidentId, location } = route.params || { incidentId: "INC-DEMO", location: "Active Crisis" };
@@ -111,13 +107,13 @@ export default function SimView({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      <Animated.View entering={FadeInDown.duration(1500)} style={StyleSheet.absoluteFill}>
+      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.background} />
+      <View style={StyleSheet.absoluteFill}>
         <AtmosphericBackground />
-      </Animated.View>
+      </View>
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
-        <Animated.View entering={FadeInDown.delay(100).springify()}>
+        <View>
           <BlurView intensity={20} tint="light" style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <ChevronLeft size={20} color={THEME.colors.text.primary} />
@@ -132,11 +128,11 @@ export default function SimView({ route, navigation }: any) {
               </Text>
             </View>
           </BlurView>
-        </Animated.View>
+        </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Summary Card */}
-          <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.summaryCardContainer}>
+          <View style={styles.summaryCardContainer}>
             <BlurView intensity={25} tint="light" style={styles.summaryCard}>
               <View style={styles.summaryHeader}>
                 <View style={styles.iconCircle}>
@@ -170,10 +166,10 @@ export default function SimView({ route, navigation }: any) {
                 </TouchableOpacity>
               )}
             </BlurView>
-          </Animated.View>
+          </View>
 
           {/* Timeline Section */}
-          <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.timelineSection}>
+          <View style={styles.timelineSection}>
             <View style={styles.sectionHeader}>
               <Activity size={16} color={THEME.colors.text.muted} />
               <Text style={styles.sectionTitle}>EXECUTION TIMELINE</Text>
@@ -189,14 +185,14 @@ export default function SimView({ route, navigation }: any) {
                 <Text style={styles.emptyText}>Waiting for orchestration sequence...</Text>
               </View>
             )}
-          </Animated.View>
+          </View>
 
           <View style={{ height: 100 }} />
         </ScrollView>
 
         {/* Success Footer */}
         {allCompleted && (
-          <Animated.View entering={FadeInUp.springify()} style={styles.footer}>
+          <View style={styles.footer}>
             <TouchableOpacity 
               style={styles.outcomeButton}
               onPress={() => navigation.navigate("Outcome", { incidentId, location })}
@@ -204,7 +200,7 @@ export default function SimView({ route, navigation }: any) {
               <CheckCircle2 size={20} color={THEME.colors.background} />
               <Text style={styles.outcomeButtonText}>ANALYZE FINAL IMPACT</Text>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         )}
       </SafeAreaView>
     </View>
@@ -224,20 +220,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: THEME.spacing.lg,
     paddingVertical: THEME.spacing.lg,
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     gap: THEME.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: THEME.colors.glassBorder,
+    borderBottomColor: THEME.colors.surfaceBorder,
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.surfaceSoft,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   headerTitleContainer: {
     flex: 1,
@@ -255,12 +251,12 @@ const styles = StyleSheet.create({
     fontFamily: THEME.fonts.heading,
   },
   statusBadge: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.surface,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: THEME.borderRadius.sm,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   statusBadgeText: {
     color: THEME.colors.text.primary,
@@ -279,10 +275,10 @@ const styles = StyleSheet.create({
     marginBottom: THEME.spacing.xl,
   },
   summaryCard: {
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   summaryHeader: {
     flexDirection: "row",
@@ -294,7 +290,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: THEME.borderRadius.sm,
-    backgroundColor: THEME.colors.text.primary,
+    backgroundColor: THEME.colors.primary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -317,19 +313,21 @@ const styles = StyleSheet.create({
     marginBottom: THEME.spacing.xl,
   },
   triggerButton: {
-    backgroundColor: THEME.colors.text.primary,
+    backgroundColor: THEME.colors.accentSoft,
     height: 50,
     borderRadius: THEME.borderRadius.sm,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 12,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.18)",
   },
   disabledButton: {
     opacity: 0.7,
   },
   triggerButtonText: {
-    color: THEME.colors.background,
+    color: THEME.colors.primary,
     fontSize: 12,
     fontFamily: THEME.fonts.heading,
     letterSpacing: 2,
@@ -352,11 +350,11 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: "center",
     paddingVertical: 50,
-    backgroundColor: THEME.colors.glass,
+    backgroundColor: THEME.colors.background,
     borderRadius: THEME.borderRadius.md,
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
   },
   emptyText: {
     color: THEME.colors.text.muted,
@@ -374,16 +372,18 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   outcomeButton: {
-    backgroundColor: THEME.colors.primary,
+    backgroundColor: THEME.colors.accentSoft,
     height: 56,
     borderRadius: THEME.borderRadius.sm,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 12,
+    borderWidth: 1,
+    borderColor: "rgba(16, 185, 129, 0.18)",
   },
   outcomeButtonText: {
-    color: THEME.colors.background,
+    color: THEME.colors.primary,
     fontSize: 12,
     fontFamily: THEME.fonts.heading,
     letterSpacing: 2,

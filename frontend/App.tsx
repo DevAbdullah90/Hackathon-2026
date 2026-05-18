@@ -1,15 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import * as Location from "expo-location";
 import * as SplashScreen from "expo-splash-screen";
-import { 
-  useFonts, 
-  Inter_400Regular, 
-  Inter_700Bold, 
-  Inter_900Black 
-} from "@expo-google-fonts/inter";
-import { JetBrainsMono_400Regular } from "@expo-google-fonts/jetbrains-mono";
 
 import WelcomeScreen from "./app/welcome";
 import Dashboard from "./app/index";
@@ -33,34 +25,12 @@ export type RootStackParamList = {
 const Stack = createStackNavigator<RootStackParamList>();
 
 export default function App() {
-    const [locationPermission, setLocationPermission] = useState<Location.PermissionStatus | null>(null);
-
     useEffect(() => {
-        (async () => {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            setLocationPermission(status);
-        })();
+        SplashScreen.hideAsync().catch(() => {});
     }, []);
 
-    const [fontsLoaded] = useFonts({
-        Inter_400Regular,
-        Inter_700Bold,
-        Inter_900Black,
-        JetBrainsMono_400Regular,
-    });
-
-    const onLayoutRootView = useCallback(async () => {
-        if (fontsLoaded) {
-            await SplashScreen.hideAsync();
-        }
-    }, [fontsLoaded]);
-
-    if (!fontsLoaded) {
-        return null;
-    }
-
     return (
-        <NavigationContainer onReady={onLayoutRootView}>
+        <NavigationContainer>
             <Stack.Navigator
                 initialRouteName="Welcome"
                 screenOptions={{

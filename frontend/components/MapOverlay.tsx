@@ -10,21 +10,18 @@ interface MapOverlayProps {
 const MapOverlay: React.FC<MapOverlayProps> = ({ incidents }) => {
   const getSeverityColors = (score: number) => {
     if (score >= 7.5) {
-      // Critical: Stark red alert fill with Velvet Black outline
       return {
-        fill: "rgba(220, 38, 38, 0.12)",
-        stroke: THEME.colors.text.primary
+        fill: "rgba(220, 38, 38, 0.08)",
+        stroke: THEME.colors.status.critical
       };
     } else if (score >= 4.5) {
-      // Elevated: Soft zinc fill with cool grey outline
       return {
-        fill: "rgba(9, 9, 11, 0.05)",
-        stroke: THEME.colors.text.muted
+        fill: "rgba(15, 118, 110, 0.06)",
+        stroke: THEME.colors.primary
       };
     }
-    // Nominal: Delicate forest green fill with branding green outline
     return {
-      fill: "rgba(6, 78, 59, 0.08)",
+      fill: "rgba(16, 185, 129, 0.07)",
       stroke: THEME.colors.primary
     };
   };
@@ -53,7 +50,7 @@ const MapOverlay: React.FC<MapOverlayProps> = ({ incidents }) => {
             coordinates={polygonCoords}
             fillColor={colors.fill}
             strokeColor={colors.stroke}
-            strokeWidth={2}
+            strokeWidth={1.5}
           />
         );
       })}
