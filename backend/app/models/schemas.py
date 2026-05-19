@@ -50,9 +50,10 @@ class SignalRead(BaseModel):
 # ── Incidents ─────────────────────────────────────────────────────────────────
 
 class IncidentRead(BaseModel):
-    """Response schema for confirmed flood incidents"""
+    """Response schema for confirmed incidents"""
     id: uuid.UUID
     location: str
+    disaster_type: str = "flood"
     lat: float
     lng: float
     severity_score: Optional[float] = None
