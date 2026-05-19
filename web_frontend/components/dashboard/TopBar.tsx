@@ -232,16 +232,21 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         
         {/* Left side: System branding and selectors */}
-        <div className="flex items-start gap-2">
-          {/* Mobile hamburger */}
-          <button 
-            onClick={onMenuToggle}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 mr-1 flex-shrink-0 cursor-pointer border border-gray-200 transition-colors"
-          >
-            <Menu className="w-5 h-5 text-gray-600" />
-          </button>
+        <div className="flex items-center gap-4">
+          {/* Brand Logo & Name */}
+          <div className="flex items-center gap-2.5 pr-4 border-r border-gray-200">
+            <div className="w-8 h-8 rounded-xl bg-teal-700 flex items-center justify-center shadow-md border border-teal-800">
+              <Activity className="w-4 h-4 text-white animate-pulse" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-sm font-black text-gray-900 leading-none tracking-wider">CIRO</h1>
+              <span className="text-[8px] text-gray-400 font-extrabold tracking-widest uppercase mt-0.5 block">
+                Orchestrator
+              </span>
+            </div>
+          </div>
 
-          <div className="flex flex-col gap-2 flex-1">
+          <div className="flex flex-col gap-1">
             {/* Title & Status */}
             <div className="flex flex-col">
               <div className="relative">
@@ -249,11 +254,10 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
                   onClick={() => setShowLocationMenu(!showLocationMenu)}
                   className="flex items-center gap-1 cursor-pointer group w-fit select-none"
                 >
-                  <h2 className="text-[17px] font-black text-gray-900 leading-tight uppercase tracking-wider flex items-center gap-1.5">
-                    <Activity className="w-4.5 h-4.5 text-red-500 animate-pulse" />
-                    <span>CIRO {activeLocation} Center</span>
+                  <h2 className="text-[15px] font-black text-gray-900 leading-none uppercase tracking-wider flex items-center gap-1">
+                    <span>{activeLocation} Command Center</span>
                   </h2>
-                  <ChevronDown className="w-4.5 h-4.5 text-gray-400 group-hover:text-gray-900 transition-colors" />
+                  <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gray-900 transition-colors" />
                 </div>
                 
                 {/* Location Dropdown Options */}
@@ -348,9 +352,9 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-800 pb-3">
             <div className="flex items-center gap-2">
-              <Terminal className="w-5 h-5 text-red-500 animate-pulse" />
+              <Terminal className="w-5 h-5 text-teal-600 animate-pulse" />
               <div>
-                <h4 className="text-xs font-extrabold uppercase tracking-widest text-red-400">
+                <h4 className="text-xs font-extrabold uppercase tracking-widest text-teal-600">
                   Interactive Telemetry Injector Console
                 </h4>
                 <p className="text-[10px] text-gray-500 mt-0.5">
@@ -376,7 +380,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
               <select
                 value={injectorCity}
                 onChange={(e) => setInjectorCity(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-bold"
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-600 font-bold"
               >
                 {["Karachi", "Islamabad", "Austin", "Lahore"].map((city) => (
                   <option key={city} value={city}>
@@ -394,7 +398,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
               <select
                 value={injectorSource}
                 onChange={(e) => setInjectorSource(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-bold"
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-600 font-bold"
               >
                 <option value="twitter">Social Twitter Feed</option>
                 <option value="weather_station">Radar Meteorological Station</option>
@@ -412,7 +416,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
               <select
                 value={injectorType}
                 onChange={(e) => setInjectorType(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-bold"
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-600 font-bold"
               >
                 <option value="flash_flood">🚨 Flash Flooding</option>
                 <option value="heavy_rain">🌧️ Severe Precipitation</option>
@@ -432,7 +436,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
                 type="text"
                 value={injectorLat}
                 onChange={(e) => setInjectorLat(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-mono font-bold"
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-600 font-mono font-bold"
                 placeholder="24.9088"
               />
             </div>
@@ -446,7 +450,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
                 type="text"
                 value={injectorLng}
                 onChange={(e) => setInjectorLng(e.target.value)}
-                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-mono font-bold"
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-600 font-mono font-bold"
                 placeholder="67.1282"
               />
             </div>
@@ -461,7 +465,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
               rows={2}
               value={injectorComment}
               onChange={(e) => setInjectorComment(e.target.value)}
-              className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-semibold"
+              className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-600 font-semibold"
               placeholder="Describe the crisis details..."
             />
           </div>
@@ -470,10 +474,10 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
           <div className="flex justify-end border-t border-gray-800 pt-3 mt-1">
             <button
               onClick={handleInjectCustomSignal}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider px-5 py-2.5 rounded-lg transition-colors cursor-pointer border border-red-700 shadow-lg shadow-red-900/20 active:scale-95"
+              className="flex items-center gap-2 bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs uppercase tracking-wider px-5 py-2.5 rounded-lg transition-colors cursor-pointer border border-teal-800 shadow-lg shadow-teal-900/10 active:scale-95"
             >
               <AlertOctagon className="w-4 h-4 animate-bounce" />
-              <span>🚨 Inject Custom Crisis Scenario</span>
+              <span>🚨 Inject Custom Scenario</span>
             </button>
           </div>
         </div>
@@ -553,8 +557,8 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
               let labelColor = "text-gray-500";
 
               if (status === "FAILED") {
-                dotBgColor = "bg-red-500/20 border-red-500 text-red-400 scale-[1.05]";
-                labelColor = "text-red-400 font-extrabold";
+                dotBgColor = "bg-red-500/20 border-red-500 text-red-500 scale-[1.05]";
+                labelColor = "text-red-500 font-extrabold";
               } else if (status === "RUNNING") {
                 dotBgColor = "bg-amber-500/10 border-amber-500 text-amber-400 animate-pulse scale-[1.05]";
                 labelColor = "text-amber-400 font-bold";
