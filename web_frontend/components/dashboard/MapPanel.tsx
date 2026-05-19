@@ -108,9 +108,14 @@ interface MapPanelProps {
 }
 
 export default function MapPanel({ selectedIncident, onSelectIncident }: MapPanelProps) {
-  const isServer = typeof window === "undefined";
   const KARACHI_CENTER: [number, number] = [24.9088, 67.1282];
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [isDetourActive, setIsDetourActive] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const fetchIncidents = async () => {
     try {
@@ -121,11 +126,53 @@ export default function MapPanel({ selectedIncident, onSelectIncident }: MapPane
     }
   };
 
+  const checkDetourActive = async (incidentId: string) => {
+    try {
+      const actions = await api.getIncidentActions(incidentId);
+      const activeOrCompleted = actions.some((a) =>
+        ["ACTIVE", "ON_SITE", "COMPLETED", "DISPATCHED", "SENT"].includes(a.status.toUpperCase())
+      );
+      setIsDetourActive(activeOrCompleted);
+    } catch (err) {
+      setIsDetourActive(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedIncident) {
+      checkDetourActive(selectedIncident.id);
+    } else {
+      setIsDetourActive(false);
+    }
+  }, [selectedIncident]);
+
   useEffect(() => {
     fetchIncidents();
-    const interval = setInterval(fetchIncidents, 3000); // 3s real-time active polling
-    return () => clearInterval(interval);
-  }, []);
+    // Fallback interval (reduced frequency because WebSocket handles instant sync)
+    const interval = setInterval(fetchIncidents, 10000);
+
+    const handleRefreshIncidents = () => {
+      fetchIncidents();
+    };
+
+    const handleRefreshSimulation = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const data = customEvent.detail;
+      fetchIncidents();
+      if (selectedIncident && data.incident_id === selectedIncident.id) {
+        checkDetourActive(selectedIncident.id);
+      }
+    };
+
+    window.addEventListener("refresh_incidents", handleRefreshIncidents);
+    window.addEventListener("refresh_simulation", handleRefreshSimulation);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("refresh_incidents", handleRefreshIncidents);
+      window.removeEventListener("refresh_simulation", handleRefreshSimulation);
+    };
+  }, [selectedIncident]);
 
   // Generate routes relative to the active/selected incident
   const blockedRouteCoords: [number, number][] = selectedIncident ? [
@@ -149,7 +196,7 @@ export default function MapPanel({ selectedIncident, onSelectIncident }: MapPane
       className="relative border-r border-gray-200 overflow-hidden shadow-inner bg-slate-50"
       style={{ width: "420px", minWidth: "420px", height: "100%" }}
     >
-      {!isServer && (
+      {mounted && (
         <MapContainer
           center={KARACHI_CENTER}
           zoom={13}
@@ -233,19 +280,21 @@ export default function MapPanel({ selectedIncident, onSelectIncident }: MapPane
                 </Tooltip>
               </Polyline>
 
-              {/* Detour Bypass Route (Solid Green Line) */}
-              <Polyline 
-                positions={detourRouteCoords} 
-                pathOptions={{ 
-                  color: "#10b981", 
-                  weight: 6,
-                  opacity: 0.95
-                }} 
-              >
-                <Tooltip permanent direction="bottom" opacity={0.9} className="font-mono text-[9px] bg-emerald-950 border border-emerald-500 text-emerald-400 font-extrabold uppercase p-1 px-1.5 rounded shadow">
-                  🚗 DETOUR BYPASS ACTIVE (CLEAR)
-                </Tooltip>
-              </Polyline>
+              {/* Detour Bypass Route (Solid Green Line) - visible only when active */}
+              {isDetourActive && (
+                <Polyline 
+                  positions={detourRouteCoords} 
+                  pathOptions={{ 
+                    color: "#10b981", 
+                    weight: 6,
+                    opacity: 0.95
+                  }} 
+                >
+                  <Tooltip permanent direction="bottom" opacity={0.9} className="font-mono text-[9px] bg-emerald-950 border border-emerald-500 text-emerald-400 font-extrabold uppercase p-1 px-1.5 rounded shadow">
+                    🚗 DETOUR BYPASS ACTIVE (CLEAR)
+                  </Tooltip>
+                </Polyline>
+              )}
 
               {/* Route Anchors */}
               <Marker 

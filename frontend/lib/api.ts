@@ -1,5 +1,8 @@
 import { CONFIG } from "../constants/config";
 
+let activeApiBaseUrl = CONFIG.API_BASE_URL;
+const PROD_API_BASE = "https://hackathon-2026-production-ff6c.up.railway.app/api/v1";
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. DATA MODELS & TYPES
 // ─────────────────────────────────────────────────────────────────────────────
@@ -390,7 +393,7 @@ async function makeRequest<T>(
   retriesLeft = MAX_RETRIES,
   delay = RETRY_DELAY_BASE
 ): Promise<T> {
-  const url = `${CONFIG.API_BASE_URL}${path}`;
+  const url = `${activeApiBaseUrl}${path}`;
 
   const requestOptions: RequestInit = {
     ...options,
@@ -441,6 +444,12 @@ async function makeRequest<T>(
 
     // If it's a transient failure (network/timeout/Wi-Fi dropped packet), attempt retry
     if ((isTimeout || isNetworkError) && retriesLeft > 0) {
+      if (retriesLeft === MAX_RETRIES) {
+        // Swap to production fallback on first failure
+        const fallback = activeApiBaseUrl === CONFIG.API_BASE_URL ? PROD_API_BASE : CONFIG.API_BASE_URL;
+        console.log(`🔄 [API FALLBACK] Switching API base to ${fallback}`);
+        activeApiBaseUrl = fallback;
+      }
       console.log(`🔄 [API RETRY] Retrying in ${delay}ms... (${retriesLeft} retries remaining)`);
       await sleep(delay);
       return makeRequest<T>(path, options, retriesLeft - 1, delay * 2);

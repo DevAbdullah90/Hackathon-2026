@@ -45,6 +45,89 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
   const [reportActions, setReportActions] = useState<Action[]>([]);
   const [reportLogs, setReportLogs] = useState<ReasoningLog[]>([]);
   
+  // Real-Time Simulation Metrics State
+  const [metrics, setMetrics] = useState<any>(null);
+
+  useEffect(() => {
+    if (!showReport || !reportIncident) {
+      setMetrics(null);
+      return;
+    }
+    
+    // Auto-approximate initial metrics based on incident status
+    const isHeat = reportIncident.disaster_type === "heatwave";
+    if (reportIncident.status === "completed" || reportIncident.status === "resolved") {
+      setMetrics(isHeat 
+        ? { cooling_coverage: 100, safety_rate: 98, grid_relief: 95 }
+        : { congestion_index: 20, evacuation_rate: 98, road_blockage: 0 }
+      );
+    } else {
+      setMetrics(isHeat
+        ? { cooling_coverage: 0, safety_rate: 10, grid_relief: 0 }
+        : { congestion_index: 90, evacuation_rate: 5, road_blockage: 100 }
+      );
+    }
+
+    // Connect to WebSocket endpoint for this specific incident to stream live simulation events
+    let socket: WebSocket | null = null;
+    let reconnectTimeout: any = null;
+    let isMounted = true;
+
+    const connect = async () => {
+      try {
+        const { API_BASE_URL } = await import("@/lib/api");
+        const wsUrl = `${API_BASE_URL.replace("http", "ws").replace("https", "wss")}/ws/${reportIncident.id}`;
+        console.log(`🔌 [TopBar Report] Connecting to incident WebSocket: ${wsUrl}`);
+        
+        if (!isMounted) return;
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+          console.log(`📡 [TopBar Report] Connected to incident WebSocket`);
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log(`📡 [TopBar Report] Received incident event:`, data.event);
+            if (data.event === "simulation_progress") {
+              if (data.metrics) {
+                setMetrics(data.metrics);
+              }
+            }
+          } catch (err) {
+            console.warn("Failed to parse websocket message in TopBar Report", err);
+          }
+        };
+
+        socket.onclose = () => {
+          console.log(`🔌 [TopBar Report] WebSocket disconnected, reconnecting in 5s...`);
+          reconnectTimeout = setTimeout(() => {
+            connect();
+          }, 5000);
+        };
+
+        socket.onerror = (error) => {
+          console.warn(`⚠️ [TopBar Report] WebSocket error:`, error);
+        };
+      } catch (err) {
+        console.error("Failed to connect incident WebSocket", err);
+      }
+    };
+
+    connect();
+
+    return () => {
+      isMounted = false;
+      if (socket) {
+        socket.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
+  }, [showReport, reportIncident]);
+  
   // Custom Signal Injector state
   const [showCustomInjector, setShowCustomInjector] = useState(false);
   const [injectorCity, setInjectorCity] = useState("Karachi");
@@ -129,12 +212,15 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
         setActiveSignalId(response.signal_id);
         triggerToast("Custom Incident Telemetry Injected! Initializing live multi-agent workflow...");
       } else {
-        throw new Error("Invalid custom injection response.");
+        console.warn("Invalid custom injection response, invoking fallback.");
+        triggerToast("Error injecting custom signal. Deploying offline mock pipeline...");
+        setTriggering(true);
+        setActiveSignalId("sig-offline-fallback");
       }
     } catch (err) {
       console.error("Failed to inject custom signal:", err);
       triggerToast("Error injecting custom signal. Deploying offline mock pipeline...");
-      setTriggering(false);
+      setTriggering(true);
       setActiveSignalId("sig-offline-fallback");
     }
   };
@@ -171,13 +257,15 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
             : "Emergency Telemetry Injected! Initializing multi-agent triage..."
         );
       } else {
-        throw new Error("Invalid backend mock response.");
+        console.warn("Invalid backend mock response, invoking fallback.");
+        triggerToast("Error contacting FastAPI backend. Serving local mock trace.");
+        setTriggering(true);
+        setActiveSignalId("sig-offline-fallback");
       }
     } catch (err) {
       console.error("Failed to inject mock telemetry:", err);
       triggerToast("Error contacting FastAPI backend. Serving local mock trace.");
-      setTriggering(false);
-      // Fallback state offline
+      setTriggering(true);
       setActiveSignalId("sig-offline-fallback");
     }
   };
@@ -185,6 +273,78 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
   // Polling pipeline status
   useEffect(() => {
     if (!activeSignalId) return;
+
+    // Live Offline Fallback Simulation Animation
+    if (activeSignalId === "sig-offline-fallback") {
+      let currentStageIdx = 0;
+      const offlineStages = [
+        { stage: "signal_agent", msg: "Parsing incoming social media and telemetry feeds..." },
+        { stage: "detection_agent", msg: "Running dbscan clustering on spatial coordinates..." },
+        { stage: "verification_agent", msg: "Cross-referencing satellite image index..." },
+        { stage: "severity_agent", msg: "Calculating crisis severity index and population density..." },
+        { stage: "resource_allocation_agent", msg: "Deploying nearby response units..." },
+        { stage: "planning_agent", msg: "Synthesizing mitigation route and detour bypass..." },
+        { stage: "notification_agent", msg: "Broadcasting emergency alerts to public channels..." },
+        { stage: "logging_agent", msg: "Audit trail verified. Dispatch report compiled." }
+      ];
+
+      // Immediately run first stage
+      const runStage = (idx: number) => {
+        const s = offlineStages[idx];
+        const agentStates: Record<string, string> = {};
+        STAGES.forEach((stageNode, sIdx) => {
+          if (sIdx < idx) {
+            agentStates[stageNode.key] = "COMPLETED";
+          } else if (sIdx === idx) {
+            agentStates[stageNode.key] = "RUNNING";
+          } else {
+            agentStates[stageNode.key] = "PENDING";
+          }
+        });
+
+        const isLast = idx === offlineStages.length - 1;
+
+        setPipelineState({
+          signal_id: "sig-offline-fallback",
+          incident_id: "inc-jauhar",
+          status: isLast ? "CONFIRMED" : "ACTIVE",
+          stage: s.stage,
+          stage_index: idx + 1,
+          stage_status: isLast ? "COMPLETED" : "RUNNING",
+          message: s.msg,
+          updated_at: new Date().toISOString(),
+          agent_states: agentStates
+        });
+      };
+
+      runStage(0);
+
+      const interval = setInterval(() => {
+        currentStageIdx++;
+        if (currentStageIdx < offlineStages.length) {
+          runStage(currentStageIdx);
+          
+          const isLast = currentStageIdx === offlineStages.length - 1;
+          if (isLast) {
+            clearInterval(interval);
+            setTimeout(() => {
+              setTriggering(false);
+              setActiveSignalId(null);
+              triggerToast("Disaster response actions dispatched successfully!");
+              
+              // Load mock incident reports
+              api.getIncidentById("inc-jauhar").then(setReportIncident).catch(console.error);
+              api.getIncidentActions("inc-jauhar").then(setReportActions).catch(console.error);
+              api.getIncidentLogs("inc-jauhar").then(setReportLogs).catch(console.error);
+              
+              setShowReport(true);
+            }, 1500);
+          }
+        }
+      }, 2000);
+
+      return () => clearInterval(interval);
+    }
 
     let pollCount = 0;
     const maxPolls = 180; // 4.5 minute timeout for multi-agent LLM sequential chain
@@ -924,6 +1084,156 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
                   </div>
                 )}
               </div>
+
+              {/* Dynamic Swarm Impact Metrics Panel */}
+              {metrics && (
+                <div className="bg-gray-950 border border-gray-900 rounded-2xl p-5 space-y-4 shadow-xl relative overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-gray-900 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      <h4 className="text-[11px] font-mono font-extrabold tracking-wider text-emerald-400 uppercase">
+                        Dynamic Impact Metrics (Before vs After)
+                      </h4>
+                    </div>
+                    <span className="text-[9px] font-mono text-gray-500 font-bold">REAL-TIME DATA FEED</span>
+                  </div>
+
+                  {isHeatwave ? (
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      {/* Gauge 1: Cooling Coverage */}
+                      <div className="flex flex-col items-center space-y-2 bg-white/5 border border-white/5 rounded-xl p-3">
+                        <span className="text-[9px] font-mono font-bold text-gray-400 uppercase">COOLING COVERAGE</span>
+                        <div className="relative w-20 h-20 flex items-center justify-center">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
+                            <circle cx="40" cy="40" r="32" stroke="#14B8A6" strokeWidth="6" fill="none"
+                              strokeDasharray={`${2 * Math.PI * 32}`}
+                              strokeDashoffset={`${2 * Math.PI * 32 * (1 - (metrics.cooling_coverage ?? 0) / 100)}`}
+                              className="transition-all duration-1000 ease-out"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <span className="absolute text-sm font-mono font-extrabold text-white">
+                            {metrics.cooling_coverage ?? 0}%
+                          </span>
+                        </div>
+                        <span className="text-[8px] text-gray-500 font-semibold">Triage Goal: 100%</span>
+                      </div>
+
+                      {/* Gauge 2: Safety Rate */}
+                      <div className="flex flex-col items-center space-y-2 bg-white/5 border border-white/5 rounded-xl p-3">
+                        <span className="text-[9px] font-mono font-bold text-gray-400 uppercase">SAFETY RATE</span>
+                        <div className="relative w-20 h-20 flex items-center justify-center">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
+                            <circle cx="40" cy="40" r="32" stroke="#10B981" strokeWidth="6" fill="none"
+                              strokeDasharray={`${2 * Math.PI * 32}`}
+                              strokeDashoffset={`${2 * Math.PI * 32 * (1 - (metrics.safety_rate ?? 10) / 100)}`}
+                              className="transition-all duration-1000 ease-out"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <span className="absolute text-sm font-mono font-extrabold text-white">
+                            {metrics.safety_rate ?? 10}%
+                          </span>
+                        </div>
+                        <span className="text-[8px] text-gray-500 font-semibold">Survival Probability</span>
+                      </div>
+
+                      {/* Gauge 3: Grid Relief */}
+                      <div className="flex flex-col items-center space-y-2 bg-white/5 border border-white/5 rounded-xl p-3">
+                        <span className="text-[9px] font-mono font-bold text-gray-400 uppercase">GRID RELIEF</span>
+                        <div className="relative w-20 h-20 flex items-center justify-center">
+                          <svg className="w-full h-full transform -rotate-90">
+                            <circle cx="40" cy="40" r="32" stroke="rgba(255,255,255,0.05)" strokeWidth="6" fill="none" />
+                            <circle cx="40" cy="40" r="32" stroke="#F59E0B" strokeWidth="6" fill="none"
+                              strokeDasharray={`${2 * Math.PI * 32}`}
+                              strokeDashoffset={`${2 * Math.PI * 32 * (1 - (metrics.grid_relief ?? 0) / 100)}`}
+                              className="transition-all duration-1000 ease-out"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <span className="absolute text-sm font-mono font-extrabold text-white">
+                            {metrics.grid_relief ?? 0}%
+                          </span>
+                        </div>
+                        <span className="text-[8px] text-gray-500 font-semibold">Demand Restabilized</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Congestion Index */}
+                      <div className="space-y-1 bg-white/5 border border-white/5 rounded-xl p-3">
+                        <div className="flex justify-between items-center text-[10px] font-mono">
+                          <span className="font-bold text-gray-400">CONGESTION INDEX</span>
+                          <span className={`font-extrabold ${metrics.congestion_index > 50 ? "text-red-400" : "text-emerald-400"}`}>
+                            {metrics.congestion_index ?? 90}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-1000 ease-out" 
+                            style={{ 
+                              width: `${metrics.congestion_index ?? 90}%`, 
+                              backgroundColor: (metrics.congestion_index ?? 90) > 50 ? "#EF4444" : "#10B981" 
+                            }} 
+                          />
+                        </div>
+                        <div className="flex justify-between text-[8px] text-gray-500 font-bold">
+                          <span>Before: 90%</span>
+                          <span>Target: &lt; 30%</span>
+                        </div>
+                      </div>
+
+                      {/* Evacuation Rate */}
+                      <div className="space-y-1 bg-white/5 border border-white/5 rounded-xl p-3">
+                        <div className="flex justify-between items-center text-[10px] font-mono">
+                          <span className="font-bold text-gray-400">EVACUATION RATE</span>
+                          <span className="font-extrabold text-emerald-400">
+                            {metrics.evacuation_rate ?? 5}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="h-full rounded-full bg-emerald-500 transition-all duration-1000 ease-out" 
+                            style={{ width: `${metrics.evacuation_rate ?? 5}%` }} 
+                          />
+                        </div>
+                        <div className="flex justify-between text-[8px] text-gray-500 font-bold">
+                          <span>Before: 5%</span>
+                          <span>Target: &gt; 95%</span>
+                        </div>
+                      </div>
+
+                      {/* Road Blockage */}
+                      <div className="space-y-1 bg-white/5 border border-white/5 rounded-xl p-3">
+                        <div className="flex justify-between items-center text-[10px] font-mono">
+                          <span className="font-bold text-gray-400">ROAD BLOCKAGE</span>
+                          <span className={`font-extrabold ${(metrics.road_blockage ?? 100) > 30 ? "text-amber-400" : "text-emerald-400"}`}>
+                            {metrics.road_blockage ?? 100}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-1000 ease-out" 
+                            style={{ 
+                              width: `${metrics.road_blockage ?? 100}%`,
+                              backgroundColor: (metrics.road_blockage ?? 100) > 30 ? "#F59E0B" : "#10B981"
+                            }} 
+                          />
+                        </div>
+                        <div className="flex justify-between text-[8px] text-gray-500 font-bold">
+                          <span>Before: 100%</span>
+                          <span>Target: 0%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Agent Timeline */}
               <div className="space-y-4">

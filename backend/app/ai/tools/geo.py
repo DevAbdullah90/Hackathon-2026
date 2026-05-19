@@ -88,5 +88,9 @@ async def reverse_geocode(lat: float, lng: float) -> str:
         return "G-10 Sector, Islamabad"
     elif 24.7 <= lat <= 25.1 and 66.8 <= lng <= 67.3:
         return "Clifton Block 5, Karachi"
+    elif 31.3 <= lat <= 31.7 and 74.2 <= lng <= 74.5:
+        return "Anarkali Bazaar, Lahore"
+    elif 30.1 <= lat <= 30.4 and -98.0 <= lng <= -97.5:
+        return "Downtown, Austin"
 
     return "UNKNOWN — manual review required"

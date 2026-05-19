@@ -249,6 +249,30 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
                 incident_id = str(db_incident.id)
                 logger.info(f"🏠 [DB] Created Confirmed Incident: {incident_id}")
 
+                try:
+                    from app.api.api_v1.endpoints.websocket import manager
+                    # Broadcast the new incident to all global listeners
+                    await manager.broadcast_global({
+                        "event": "new_incident",
+                        "incident": {
+                            "id": str(db_incident.id),
+                            "location": db_incident.location,
+                            "disaster_type": db_incident.disaster_type,
+                            "lat": db_incident.lat,
+                            "lng": db_incident.lng,
+                            "severity_score": db_incident.severity_score,
+                            "confidence": db_incident.confidence,
+                            "affected_radius_km": db_incident.affected_radius_km,
+                            "estimated_population": db_incident.estimated_population,
+                            "peak_impact_eta": db_incident.peak_impact_eta,
+                            "status": db_incident.status,
+                            "created_at": db_incident.created_at.isoformat() if db_incident.created_at else None
+                        }
+                    })
+                    logger.info("📡 [WS] Broadcasted new_incident event globally")
+                except Exception as ws_broadcast_err:
+                    logger.error(f"⚠️ [WS] Failed to broadcast new_incident globally: {ws_broadcast_err}")
+
             update_pipeline_progress(sig_id_str, "PROCESSING", "severity_agent", 4, "COMPLETED", "Crisis threat model established.", incident_id=incident_id)
 
             # ── Retroactive database correlation for pre-incident logs ──

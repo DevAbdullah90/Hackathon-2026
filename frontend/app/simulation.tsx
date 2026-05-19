@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, 
   Text, 
   StyleSheet, 
@@ -13,6 +13,7 @@ import AtmosphericBackground from "../components/AtmosphericBackground";
 import ExecutionTimeline from "../components/ExecutionTimeline";
 import { api, Action } from "../lib/api";
 import { THEME } from "../lib/theme";
+import { CONFIG } from "../constants/config";
 import { 
   ChevronLeft, 
   Activity, 
@@ -28,6 +29,22 @@ export default function SimView({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
   const [isSimulatingLocally, setIsSimulatingLocally] = useState(false);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [disasterType, setDisasterType] = useState<string>("flood");
+
+  useEffect(() => {
+    const fetchIncidentDetails = async () => {
+      try {
+        const incident = await api.getIncident(incidentId);
+        if (incident && incident.disaster_type) {
+          setDisasterType(incident.disaster_type);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch incident disaster type in SimView", err);
+      }
+    };
+    fetchIncidentDetails();
+  }, [incidentId]);
 
   const fetchSimulationState = async () => {
     if (isSimulatingLocally) return;
@@ -55,6 +72,12 @@ export default function SimView({ route, navigation }: any) {
       if (actions.length > 0 && actions[0].id.startsWith("a")) {
         setIsSimulatingLocally(true);
         
+        // PENDING state metrics initially
+        setMetrics(disasterType === "heatwave"
+          ? {"cooling_coverage": 0, "safety_rate": 10, "grid_relief": 0}
+          : {"congestion_index": 90, "evacuation_rate": 5, "road_blockage": 100}
+        );
+
         // Step 1: Set action 1 to running
         setTimeout(() => {
           setActions(prev => {
@@ -62,6 +85,10 @@ export default function SimView({ route, navigation }: any) {
             if (next[0]) next[0] = { ...next[0], status: "ACTIVE" };
             return next;
           });
+          setMetrics(disasterType === "heatwave"
+            ? {"cooling_coverage": 25, "safety_rate": 35, "grid_relief": 20}
+            : {"congestion_index": 75, "evacuation_rate": 25, "road_blockage": 80}
+          );
         }, 1000);
         
         // Step 2: Set action 1 to completed, action 2 to running
@@ -72,6 +99,10 @@ export default function SimView({ route, navigation }: any) {
             if (next[1]) next[1] = { ...next[1], status: "ACTIVE" };
             return next;
           });
+          setMetrics(disasterType === "heatwave"
+            ? {"cooling_coverage": 60, "safety_rate": 65, "grid_relief": 50}
+            : {"congestion_index": 50, "evacuation_rate": 60, "road_blockage": 40}
+          );
         }, 4000);
         
         // Step 3: Set action 2 to completed, action 3 to running
@@ -82,6 +113,10 @@ export default function SimView({ route, navigation }: any) {
             if (next[2]) next[2] = { ...next[2], status: "ACTIVE" };
             return next;
           });
+          setMetrics(disasterType === "heatwave"
+            ? {"cooling_coverage": 85, "safety_rate": 85, "grid_relief": 75}
+            : {"congestion_index": 35, "evacuation_rate": 80, "road_blockage": 15}
+          );
         }, 7000);
         
         // Step 4: Set action 3 to completed
@@ -91,6 +126,11 @@ export default function SimView({ route, navigation }: any) {
             if (next[2]) next[2] = { ...next[2], status: "COMPLETED" };
             return next;
           });
+          setMetrics(disasterType === "heatwave"
+            ? {"cooling_coverage": 100, "safety_rate": 98, "grid_relief": 95}
+            : {"congestion_index": 20, "evacuation_rate": 98, "road_blockage": 0}
+          );
+          setIsSimulatingLocally(false);
         }, 10000);
       }
     } else {
@@ -102,6 +142,91 @@ export default function SimView({ route, navigation }: any) {
   const allCompleted = actions.length > 0 && completedCount === actions.length;
   const isRunning = actions.some(a => ["SENT", "ACTIVE", "ON_SITE", "RUNNING"].includes(a.status.toUpperCase()));
   const isStarted = actions.some(a => ["ACTIVE", "RUNNING", "COMPLETED", "SENT", "ON_SITE"].includes(a.status.toUpperCase()));
+
+  // Auto-approximate metrics if screen loaded with pre-existing progress
+  useEffect(() => {
+    if (allCompleted) {
+      if (disasterType === "heatwave") {
+        setMetrics({ cooling_coverage: 100, safety_rate: 98, grid_relief: 95 });
+      } else {
+        setMetrics({ congestion_index: 20, evacuation_rate: 98, road_blockage: 0 });
+      }
+    } else if (isStarted && !metrics) {
+      const runningAction = actions.find(a => ["ACTIVE", "SENT", "ON_SITE"].includes(a.status.toUpperCase()));
+      const status = runningAction ? runningAction.status.toUpperCase() : "PENDING";
+      const defaultMetrics = disasterType === "heatwave" ? {
+        "PENDING": {"cooling_coverage": 0, "safety_rate": 10, "grid_relief": 0},
+        "SENT": {"cooling_coverage": 25, "safety_rate": 35, "grid_relief": 20},
+        "ACTIVE": {"cooling_coverage": 60, "safety_rate": 65, "grid_relief": 50},
+        "ON_SITE": {"cooling_coverage": 85, "safety_rate": 85, "grid_relief": 75},
+        "COMPLETED": {"cooling_coverage": 100, "safety_rate": 98, "grid_relief": 95},
+      } : {
+        "PENDING": {"congestion_index": 90, "evacuation_rate": 5, "road_blockage": 100},
+        "SENT": {"congestion_index": 75, "evacuation_rate": 25, "road_blockage": 80},
+        "ACTIVE": {"congestion_index": 50, "evacuation_rate": 60, "road_blockage": 40},
+        "ON_SITE": {"congestion_index": 35, "evacuation_rate": 80, "road_blockage": 15},
+        "COMPLETED": {"congestion_index": 20, "evacuation_rate": 98, "road_blockage": 0},
+      };
+      setMetrics((defaultMetrics as any)[status]);
+    }
+  }, [allCompleted, isStarted, disasterType, actions]);
+
+  // Connect to incident WebSocket for live simulation events
+  useEffect(() => {
+    const wsUrl = `${CONFIG.WS_BASE_URL.replace("http", "ws").replace("https", "wss")}/api/v1/ws/${incidentId}`;
+    console.log(`🔌 [SimView] Connecting to incident WebSocket: ${wsUrl}`);
+    
+    let socket: WebSocket | null = null;
+    let reconnectTimeout: any = null;
+    let isMounted = true;
+
+    const connect = () => {
+      if (!isMounted) return;
+      socket = new WebSocket(wsUrl);
+
+      socket.onopen = () => {
+        console.log(`📡 [SimView] Connected to incident WebSocket`);
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log(`📡 [SimView] Received incident event:`, data.event);
+          if (data.event === "simulation_progress") {
+            if (data.metrics) {
+              setMetrics(data.metrics);
+            }
+            fetchSimulationState();
+          }
+        } catch (err) {
+          console.warn("Failed to parse websocket message in SimView", err);
+        }
+      };
+
+      socket.onclose = () => {
+        console.log(`🔌 [SimView] WebSocket disconnected, reconnecting in 5s...`);
+        reconnectTimeout = setTimeout(() => {
+          connect();
+        }, 5000);
+      };
+
+      socket.onerror = (error) => {
+        console.warn(`⚠️ [SimView] WebSocket error:`, error);
+      };
+    };
+
+    connect();
+
+    return () => {
+      isMounted = false;
+      if (socket) {
+        socket.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
+  }, [incidentId]);
 
 
   return (
@@ -180,6 +305,90 @@ export default function SimView({ route, navigation }: any) {
               )}
             </View>
           </View>
+
+          {/* Dynamic Impact Metrics Panel */}
+          {isStarted && metrics && (
+            <View style={styles.metricsCardContainer}>
+              <View style={styles.metricsCard}>
+                <View style={styles.metricsHeader}>
+                  <Activity size={16} color={THEME.colors.primary} />
+                  <Text style={styles.metricsTitle}>LIVE SWARM IMPACT METRICS</Text>
+                </View>
+                
+                {disasterType === "heatwave" ? (
+                  <View style={styles.metricsList}>
+                    {/* Cooling Coverage */}
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricLabelRow}>
+                        <Text style={styles.metricLabel}>COOLING COVERAGE</Text>
+                        <Text style={styles.metricValue}>{metrics.cooling_coverage ?? 0}%</Text>
+                      </View>
+                      <View style={styles.progressBarBg}>
+                        <View style={[styles.progressBarFill, { width: `${metrics.cooling_coverage ?? 0}%`, backgroundColor: "#14B8A6" }]} />
+                      </View>
+                    </View>
+
+                    {/* Safety Rate */}
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricLabelRow}>
+                        <Text style={styles.metricLabel}>SAFETY RATE</Text>
+                        <Text style={styles.metricValue}>{metrics.safety_rate ?? 10}%</Text>
+                      </View>
+                      <View style={styles.progressBarBg}>
+                        <View style={[styles.progressBarFill, { width: `${metrics.safety_rate ?? 10}%`, backgroundColor: "#10B981" }]} />
+                      </View>
+                    </View>
+
+                    {/* Grid Relief */}
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricLabelRow}>
+                        <Text style={styles.metricLabel}>GRID RELIEF</Text>
+                        <Text style={styles.metricValue}>{metrics.grid_relief ?? 0}%</Text>
+                      </View>
+                      <View style={styles.progressBarBg}>
+                        <View style={[styles.progressBarFill, { width: `${metrics.grid_relief ?? 0}%`, backgroundColor: "#F59E0B" }]} />
+                      </View>
+                    </View>
+                  </View>
+                ) : (
+                  <View style={styles.metricsList}>
+                    {/* Congestion Index */}
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricLabelRow}>
+                        <Text style={styles.metricLabel}>CONGESTION INDEX</Text>
+                        <Text style={styles.metricValue}>{metrics.congestion_index ?? 90}%</Text>
+                      </View>
+                      <View style={styles.progressBarBg}>
+                        <View style={[styles.progressBarFill, { width: `${metrics.congestion_index ?? 90}%`, backgroundColor: (metrics.congestion_index ?? 90) > 50 ? "#EF4444" : "#10B981" }]} />
+                      </View>
+                    </View>
+
+                    {/* Evacuation Rate */}
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricLabelRow}>
+                        <Text style={styles.metricLabel}>EVACUATION RATE</Text>
+                        <Text style={styles.metricValue}>{metrics.evacuation_rate ?? 5}%</Text>
+                      </View>
+                      <View style={styles.progressBarBg}>
+                        <View style={[styles.progressBarFill, { width: `${metrics.evacuation_rate ?? 5}%`, backgroundColor: "#10B981" }]} />
+                      </View>
+                    </View>
+
+                    {/* Road Blockage */}
+                    <View style={styles.metricItem}>
+                      <View style={styles.metricLabelRow}>
+                        <Text style={styles.metricLabel}>ROAD BLOCKAGE</Text>
+                        <Text style={styles.metricValue}>{metrics.road_blockage ?? 100}%</Text>
+                      </View>
+                      <View style={styles.progressBarBg}>
+                        <View style={[styles.progressBarFill, { width: `${metrics.road_blockage ?? 100}%`, backgroundColor: (metrics.road_blockage ?? 100) > 30 ? "#F59E0B" : "#10B981" }]} />
+                      </View>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
 
           {/* Timeline Section */}
           <View style={styles.timelineSection}>
@@ -443,5 +652,67 @@ const styles = StyleSheet.create({
     fontFamily: THEME.fonts.heading,
     letterSpacing: 1,
     fontWeight: "800",
+  },
+  metricsCardContainer: {
+    borderRadius: THEME.borderRadius.xxl,
+    overflow: "hidden",
+    marginBottom: THEME.spacing.xl,
+    ...THEME.shadows.premium,
+  },
+  metricsCard: {
+    backgroundColor: THEME.colors.surface,
+    padding: THEME.spacing.xl,
+    borderWidth: 1,
+    borderColor: THEME.colors.surfaceBorder,
+    borderRadius: THEME.borderRadius.xxl,
+  },
+  metricsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: THEME.spacing.lg,
+  },
+  metricsTitle: {
+    color: THEME.colors.text.primary,
+    fontSize: 11,
+    fontFamily: THEME.fonts.mono,
+    letterSpacing: 1.5,
+    fontWeight: "900",
+  },
+  metricsList: {
+    gap: 14,
+  },
+  metricItem: {
+    width: "100%",
+  },
+  metricLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  metricLabel: {
+    color: THEME.colors.text.secondary,
+    fontSize: 10,
+    fontFamily: THEME.fonts.heading,
+    fontWeight: "800",
+    letterSpacing: 1,
+  },
+  metricValue: {
+    color: THEME.colors.text.primary,
+    fontSize: 11,
+    fontFamily: THEME.fonts.mono,
+    fontWeight: "700",
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
+    borderRadius: 4,
+    overflow: "hidden",
+    width: "100%",
+  },
+  progressBarFill: {
+    height: "100%",
+    borderRadius: 4,
   },
 });
