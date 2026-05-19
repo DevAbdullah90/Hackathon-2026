@@ -1,0 +1,7 @@
+- [x] Implement Visual Routing Maps on Web Dashboard (`MapPanel.tsx`)
+- [x] Add Premium visual schematic detour to Web Swarm Report Modal (`TopBar.tsx`)
+- [x] Implement Visual Routing Maps on Mobile App Overlay (`MapOverlay.tsx` & `map.tsx`)
+- [x] Add Premium visual route diagram to Mobile Mission Report (`outcome.tsx`)
+- [x] Implement Web Dashboard In-App Tactical Sonar Toast Notifications (`page.tsx`)
+- [x] Build HTML5 Web Audio API Sonar Synth for Web Alerts
+- [x] Implement Mobile App Sliding Neon Danger Alerts (`index.tsx`)
