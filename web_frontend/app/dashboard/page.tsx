@@ -138,40 +138,83 @@ export default function DashboardPage() {
     initSeen();
   }, []);
 
-  // Poll active incidents globally to trigger floating radar toast alerts on new ones
+  // Connect to global WebSocket stream to trigger floating radar toast alerts and coordinate app updates
   useEffect(() => {
-    const pollNewIncidents = async () => {
+    let socket: WebSocket | null = null;
+    let reconnectTimeout: any = null;
+    let isMounted = true;
+
+    const connect = async () => {
       try {
-        const { api } = await import("@/lib/api");
-        const active = await api.getActiveIncidents();
+        const { API_BASE_URL } = await import("@/lib/api");
+        const wsUrl = `${API_BASE_URL.replace("http", "ws").replace("https", "wss")}/ws/global/stream`;
+        console.log(`🔌 [Dashboard] Connecting to global WebSocket stream: ${wsUrl}`);
         
-        // Find if there is any new incident not in the seen set
-        const newIncident = active.find(i => !seenIncidentIdsRef.current.has(String(i.id)));
-        if (newIncident) {
-          // Play cyberpunk radar sonar sound
-          playTacticalSonarChime();
-          
-          // Trigger tactical banner
-          setActiveAlert({
-            id: String(newIncident.id),
-            location: newIncident.location,
-            severity_score: newIncident.severity_score,
-            confidence: newIncident.confidence,
-            affected_radius_km: newIncident.affected_radius_km,
-            estimated_population: newIncident.estimated_population,
-            created_at: newIncident.created_at
-          });
-          
-          // Mark as seen
-          seenIncidentIdsRef.current.add(String(newIncident.id));
-        }
+        if (!isMounted) return;
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+          console.log(`📡 [Dashboard] Connected to global WebSocket stream`);
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log(`📡 [Dashboard] Received global websocket event:`, data.event);
+            
+            if (data.event === "new_incident") {
+              const newIncident = data.incident;
+              if (newIncident && !seenIncidentIdsRef.current.has(String(newIncident.id))) {
+                playTacticalSonarChime();
+                setActiveAlert({
+                  id: String(newIncident.id),
+                  location: newIncident.location,
+                  severity_score: newIncident.severity_score,
+                  confidence: newIncident.confidence,
+                  affected_radius_km: newIncident.affected_radius_km,
+                  estimated_population: newIncident.estimated_population,
+                  created_at: newIncident.created_at
+                });
+                seenIncidentIdsRef.current.add(String(newIncident.id));
+              }
+              // Dispatch standard window event to trigger component refreshes across the app
+              window.dispatchEvent(new CustomEvent("refresh_incidents", { detail: { incidentId: newIncident.id } }));
+            } else if (data.event === "simulation_progress") {
+              // Dispatch standard window event for simulation updates
+              window.dispatchEvent(new CustomEvent("refresh_simulation", { detail: data }));
+            }
+          } catch (err) {
+            console.warn("Failed to parse global websocket message", err);
+          }
+        };
+
+        socket.onclose = () => {
+          console.log("🔌 [Dashboard] Global WebSocket disconnected, reconnecting in 5s...");
+          reconnectTimeout = setTimeout(() => {
+            connect();
+          }, 5000);
+        };
+
+        socket.onerror = (error) => {
+          console.warn("⚠️ [Dashboard] Global WebSocket error:", error);
+        };
+
       } catch (err) {
-        console.error("Error polling for in-app alert telemetry:", err);
+        console.error("Failed to connect global websocket", err);
       }
     };
 
-    const interval = setInterval(pollNewIncidents, 3500);
-    return () => clearInterval(interval);
+    connect();
+
+    return () => {
+      isMounted = false;
+      if (socket) {
+        socket.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
   }, []);
 
   const handlePipelineComplete = async (incidentId: string) => {

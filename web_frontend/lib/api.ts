@@ -1,7 +1,10 @@
 // web_frontend/lib/api.ts
 // Central API service connecting Next.js web_frontend to FastAPI backend.
 
-export const API_BASE_URL = "https://hackathon-2026-production-ff6c.up.railway.app/api/v1";
+const LOCAL_API_BASE = "http://localhost:8000/api/v1";
+const PROD_API_BASE = "https://hackathon-2026-production-ff6c.up.railway.app/api/v1";
+
+export let API_BASE_URL = LOCAL_API_BASE;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. DATA MODELS & TYPES
@@ -201,20 +204,33 @@ export const MOCK_ACTIONS: Record<string, Action[]> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function makeRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE_URL}${path}`;
-  
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
   };
 
-  try {
+  const tryFetch = async (baseUrl: string) => {
+    const url = `${baseUrl}${path}`;
     const res = await fetch(url, { ...options, headers });
     if (!res.ok) {
       throw new Error(`API HTTP Error: ${res.status} ${res.statusText}`);
     }
     return await res.json();
-  } catch (err) {
+  };
+
+  try {
+    return await tryFetch(API_BASE_URL);
+  } catch (err: any) {
+    if (err.name === "TypeError" || (err.message && err.message.includes("Failed to fetch"))) {
+      const fallbackUrl = API_BASE_URL === LOCAL_API_BASE ? PROD_API_BASE : LOCAL_API_BASE;
+      console.warn(`[API] Connection to ${API_BASE_URL} failed. Switching to ${fallbackUrl}`);
+      API_BASE_URL = fallbackUrl;
+      try {
+        return await tryFetch(API_BASE_URL);
+      } catch (fallbackErr) {
+        throw fallbackErr;
+      }
+    }
     throw err;
   }
 }
@@ -509,6 +525,43 @@ export const api = {
     } catch (err) {
       console.warn(`🛡️ [API FALLBACK] getIncidentNotifications(${incidentId}) -> serving fallback.`, err);
       return MOCK_NOTIFICATIONS[incidentId] || MOCK_NOTIFICATIONS["inc-jauhar"] || [];
+    }
+  },
+
+  /**
+   * Trigger simulation execution for an incident
+   */
+  async triggerSimulation(incidentId: string): Promise<boolean> {
+    try {
+      await makeRequest<any>(`/simulation/${incidentId}/trigger`, {
+        method: "POST"
+      });
+      return true;
+    } catch (err) {
+      console.warn(`🛡️ [API] triggerSimulation(${incidentId}) failed:`, err);
+      return false;
+    }
+  },
+
+  /**
+   * Get simulation actions state for an incident
+   */
+  async getSimulationState(incidentId: string): Promise<Action[]> {
+    try {
+      const data = await makeRequest<any[]>(`/simulation/${incidentId}/state`);
+      if (!data) return [];
+      return data.map((item) => ({
+        id: String(item.id),
+        incident_id: incidentId,
+        type: item.type,
+        status: item.status.toUpperCase(),
+        predicted_side_effects: item.predicted_side_effects || "N/A",
+        metadata: item.action_metadata || {},
+        updated_at: item.updated_at,
+      }));
+    } catch (err) {
+      console.warn(`🛡️ [API] getSimulationState(${incidentId}) failed:`, err);
+      return [];
     }
   }
 };
