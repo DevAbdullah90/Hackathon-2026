@@ -7,7 +7,6 @@ import { View,
   ActivityIndicator,
   TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -120,7 +119,7 @@ export default function ProcessingScreen({ route, navigation }: ProcessingScreen
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <AtmosphericBackground />
 
       <View style={styles.header}>
@@ -128,14 +127,14 @@ export default function ProcessingScreen({ route, navigation }: ProcessingScreen
           <Text style={styles.headerTitle}>COGNITIVE TRIAGE</Text>
           <Text style={styles.headerSubtitle}>Multi-Agent Verification Pipeline</Text>
         </View>
-        <BlurView intensity={30} tint="light" style={styles.signalBadge}>
+        <View style={styles.signalBadge}>
           <Text style={styles.signalIdText}>{signalId.substring(0, 10).toUpperCase()}</Text>
-        </BlurView>
+        </View>
       </View>
 
       {/* Main Glass Center Card */}
       <Animated.View entering={FadeInUp.springify()} style={styles.mainCardWrapper}>
-        <BlurView intensity={25} tint="light" style={styles.mainCard}>
+        <View style={styles.mainCard}>
           
           {/* Animated Glow Circle */}
           <View style={styles.loaderContainer}>
@@ -177,7 +176,7 @@ export default function ProcessingScreen({ route, navigation }: ProcessingScreen
                       ]} />
                     )}
                   </View>
-
+ 
                   {/* Step Text Info */}
                   <View style={styles.stepInfo}>
                     <Text style={[
@@ -198,21 +197,21 @@ export default function ProcessingScreen({ route, navigation }: ProcessingScreen
             })}
           </View>
 
-        </BlurView>
+        </View>
       </Animated.View>
 
       {/* Specialist Logs Pane */}
       <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.logsWrapper}>
         <Text style={styles.logsSectionTitle}>LOG CORRELATION PIPELINE</Text>
-        <BlurView intensity={15} tint="light" style={styles.logsPane}>
+        <View style={styles.logsPane}>
           <LiveLogStream incidentId={`triage_${signalId}`} />
-        </BlurView>
+        </View>
       </Animated.View>
 
       {/* Discarded or Error Return Navigation */}
       {pipeline?.status === "REJECTED" && (
         <Animated.View entering={FadeInUp} style={styles.errorOverlay}>
-          <BlurView intensity={60} tint="dark" style={styles.errorCard}>
+          <View style={styles.errorCard}>
             <AlertCircle size={44} color="#EF4444" style={{ marginBottom: 12 }} />
             <Text style={styles.errorTitle}>Signal Discarded</Text>
             <Text style={styles.errorText}>
@@ -221,20 +220,20 @@ export default function ProcessingScreen({ route, navigation }: ProcessingScreen
             <TouchableOpacity style={styles.returnButton} onPress={() => navigation.goBack()}>
               <Text style={styles.returnButtonText}>Back to Tactical Map</Text>
             </TouchableOpacity>
-          </BlurView>
+          </View>
         </Animated.View>
       )}
 
       {error && (
         <Animated.View entering={FadeInUp} style={styles.errorOverlay}>
-          <BlurView intensity={60} tint="dark" style={styles.errorCard}>
+          <View style={styles.errorCard}>
             <AlertCircle size={44} color="#EF4444" style={{ marginBottom: 12 }} />
             <Text style={styles.errorTitle}>Network Alert</Text>
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity style={styles.returnButton} onPress={() => navigation.goBack()}>
               <Text style={styles.returnButtonText}>Retry Connection</Text>
             </TouchableOpacity>
-          </BlurView>
+          </View>
         </Animated.View>
       )}
     </SafeAreaView>
@@ -274,10 +273,10 @@ const styles = StyleSheet.create({
   signalBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: THEME.borderRadius.sm,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    backgroundColor: "rgba(255,255,255,0.05)",
+    borderColor: THEME.colors.surfaceBorder,
+    backgroundColor: THEME.colors.surfaceSoft,
   },
   signalIdText: {
     color: THEME.colors.text.muted,
@@ -289,12 +288,12 @@ const styles = StyleSheet.create({
     paddingVertical: THEME.spacing.sm,
   },
   mainCard: {
-    borderRadius: THEME.borderRadius.lg,
+    borderRadius: THEME.borderRadius.xl,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
+    borderColor: THEME.colors.surfaceBorder,
     padding: THEME.spacing.lg,
-    backgroundColor: "rgba(255, 255, 255, 0.03)",
-    overflow: "hidden",
+    backgroundColor: THEME.colors.surface,
+    ...THEME.shadows.card,
   },
   loaderContainer: {
     alignItems: "center",
@@ -316,7 +315,7 @@ const styles = StyleSheet.create({
     borderRadius: 33,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(37, 99, 235, 0.15)",
+    backgroundColor: "rgba(14, 165, 233, 0.1)",
   },
   stepperContainer: {
     marginTop: THEME.spacing.sm,
@@ -337,35 +336,35 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 7,
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.2)",
-    backgroundColor: THEME.colors.background,
+    borderColor: THEME.colors.surfaceBorder,
+    backgroundColor: THEME.colors.surface,
     zIndex: 2,
   },
   stepDotActive: {
     borderColor: THEME.colors.primary,
-    backgroundColor: THEME.colors.background,
+    backgroundColor: THEME.colors.surface,
     transform: [{ scale: 1.2 }],
   },
   stepDotCompleted: {
-    borderColor: "#10B981",
-    backgroundColor: "#10B981",
+    borderColor: THEME.colors.accent,
+    backgroundColor: THEME.colors.accent,
   },
   innerCheckDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: THEME.colors.background,
+    backgroundColor: THEME.colors.surface,
     alignSelf: "center",
     marginTop: 3,
   },
   connectorLine: {
     width: 2,
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: THEME.colors.surfaceBorder,
     zIndex: 1,
   },
   connectorLineCompleted: {
-    backgroundColor: "#10B981",
+    backgroundColor: THEME.colors.accent,
   },
   stepInfo: {
     flex: 1,
@@ -400,29 +399,30 @@ const styles = StyleSheet.create({
   },
   logsPane: {
     flex: 1,
-    borderRadius: THEME.borderRadius.md,
+    borderRadius: THEME.borderRadius.xl,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    borderColor: THEME.colors.surfaceBorder,
+    backgroundColor: THEME.colors.surface,
     overflow: "hidden",
+    ...THEME.shadows.card,
   },
   errorOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.8)",
+    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
     padding: THEME.spacing.xl,
     zIndex: 10,
   },
   errorCard: {
-    borderRadius: THEME.borderRadius.lg,
+    borderRadius: THEME.borderRadius.xl,
     borderWidth: 1,
     borderColor: "rgba(239, 68, 110, 0.25)",
     padding: THEME.spacing.xl,
     width: "100%",
     alignItems: "center",
-    backgroundColor: "rgba(30, 20, 20, 0.95)",
-    overflow: "hidden",
+    backgroundColor: THEME.colors.surface,
+    ...THEME.shadows.card,
   },
   errorTitle: {
     fontSize: 18,
@@ -442,10 +442,11 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: THEME.borderRadius.sm,
+    ...THEME.shadows.card,
   },
   returnButtonText: {
-    color: THEME.colors.text.primary,
+    color: "#FFFFFF",
     fontFamily: THEME.fonts.subheading,
     fontWeight: "bold",
     fontSize: 13,

@@ -2,33 +2,33 @@ import { Platform } from "react-native";
 
 export const THEME = {
   colors: {
-    // Peaceful Light-Mode Backgrounds (White/Sage Mist)
-    background: "#FFFFFF",
-    surface: "#F8FAF8",
-    surfaceElevated: "#EFF4F0",
-    surfaceBorder: "#DCE7E0",
-    glass: "rgba(255, 255, 255, 0.94)",
-    glassBorder: "rgba(6, 78, 59, 0.08)",
-    surfaceSoft: "#F2F8F4",
-    surfaceWarm: "#FAFBF8",
+    // Premium Light-Mode Backgrounds (Warm Gray/White)
+    background: "#F8F9FA",        // Clean off-white
+    surface: "#FFFFFF",           // Pure White
+    surfaceElevated: "#FFFFFF",   // Pure White for cards
+    surfaceBorder: "#F1F5F9",     // Even softer gray border (Slate 100)
+    glass: "rgba(255, 255, 255, 0.9)",
+    glassBorder: "rgba(0, 0, 0, 0.03)",
+    surfaceSoft: "#F4F4F5",       // Light Zinc
+    surfaceWarm: "#F1F3F2",       // Warm off-white
     
-    // High-End Black Typography
+    // High-Contrast Carbon Typography
     text: {
-      primary: "#09090B",      // Pure Velvet Black
-      secondary: "#3F3F46",    // Charcoal
-      muted: "#71717A",        // Cool Grey
+      primary: "#0F172A",         // Slate 900 (Deeper for bold headers)
+      secondary: "#475569",       // Slate 600
+      muted: "#94A3B8",           // Slate 400
     },
 
-    // Premium Light Green Branding Elements
-    primary: "#0F766E",        // Deep teal-green
-    primaryDark: "#115E59",    // Darker teal
-    accent: "#10B981",         // Emerald Accent
-    accentSoft: "#DDF7EE",
+    // Premium Branding Elements
+    primary: "#0EA5E9",           // Sky Blue (Modern & Clean)
+    primaryDark: "#0284C7",       // Sky Blue 700
+    accent: "#6366F1",            // Indigo Accent
+    accentSoft: "rgba(99, 102, 241, 0.08)",
     
     status: {
-      success: "#059669", 
-      warning: "#D97706", 
-      critical: "#DC2626", 
+      success: "#10B981", 
+      warning: "#F59E0B", 
+      critical: "#EF4444", 
     },
   },
   spacing: {
@@ -40,10 +40,11 @@ export const THEME = {
     xxl: 48,
   },
   borderRadius: {
-    sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
+    sm: 8,
+    md: 16,
+    lg: 20,
+    xl: 24,
+    xxl: 32,
     full: 9999,
   },
   fonts: {
@@ -54,18 +55,25 @@ export const THEME = {
   },
   shadows: {
     glow: {
-      shadowColor: "#0F766E",
+      shadowColor: "#0EA5E9",
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 14,
-      elevation: 4,
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 3,
     },
     card: {
       shadowColor: "#000000",
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.04,
-      shadowRadius: 18,
+      shadowRadius: 20,
       elevation: 2,
+    },
+    premium: {
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.06,
+      shadowRadius: 24,
+      elevation: 4,
     }
   }
 };

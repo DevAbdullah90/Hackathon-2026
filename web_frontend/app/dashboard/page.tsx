@@ -118,6 +118,7 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activePage, setActivePage] = useState("Dashboard");
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [viewIncidentReportId, setViewIncidentReportId] = useState<string | null>(null);
   
   // Real-Time Sonar Alerts State
   const [activeAlert, setActiveAlert] = useState<AlertData | null>(null);
@@ -273,6 +274,8 @@ export default function DashboardPage() {
         {/* TopBar */}
         <TopBar 
           onPipelineComplete={handlePipelineComplete}
+          viewIncidentReportId={viewIncidentReportId}
+          onCloseIncidentReport={() => setViewIncidentReportId(null)}
         />
 
         {/* Body */}
@@ -289,13 +292,14 @@ export default function DashboardPage() {
           {/* Right scrollable content */}
           <div className="flex-1 overflow-y-auto bg-slate-50/50 bg-grid-pattern p-4 md:p-6 space-y-6 min-w-0">
             <div className="fade-in" style={{ animationDelay: "0ms" }}>
-              <MetricsGrid />
+              <MetricsGrid selectedIncident={selectedIncident} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-4 fade-in" style={{ animationDelay: "200ms" }}>
               <EventsPanel 
                 selectedIncident={selectedIncident} 
                 onSelectIncident={setSelectedIncident} 
+                onViewReport={setViewIncidentReportId}
               />
               <CTECCPanel />
             </div>

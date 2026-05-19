@@ -14,14 +14,16 @@ import {
   Terminal,
   Activity
 } from "lucide-react";
-import { api, PipelineStatus } from "@/lib/api";
+import { api, PipelineStatus, Incident, Action, ReasoningLog } from "@/lib/api";
 
 interface TopBarProps {
   onMenuToggle?: () => void;
   onPipelineComplete?: (incidentId: string) => void;
+  viewIncidentReportId?: string | null;
+  onCloseIncidentReport?: () => void;
 }
 
-export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps) {
+export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentReportId, onCloseIncidentReport }: TopBarProps) {
   const [activeLocation, setActiveLocation] = useState("Karachi");
   const [showLocationMenu, setShowLocationMenu] = useState(false);
   
@@ -33,6 +35,16 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
   const [completedReportData, setCompletedReportData] = useState<PipelineStatus | null>(null);
   const [showReport, setShowReport] = useState(false);
   
+  const handleCloseReport = () => {
+    setShowReport(false);
+    onCloseIncidentReport?.();
+  };
+  
+  // Dynamic report details
+  const [reportIncident, setReportIncident] = useState<Incident | null>(null);
+  const [reportActions, setReportActions] = useState<Action[]>([]);
+  const [reportLogs, setReportLogs] = useState<ReasoningLog[]>([]);
+  
   // Custom Signal Injector state
   const [showCustomInjector, setShowCustomInjector] = useState(false);
   const [injectorCity, setInjectorCity] = useState("Karachi");
@@ -42,22 +54,52 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
   const [injectorLng, setInjectorLng] = useState("67.1282");
   const [injectorComment, setInjectorComment] = useState("Judges Custom Flood Scenario: Jauhar Chowrangi under 1.5m water, local drainage blocked.");
 
-  // Auto-fill coordinates on city selection
+  // Auto-fill coordinates and comments on city or type selection
   useEffect(() => {
+    const isHeat = injectorType === "heatwave";
+    
     if (injectorCity === "Karachi") {
-      setInjectorLat("24.9088");
-      setInjectorLng("67.1282");
+      if (isHeat) {
+        setInjectorLat("24.8607");
+        setInjectorLng("67.0011");
+        setInjectorComment("Record temperatures at 47°C in Saddar. Citizens fainting near Empress Market due to extreme humidity. Multiple load-shedding zones reported.");
+      } else {
+        setInjectorLat("24.9088");
+        setInjectorLng("67.1282");
+        setInjectorComment("Judges Custom Flood Scenario: Jauhar Chowrangi under 1.5m water, local drainage blocked.");
+      }
     } else if (injectorCity === "Islamabad") {
-      setInjectorLat("33.6844");
-      setInjectorLng("73.0479");
+      if (isHeat) {
+        setInjectorLat("33.6844");
+        setInjectorLng("73.0479");
+        setInjectorComment("Heat dome over Islamabad. Temperature at 45°C. Water shortages reported in sector G-10.");
+      } else {
+        setInjectorLat("33.6844");
+        setInjectorLng("73.0479");
+        setInjectorComment("Judges Custom Flood Scenario: G-10 service road heavily flooded due to storm water drain failure.");
+      }
     } else if (injectorCity === "Austin") {
-      setInjectorLat("30.2672");
-      setInjectorLng("-97.7431");
+      if (isHeat) {
+        setInjectorLat("30.2672");
+        setInjectorLng("-97.7431");
+        setInjectorComment("Austin heat index exceeds 112°F. Demand on ERCOT grid at all-time high.");
+      } else {
+        setInjectorLat("30.2672");
+        setInjectorLng("-97.7431");
+        setInjectorComment("Austin flash flood alert. Lamar Blvd underpass flooded.");
+      }
     } else if (injectorCity === "Lahore") {
-      setInjectorLat("31.5204");
-      setInjectorLng("74.3587");
+      if (isHeat) {
+        setInjectorLat("31.5590");
+        setInjectorLng("74.3260");
+        setInjectorComment("Heat index exceeding 52°C in Anarkali. Street vendors collapsing. Hospitals reporting surge in heat stroke admissions. Power grid failures in inner city.");
+      } else {
+        setInjectorLat("31.5204");
+        setInjectorLng("74.3587");
+        setInjectorComment("Mall road Lahore flooded due to torrential downpour. Traffic at a standstill.");
+      }
     }
-  }, [injectorCity]);
+  }, [injectorCity, injectorType]);
 
   // Custom Signal Injector Handler
   const handleInjectCustomSignal = async () => {
@@ -67,6 +109,10 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
     setActiveSignalId(null);
     setShowProgressPanel(true);
     setShowCustomInjector(false);
+
+    setReportIncident(null);
+    setReportActions([]);
+    setReportLogs([]);
 
     try {
       const payload = {
@@ -110,6 +156,10 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
     setPipelineState(null);
     setActiveSignalId(null);
     setShowProgressPanel(true);
+
+    setReportIncident(null);
+    setReportActions([]);
+    setReportLogs([]);
 
     try {
       const response = await api.triggerMockSignal();
@@ -159,6 +209,16 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
           if (status.status === "CONFIRMED" && status.incident_id) {
             onPipelineComplete?.(status.incident_id);
             setCompletedReportData(status);
+            
+            // Asynchronously fetch incident details, actions, and logs
+            try {
+              api.getIncidentById(status.incident_id).then(setReportIncident).catch(console.error);
+              api.getIncidentActions(status.incident_id).then(setReportActions).catch(console.error);
+              api.getIncidentLogs(status.incident_id).then(setReportLogs).catch(console.error);
+            } catch (fetchErr) {
+              console.error("Error triggering dynamic report fetch:", fetchErr);
+            }
+
             setShowReport(true);
           }
           return;
@@ -181,6 +241,35 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
 
     return () => clearInterval(interval);
   }, [activeSignalId]);
+
+  // Listen for external trigger to view an incident report
+  useEffect(() => {
+    if (viewIncidentReportId) {
+      // Clear previous states
+      setCompletedReportData(null);
+      setReportIncident(null);
+      setReportActions([]);
+      setReportLogs([]);
+      
+      // Fetch details
+      api.getIncidentById(viewIncidentReportId)
+        .then(incident => {
+          setReportIncident(incident);
+          setShowReport(true);
+        })
+        .catch(err => {
+          console.error("Error viewing incident report details:", err);
+        });
+
+      api.getIncidentActions(viewIncidentReportId)
+        .then(setReportActions)
+        .catch(console.error);
+
+      api.getIncidentLogs(viewIncidentReportId)
+        .then(setReportLogs)
+        .catch(console.error);
+    }
+  }, [viewIncidentReportId]);
 
   // Order mapping to perfectly align UI stepper states independent of custom indices
   const STAGE_ORDER: Record<string, number> = {
@@ -216,6 +305,21 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
     { key: "notification_agent", label: "Public Broadcast" },
     { key: "logging_agent", label: "System Auditor" },
   ];
+
+  const getCleanLocationName = (loc: string) => {
+    if (!loc) return "";
+    const parts = loc.split(",");
+    let label = parts[0].trim();
+    if (label.includes("+")) {
+      const words = label.split(" ").filter(w => !w.includes("+"));
+      if (words.length > 0) {
+        label = words.join(" ");
+      } else if (parts.length > 1) {
+        label = parts.slice(1, 3).join(", ").trim();
+      }
+    }
+    return label;
+  };
 
   return (
     <div className="w-full bg-white border-b border-gray-200 px-4 md:px-6 py-3 shadow-sm relative z-[999]">
@@ -418,10 +522,8 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
                 onChange={(e) => setInjectorType(e.target.value)}
                 className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-600 font-bold"
               >
-                <option value="flash_flood">🚨 Flash Flooding</option>
-                <option value="heavy_rain">🌧️ Severe Precipitation</option>
-                <option value="sewer_overflow">💧 Sewerage Breakdown</option>
-                <option value="drainage_failure">🚧 Drainage Infrastructure Malfunction</option>
+                <option value="flash_flood">🚨 Urban Flood Crisis</option>
+                <option value="heatwave">🔥 Extreme Heatwave</option>
               </select>
             </div>
           </div>
@@ -623,236 +725,314 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
       )}
 
       {/* Dynamic Swarm Dispatch Report Modal */}
-      {showReport && completedReportData && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col p-6 space-y-6 transform scale-100 transition-all duration-300">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg border border-emerald-600">
-                  <CheckCircle2 className="w-6 h-6 text-white" />
+      {showReport && (completedReportData || reportIncident) && (() => {
+        const isHeatwave = reportIncident 
+          ? reportIncident.disaster_type === "heatwave" 
+          : (injectorType === "heatwave" || completedReportData?.message?.toLowerCase().includes("heat") || completedReportData?.message?.toLowerCase().includes("temperature"));
+
+        const accentBg = isHeatwave ? "bg-orange-500 border-orange-600 animate-pulse" : "bg-emerald-500 border-emerald-600";
+        const accentText = isHeatwave ? "text-orange-600" : "text-emerald-600";
+        const accentTextDark = isHeatwave ? "text-orange-800" : "text-emerald-800";
+        const accentLightBg = isHeatwave ? "bg-orange-50/20 border-orange-100/40" : "bg-emerald-50/20 border-emerald-100/40";
+        const accentBorder = isHeatwave ? "border-orange-100" : "border-emerald-100";
+        const accentBgCard = isHeatwave ? "bg-orange-50/10 border-orange-100" : "bg-emerald-50/10 border-emerald-100";
+        const accentBtn = isHeatwave 
+          ? "bg-orange-600 hover:bg-orange-700 border-orange-700 shadow-orange-600/20" 
+          : "bg-emerald-600 hover:bg-emerald-700 border-emerald-700 shadow-emerald-600/20";
+        const accentIconColor = isHeatwave ? "text-orange-500" : "text-emerald-500";
+
+        const originName = reportIncident 
+          ? getCleanLocationName(reportIncident.location) 
+          : (isHeatwave ? "Saddar Market" : "Jauhar Chowrangi");
+        const destName = isHeatwave ? "Cooling Post" : "University Rd.";
+
+        const severityScoreVal = reportIncident ? reportIncident.severity_score : (isHeatwave ? 9.2 : 8.5);
+        const severityScoreText = `${Number(severityScoreVal).toFixed(1)} / 10`;
+        const verificationConfidenceText = reportIncident ? `${(Number(reportIncident.confidence) * 100).toFixed(0)}% Verified` : "98% Verified";
+        const locationText = reportIncident ? getCleanLocationName(reportIncident.location) : (isHeatwave ? "Saddar, Karachi" : "Karachi Region");
+
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col p-6 space-y-6 transform scale-100 transition-all duration-300">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg border ${isHeatwave ? "bg-orange-500 border-orange-600" : "bg-emerald-500 border-emerald-600"}`}>
+                    <CheckCircle2 className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-extrabold text-gray-900 tracking-tight leading-none">
+                      CIRO Swarm Triage Completed Successfully
+                    </h3>
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 block">
+                      Disaster Response Actions Dispatched
+                    </span>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleCloseReport}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Metrics Grid */}
+              <div className={`grid grid-cols-3 gap-4 p-4 rounded-xl border text-center ${accentLightBg}`}>
+                <div>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider block ${accentText}`}>Verified Location</span>
+                  <span className="text-xs font-extrabold text-gray-800 mt-1 block truncate">{locationText}</span>
+                </div>
+                <div className="border-x border-gray-200/50">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider block ${accentText}`}>Severity Index</span>
+                  <span className={`text-xs font-extrabold mt-1 block ${severityScoreVal >= 7.0 ? "text-red-600" : "text-amber-600"}`}>{severityScoreText}</span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold text-gray-900 tracking-tight leading-none">
-                    CIRO Swarm Triage Completed Successfully
-                  </h3>
-                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 block">
-                    Disaster Response Actions Dispatched
+                  <span className={`text-[10px] font-bold uppercase tracking-wider block ${accentText}`}>Verification Confidence</span>
+                  <span className="text-xs font-extrabold text-gray-800 mt-1 block">{verificationConfidenceText}</span>
+                </div>
+              </div>
+
+              {/* Dynamic Visual Route Reroute / Cooling Schematic */}
+              <div className={`border rounded-2xl p-4 space-y-3 ${accentBgCard}`}>
+                <div className="flex items-center justify-between">
+                  <h4 className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${accentTextDark}`}>
+                    <Activity className={`w-4 h-4 animate-pulse ${accentIconColor}`} />
+                    {isHeatwave ? "☀️ Active Cooling & Hydration Network" : "🚧 Active Multi-Agent Detour Schematic"}
+                  </h4>
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border animate-pulse ${
+                    isHeatwave ? "bg-orange-500/20 text-orange-600 border-orange-500/20" : "bg-emerald-500/20 text-emerald-600 border-emerald-500/20"
+                  }`}>
+                    {isHeatwave ? "Cooling Active" : "Traffic Diverted"}
                   </span>
                 </div>
-              </div>
-              <button 
-                onClick={() => setShowReport(false)}
-                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Metrics Grid */}
-            <div className="grid grid-cols-3 gap-4 bg-emerald-50/20 p-4 rounded-xl border border-emerald-100/40 text-center">
-              <div>
-                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Verified Location</span>
-                <span className="text-xs font-extrabold text-gray-800 mt-1 block truncate">Karachi Region</span>
-              </div>
-              <div className="border-x border-gray-200/50">
-                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Severity Index</span>
-                <span className="text-xs font-extrabold text-red-600 mt-1 block">8.5 / 10</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Verification Confidence</span>
-                <span className="text-xs font-extrabold text-gray-800 mt-1 block">98% Verified</span>
-              </div>
-            </div>
+                {/* Graphic Vector */}
+                <div className="bg-gray-950 rounded-xl p-3 flex flex-col items-center justify-center relative overflow-hidden border border-gray-900 shadow-inner">
+                  {isHeatwave ? (
+                    <svg className="w-full max-w-[450px]" height="110" viewBox="0 0 450 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <pattern id="heatgrid" width="15" height="15" patternUnits="userSpaceOnUse">
+                          <path d="M 15 0 L 0 0 0 15" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#heatgrid)" />
 
-            {/* Dynamic Visual Route Reroute Schematic */}
-            <div className="border border-emerald-100 bg-emerald-50/10 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <Activity className="w-4 h-4 text-emerald-500 animate-pulse" />
-                  🚧 Active Multi-Agent Detour Schematic
+                      {/* Connecting Orange/Green Supply Dotted lines */}
+                      <path d="M 40 55 Q 225 90 410 55" stroke="#f97316" strokeWidth="2.5" strokeDasharray="4, 4" opacity="0.6" />
+                      <path d="M 40 55 Q 225 20 410 55" stroke="#10b981" strokeWidth="3" strokeDasharray="6, 6" />
+
+                      {/* Water flow indicator arrows */}
+                      <path d="M 130 33 L 138 31 M 138 31 L 133 27 M 138 31 L 135 36" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                      <path d="M 320 33 L 328 35 M 328 35 L 324 30 M 328 35 L 323 39" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+
+                      {/* Heat Core Zone */}
+                      <circle cx="225" cy="55" r="24" fill="rgba(249, 115, 22, 0.15)" stroke="#f97316" strokeWidth="1.5" strokeDasharray="3, 3" />
+                      <circle cx="225" cy="55" r="12" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" strokeWidth="1" />
+                      
+                      {/* Water Tanker Origin Node A */}
+                      <circle cx="40" cy="55" r="9" fill="#0284c7" stroke="#ffffff" strokeWidth="2" />
+                      <text x="40" y="78" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">Water Hydrant</text>
+                      
+                      {/* Empress Market Node B */}
+                      <circle cx="410" cy="55" r="9" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                      <text x="410" y="78" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{locationText}</text>
+
+                      {/* Label Tooltips */}
+                      <rect x="180" y="83" width="90" height="15" rx="3" fill="#f97316" opacity="0.9" />
+                      <text x="225" y="94" fill="#ffffff" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="monospace">⚠ EXTREME HEAT</text>
+                      
+                      <rect x="180" y="15" width="90" height="15" rx="3" fill="#10b981" opacity="0.95" />
+                      <text x="225" y="26" fill="#ffffff" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="monospace">✔ COOLING DEPLOYED</text>
+                    </svg>
+                  ) : (
+                    <svg className="w-full max-w-[450px]" height="110" viewBox="0 0 450 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <pattern id="grid" width="15" height="15" patternUnits="userSpaceOnUse">
+                          <path d="M 15 0 L 0 0 0 15" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                        </pattern>
+                      </defs>
+                      <rect width="100%" height="100%" fill="url(#grid)" />
+
+                      {/* Red Blocked Path */}
+                      <path d="M 40 55 L 410 55" stroke="#ef4444" strokeWidth="3" strokeDasharray="6, 8" opacity="0.6" />
+                      
+                      {/* Green Detour Curve */}
+                      <path d="M 40 55 Q 225 5 410 55" stroke="#10b981" strokeWidth="4.5" strokeLinecap="round" />
+
+                      {/* Flow Indicator Arrows on Green Path */}
+                      <path d="M 130 25 L 138 25 M 138 25 L 134 21 M 138 25 L 134 29" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                      <path d="M 225 15 L 233 15 M 233 15 L 229 11 M 233 15 L 229 19" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                      <path d="M 320 25 L 328 25 M 328 25 L 324 21 M 328 25 L 324 29" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+
+                      {/* Flood Hazard Zone Circle */}
+                      <circle cx="225" cy="55" r="22" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3, 3" />
+                      <path d="M 220 50 L 230 60 M 230 50 L 220 60" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
+                      
+                      {/* Origin Node A */}
+                      <circle cx="40" cy="55" r="9" fill="#3b82f6" stroke="#ffffff" strokeWidth="2" />
+                      <text x="40" y="78" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{originName}</text>
+                      
+                      {/* Destination Node B */}
+                      <circle cx="410" cy="55" r="9" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
+                      <text x="410" y="78" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">{destName}</text>
+
+                      {/* Label Tooltips */}
+                      <rect x="180" y="83" width="90" height="15" rx="3" fill="#ef4444" opacity="0.9" />
+                      <text x="225" y="94" fill="#ffffff" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="monospace">⚠ 1.2M FLOOD</text>
+                      
+                      <rect x="180" y="28" width="90" height="15" rx="3" fill="#10b981" opacity="0.95" />
+                      <text x="225" y="39" fill="#ffffff" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="monospace">✔ DETOUR OPEN</text>
+                    </svg>
+                  )}
+                </div>
+
+                {/* Schematic Explainer Cards */}
+                {isHeatwave ? (
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="bg-orange-500/5 border border-orange-500/10 rounded-xl p-2.5 flex flex-col justify-between">
+                      <div>
+                        <span className="font-bold text-orange-500 uppercase text-[9px] tracking-wider block mb-1">🔴 Primary Heat Zone</span>
+                        <span className="font-extrabold text-gray-800 text-xs">{locationText} Area</span>
+                      </div>
+                      <span className="text-[10px] text-orange-500 font-semibold mt-2">Status: EXTREME HEAT HAZARD / NO SHADE</span>
+                    </div>
+                    <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-2.5 flex flex-col justify-between">
+                      <div>
+                        <span className="font-bold text-emerald-600 uppercase text-[9px] tracking-wider block mb-1">🟢 Multi-Agent Cooling Network</span>
+                        <span className="font-extrabold text-gray-800 text-xs">Hydration Stations & Shade Canopies</span>
+                      </div>
+                      <span className="text-[10px] text-emerald-600 font-semibold mt-2">Status: DISPATCHED & ACTIVE</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-2.5 flex flex-col justify-between">
+                      <div>
+                        <span className="font-bold text-red-500 uppercase text-[9px] tracking-wider block mb-1">🔴 Standard Primary Route</span>
+                        <span className="font-extrabold text-gray-800 text-xs">{originName} Main Road</span>
+                      </div>
+                      <span className="text-[10px] text-red-500 font-semibold mt-2">Status: BLOCKED BY SEVERE FLOODING</span>
+                    </div>
+                    <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-2.5 flex flex-col justify-between">
+                      <div>
+                        <span className="font-bold text-emerald-600 uppercase text-[9px] tracking-wider block mb-1">🟢 Multi-Agent Assigned Detour</span>
+                        <span className="font-extrabold text-gray-800 text-xs">{destName} Alternate</span>
+                      </div>
+                      <span className="text-[10px] text-emerald-600 font-semibold mt-2">Status: DETOUR DISPATCHED (+4 mins)</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Agent Timeline */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Sequential Agent Swarm Workflow Trace
                 </h4>
-                <span className="text-[9px] font-bold bg-emerald-500/20 text-emerald-600 px-2 py-0.5 rounded-full uppercase border border-emerald-500/20 animate-pulse">
-                  Traffic Diverted
-                </span>
-              </div>
+                
+                <div className="relative border-l border-gray-200 pl-4 ml-2 space-y-4">
+                  {STAGES.filter(s => s.key !== "logging_agent").map((stage, idx) => {
+                    // Find reasoning log for this agent
+                    const agentLog = reportLogs.find(
+                      l => l.agent_name === stage.key || 
+                      (stage.key === "resource_allocation_agent" && l.agent_name === "resource_agent")
+                    );
+                    
+                    let desc = "";
+                    let statusLabel = "";
+                    if (agentLog) {
+                      const text = agentLog.log_text;
+                      const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+                      
+                      const statusLine = lines.find(l => l.toUpperCase().startsWith("**STATUS**:"));
+                      if (statusLine) {
+                        statusLabel = statusLine.replace(/\*\*Status\*\*:/i, "").trim();
+                      }
+                      
+                      const narrativeLine = lines.find(l => !l.startsWith("###") && !l.startsWith("**") && !l.startsWith("-") && !l.startsWith("---"));
+                      if (narrativeLine) {
+                        desc = narrativeLine;
+                      } else {
+                        desc = agentLog.log_text;
+                      }
+                    } else {
+                      if (isHeatwave) {
+                        if (stage.key === "signal_agent") desc = `Parsed unstructured temperature alert in ${locationText}. Assigned a credibility index of 95% based on official weather api cross-referencing.`;
+                        else if (stage.key === "detection_agent") desc = `Evaluated city-scale temperature sensors. Confirmed active sector heatwave incident in ${locationText} without spatial clustering.`;
+                        else if (stage.key === "verification_agent") desc = "Audited weather forecasts. Confirmed extreme ambient heat index exceeding 54°C.";
+                        else if (stage.key === "severity_agent") desc = `Assigned critical severity index (${Number(severityScoreVal).toFixed(1)}/10) to ${locationText}. Identified dense urban heat island risk and power grid load-shedding.`;
+                        else if (stage.key === "resource_allocation_agent") desc = `Allocated 4 Hydration Camps, 4 Water Tankers, and 6 Shade Canopies to ${locationText} region.`;
+                        else if (stage.key === "planning_agent") desc = `Formulated heatwave plan: Activate cooling centers, deploy mobile hydration posts, and dispatch water tankers in ${locationText}.`;
+                        else if (stage.key === "notification_agent") desc = `Dispatched emergency heat wave SMS advisories to citizens inside ${locationText} area.`;
+                      } else {
+                        if (stage.key === "signal_agent") desc = `Parsed unstructured mock telemetry signal in ${locationText}. Validated geographic boundaries and assigned an initial credibility index of 95% based on source cross-referencing.`;
+                        else if (stage.key === "detection_agent") desc = `Evaluated incoming signal location against historical datasets. Created a new active spatiotemporal cluster with verification triggers at ${locationText}.`;
+                        else if (stage.key === "verification_agent") desc = "Scraped live Twitter/X crisis feeds and weather radar telemetry in real-time. Confirmed active flash floods with zero false alarms.";
+                        else if (stage.key === "severity_agent") desc = `Assigned critical severity index (${Number(severityScoreVal).toFixed(1)}/10) to ${locationText}. Created verified incident in the central database.`;
+                        else if (stage.key === "resource_allocation_agent") desc = `Calculated vehicle requirements and dispatched 3 Rescue boats, 2 Ambulances to ${locationText} region.`;
+                        else if (stage.key === "planning_agent") desc = `Formulated action items: Dispatching rescue vehicles, setting up high-ground camps, closing low-lying bridges, and routing public traffic in ${locationText}.`;
+                        else if (stage.key === "notification_agent") desc = `Triggered mass SMS/alert notifications to mobile devices inside the affected radius of ${locationText}.`;
+                      }
+                    }
 
-              {/* Graphic Vector */}
-              <div className="bg-gray-950 rounded-xl p-3 flex flex-col items-center justify-center relative overflow-hidden border border-gray-900 shadow-inner">
-                <svg className="w-full max-w-[450px]" height="110" viewBox="0 0 450 110" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  {/* Grid Lines for style */}
-                  <defs>
-                    <pattern id="grid" width="15" height="15" patternUnits="userSpaceOnUse">
-                      <path d="M 15 0 L 0 0 0 15" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#grid)" />
+                    const isSkipped = pipelineState?.agent_states?.verification_agent === "SKIPPED" || 
+                                      completedReportData?.agent_states?.verification_agent === "SKIPPED" ||
+                                      (reportIncident && reportIncident.confidence >= 0.95 && !reportLogs.some(l => l.agent_name === "verification_agent"));
+                    if (stage.key === "verification_agent" && isSkipped && !agentLog) {
+                      desc = "Verification bypassed: High confidence telemetry from verified API source confirmed.";
+                      statusLabel = "SKIPPED";
+                    }
 
-                  {/* Red Blocked Path */}
-                  <path d="M 40 55 L 410 55" stroke="#ef4444" strokeWidth="3" strokeDasharray="6, 8" opacity="0.6" />
-                  
-                  {/* Green Detour Curve */}
-                  <path d="M 40 55 Q 225 5 410 55" stroke="#10b981" strokeWidth="4.5" strokeLinecap="round" />
-
-                  {/* Flow Indicator Arrows on Green Path */}
-                  <path d="M 130 25 L 138 25 M 138 25 L 134 21 M 138 25 L 134 29" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
-                  <path d="M 225 15 L 233 15 M 233 15 L 229 11 M 233 15 L 229 19" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
-                  <path d="M 320 25 L 328 25 M 328 25 L 324 21 M 328 25 L 324 29" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
-
-                  {/* Flood Hazard Zone Circle */}
-                  <circle cx="225" cy="55" r="22" fill="rgba(239, 68, 68, 0.15)" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3, 3" />
-                  <path d="M 220 50 L 230 60 M 230 50 L 220 60" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
-                  
-                  {/* Origin Node A */}
-                  <circle cx="40" cy="55" r="9" fill="#3b82f6" stroke="#ffffff" strokeWidth="2" />
-                  <text x="40" y="78" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">Jauhar Chowrangi</text>
-                  
-                  {/* Destination Node B */}
-                  <circle cx="410" cy="55" r="9" fill="#10b981" stroke="#ffffff" strokeWidth="2" />
-                  <text x="410" y="78" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle" fontFamily="monospace">University Rd.</text>
-
-                  {/* Label Tooltips */}
-                  <rect x="180" y="83" width="90" height="15" rx="3" fill="#ef4444" opacity="0.9" />
-                  <text x="225" y="94" fill="#ffffff" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="monospace">⚠ 1.2M FLOOD</text>
-                  
-                  <rect x="180" y="28" width="90" height="15" rx="3" fill="#10b981" opacity="0.95" />
-                  <text x="225" y="39" fill="#ffffff" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="monospace">✔ DETOUR OPEN</text>
-                </svg>
-              </div>
-
-              {/* Schematic Explainer Cards */}
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="bg-red-500/5 border border-red-500/10 rounded-xl p-2.5 flex flex-col justify-between">
-                  <div>
-                    <span className="font-bold text-red-500 uppercase text-[9px] tracking-wider block mb-1">🔴 Standard Primary Route</span>
-                    <span className="font-extrabold text-gray-800 text-xs">Gulistan-e-Jauhar Main Road</span>
-                  </div>
-                  <span className="text-[10px] text-red-500 font-semibold mt-2">Status: BLOCKED BY SEVERE FLOODING</span>
-                </div>
-                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-2.5 flex flex-col justify-between">
-                  <div>
-                    <span className="font-bold text-emerald-600 uppercase text-[9px] tracking-wider block mb-1">🟢 Multi-Agent Assigned Detour</span>
-                    <span className="font-extrabold text-gray-800 text-xs">University Road Alternate</span>
-                  </div>
-                  <span className="text-[10px] text-emerald-600 font-semibold mt-2">Status: DETOUR DISPATCHED (+4 mins)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Agent Timeline */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Sequential Agent Swarm Workflow Trace
-              </h4>
-              
-              <div className="relative border-l border-gray-200 pl-4 ml-2 space-y-4">
-                {/* Stage 1 */}
-                <div className="relative">
-                  <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white animate-pulse" />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide">
-                      1. Ingestion & Credibility Score (Signal Parser)
-                    </span>
-                    <p className="text-[11px] text-gray-500 font-semibold leading-relaxed">
-                      Parsed unstructured mock telemetry signal. Validated geographic boundaries and assigned an initial credibility index of 95% based on source cross-referencing.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stage 2 */}
-                <div className="relative">
-                  <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white animate-pulse" />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide">
-                      2. Spatiotemporal Clustering (Crisis Clusterer)
-                    </span>
-                    <p className="text-[11px] text-gray-500 font-semibold leading-relaxed">
-                      Evaluated incoming signal location against historical datasets. Created a new active spatiotemporal cluster with verification triggers.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stage 3 */}
-                <div className="relative">
-                  <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white animate-pulse" />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide">
-                      3. Multimodal Auditing (Social Verifier)
-                    </span>
-                    <p className="text-[11px] text-gray-500 font-semibold leading-relaxed">
-                      Scraped live Twitter/X crisis feeds and weather radar telemetry in real-time. Confirmed active flash floods with zero false alarms.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stage 4 */}
-                <div className="relative">
-                  <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white animate-pulse" />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide">
-                      4. Asset & Exposure Indexing (Severity Agent)
-                    </span>
-                    <p className="text-[11px] text-gray-500 font-semibold leading-relaxed">
-                      Assigned critical severity index (8.5/10). Identified 15,000 citizens and key hospital infrastructure inside the affected hazard zone. Created verified incident in the central database.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stage 5 */}
-                <div className="relative">
-                  <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white animate-pulse" />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide">
-                      5. Tactical Asset Dispatching (Resource Agent)
-                    </span>
-                    <p className="text-[11px] text-gray-500 font-semibold leading-relaxed">
-                      Calculated vehicle requirements and dispatched 3 Rescue boats, 2 Ambulances from Sector G-9 base station, optimizing travel time.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stage 6 */}
-                <div className="relative">
-                  <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white animate-pulse" />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide">
-                      6. Action Plan Formulation (Planner Agent)
-                    </span>
-                    <p className="text-[11px] text-gray-500 font-semibold leading-relaxed">
-                      Formulated 4 action items: Dispatching rescue vehicles, setting up high-ground camps, closing low-lying bridges, and routing public traffic.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Stage 7 */}
-                <div className="relative">
-                  <span className="absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-4 ring-white animate-pulse" />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide">
-                      7. Public Emergency Alert (Broadcast Agent)
-                    </span>
-                    <p className="text-[11px] text-gray-500 font-semibold leading-relaxed">
-                      Triggered mass SMS/alert notifications to mobile devices inside the affected radius, instructing citizens to evacuate to nearest safe zones.
-                    </p>
-                  </div>
+                    return (
+                      <div key={stage.key} className="relative">
+                        <span className={`absolute -left-[21px] top-0.5 w-2.5 h-2.5 rounded-full ring-4 ring-white ${
+                          isSkipped && stage.key === "verification_agent" 
+                            ? "bg-blue-400" 
+                            : isHeatwave 
+                            ? "bg-orange-500 animate-pulse"
+                            : "bg-emerald-500 animate-pulse"
+                        }`} />
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-extrabold text-gray-800 uppercase tracking-wide flex items-center gap-2">
+                            {idx + 1}. {stage.label}
+                            {statusLabel && (
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                statusLabel === "SKIPPED" 
+                                  ? "bg-blue-50 text-blue-600 border border-blue-100"
+                                  : statusLabel.includes("CRITICAL") || statusLabel.includes("ALERT")
+                                  ? "bg-red-50 text-red-600 border border-red-100"
+                                  : isHeatwave
+                                  ? "bg-orange-50 text-orange-600 border border-orange-100"
+                                  : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                              }`}>
+                                {statusLabel}
+                              </span>
+                            )}
+                          </span>
+                          <p className="text-[11px] text-gray-500 font-semibold leading-relaxed">
+                            {desc}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
 
-            {/* Actions Footer */}
-            <div className="border-t border-gray-100 pt-4 flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setShowReport(false);
-                }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 rounded-lg transition-colors cursor-pointer border border-emerald-700 shadow-md shadow-emerald-600/20"
-              >
-                Explore Control Room
-              </button>
+              {/* Actions Footer */}
+              <div className="border-t border-gray-100 pt-4 flex gap-3 justify-end">
+                <button
+                  onClick={handleCloseReport}
+                  className={`text-white font-bold text-xs uppercase tracking-wider px-5 py-2.5 rounded-lg transition-colors cursor-pointer border shadow-md ${accentBtn}`}
+                >
+                  Explore Control Room
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
     </div>
   );

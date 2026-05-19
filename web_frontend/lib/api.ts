@@ -20,6 +20,7 @@ export interface Incident {
   status: string;
   risk_factors?: string[];
   created_at: string;
+  disaster_type?: "flood" | "heatwave";
 }
 
 export interface Action {
@@ -122,6 +123,7 @@ export const MOCK_INCIDENTS: Incident[] = [
     status: "ACTIVE",
     risk_factors: ["heavy_rain", "drainage_blockage", "road_ponding"],
     created_at: new Date(Date.now() - 3600000).toISOString(),
+    disaster_type: "flood",
   },
   {
     id: "inc-block13",
@@ -136,6 +138,7 @@ export const MOCK_INCIDENTS: Incident[] = [
     status: "ACTIVE",
     risk_factors: ["localized_ponding", "drainage_overflow"],
     created_at: new Date(Date.now() - 7200000).toISOString(),
+    disaster_type: "flood",
   },
   {
     id: "inc-block15",
@@ -150,6 +153,22 @@ export const MOCK_INCIDENTS: Incident[] = [
     status: "ACTIVE",
     risk_factors: ["urban_runoff", "basement_flooding"],
     created_at: new Date(Date.now() - 10800000).toISOString(),
+    disaster_type: "flood",
+  },
+  {
+    id: "inc-saddar",
+    location: "Saddar Market Area, Karachi",
+    lat: 24.8607,
+    lng: 67.0011,
+    severity_score: 9.2,
+    confidence: 0.98,
+    affected_radius_km: 2.5,
+    estimated_population: 18500,
+    peak_impact_eta: "Immediate",
+    status: "ACTIVE",
+    risk_factors: ["extreme_heat", "high_wet_bulb", "power_outages", "dense_urban_heat_island"],
+    created_at: new Date(Date.now() - 1800000).toISOString(),
+    disaster_type: "heatwave",
   }
 ];
 
@@ -169,6 +188,11 @@ export const MOCK_ACTIONS: Record<string, Action[]> = {
   "inc-f6": [
     { id: "act-f6-1", incident_id: "inc-f6", type: "ALERT_CITIZENS", status: "NOTIFIED", predicted_side_effects: "Margalla hill run-off danger notification sent.", updated_at: nowStr() },
     { id: "act-f6-2", incident_id: "inc-f6", type: "DISPATCH_RESCUE", status: "DISPATCHED", predicted_side_effects: "Standby units deployed near Sector F-6.", updated_at: nowStr() },
+  ],
+  "inc-saddar": [
+    { id: "act-saddar-1", incident_id: "inc-saddar", type: "ESTABLISH_COOLING_STATIONS", status: "COMPLETED", predicted_side_effects: "Erected shade canopies & hydration posts near Saddar bazaar. Lowered heat vulnerability.", updated_at: nowStr() },
+    { id: "act-saddar-2", incident_id: "inc-saddar", type: "DEPLOY_WATER_TANKERS", status: "DISPATCHED", predicted_side_effects: "Water distribution tankers arriving to fill municipal heat-safety reserves.", updated_at: nowStr() },
+    { id: "act-saddar-3", incident_id: "inc-saddar", type: "ALERT_CITIZENS", status: "NOTIFIED", predicted_side_effects: "Amber alert broadcast: restrict outdoor activity between 11 AM - 4 PM.", updated_at: nowStr() }
   ]
 };
 
@@ -216,6 +240,7 @@ export const api = {
         status: item.status || "ACTIVE",
         risk_factors: item.risk_factors || [],
         created_at: item.created_at,
+        disaster_type: item.disaster_type || "flood",
       }));
     } catch (err) {
       console.warn("🛡️ [API FALLBACK] getActiveIncidents() -> serving mock Islamabad sectors.", err);
@@ -242,6 +267,35 @@ export const api = {
     } catch (err) {
       console.warn(`🛡️ [API FALLBACK] getIncidentActions(${incidentId}) -> serving mock actions.`, err);
       return MOCK_ACTIONS[incidentId] || [];
+    }
+  },
+
+  /**
+   * Fetch a single incident by ID
+   */
+  async getIncidentById(incidentId: string): Promise<Incident> {
+    try {
+      const item = await makeRequest<any>(`/incidents/${incidentId}`);
+      return {
+        id: String(item.id),
+        location: item.location,
+        lat: Number(item.lat),
+        lng: Number(item.lng),
+        severity_score: Number(item.severity_score),
+        confidence: Number(item.confidence),
+        affected_radius_km: Number(item.affected_radius_km || 1.0),
+        estimated_population: Number(item.estimated_population || 1000),
+        peak_impact_eta: item.peak_impact_eta || "N/A",
+        status: item.status || "ACTIVE",
+        risk_factors: item.risk_factors || [],
+        created_at: item.created_at,
+        disaster_type: item.disaster_type || "flood",
+      };
+    } catch (err) {
+      console.warn(`🛡️ [API FALLBACK] getIncidentById(${incidentId}) -> serving fallback.`, err);
+      const found = MOCK_INCIDENTS.find(i => String(i.id) === String(incidentId));
+      if (found) return found;
+      throw err;
     }
   },
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AlertTriangle, Shield, Settings, Bookmark, CheckCircle2, Navigation, MessageSquare, Heart, Radio, Activity } from "lucide-react";
+import { AlertTriangle, Shield, Settings, Bookmark, CheckCircle2, Navigation, MessageSquare, Heart, Radio, Activity, Sun, Thermometer, FileText } from "lucide-react";
 import { api, Incident, Action, ReasoningLog, Notification } from "@/lib/api";
 
 const AGENT_META: Record<string, { label: string, color: string, bg: string, border: string }> = {
@@ -17,9 +17,12 @@ const AGENT_META: Record<string, { label: string, color: string, bg: string, bor
 interface EventsPanelProps {
   selectedIncident: Incident | null;
   onSelectIncident: (incident: Incident | null) => void;
+  onViewReport?: (incidentId: string) => void;
 }
 
-export default function EventsPanel({ selectedIncident, onSelectIncident }: EventsPanelProps) {
+export default function EventsPanel({ selectedIncident, onSelectIncident, onViewReport }: EventsPanelProps) {
+  const isHeatwave = selectedIncident?.disaster_type === "heatwave";
+  
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [reasoningLogs, setReasoningLogs] = useState<ReasoningLog[]>([]);
@@ -132,12 +135,18 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col h-full">
       {/* Top Accent Gradient Bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-600 to-emerald-600" />
+      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${isHeatwave ? "from-amber-500 to-orange-600" : "from-teal-600 to-emerald-600"}`} />
       {/* Card Header */}
       <div className="px-4 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-red-500 animate-pulse" />
-          <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Active Hazards</h3>
+          {isHeatwave ? (
+            <Sun className="w-4 h-4 text-orange-500 animate-pulse" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 text-red-500 animate-pulse" />
+          )}
+          <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
+            {isHeatwave ? "Active Heatwaves" : "Active Hazards"}
+          </h3>
         </div>
 
         <div className="flex items-center gap-2">
@@ -156,12 +165,19 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
               incidents.map((incident) => {
                 const parts = incident.location.split(",");
                 let label = parts[0].trim();
-                if (parts.length > 1 && (/^\d+$/.test(label) || label.length <= 4)) {
+                if (label.includes("+")) {
+                  const words = label.split(" ").filter(w => !w.includes("+"));
+                  if (words.length > 0) {
+                    label = words.join(" ");
+                  } else if (parts.length > 1) {
+                    label = parts.slice(1, 3).join(", ").trim();
+                  }
+                } else if (parts.length > 1 && (/^\d+$/.test(label) || label.length <= 4)) {
                   label = parts.slice(1, 3).join(", ").trim();
                 }
                 return (
                   <option key={incident.id} value={incident.id}>
-                    {label} ({incident.severity_score}/10)
+                    {label} ({Number(incident.severity_score).toFixed(1)}/10)
                   </option>
                 );
               })
@@ -175,10 +191,22 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
         {selectedIncident ? (
           <div className="space-y-4">
             {/* Top Row: Incident Info */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-red-50/30 p-3 rounded-lg border border-red-100/50">
+            <div className={`flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-lg border ${
+              isHeatwave 
+                ? "bg-orange-50/40 border-orange-100" 
+                : "bg-red-50/30 border-red-100/50"
+            }`}>
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-red-500 flex items-center justify-center border border-red-600 shadow-sm flex-shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-white" />
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center border shadow-sm flex-shrink-0 ${
+                  isHeatwave 
+                    ? "bg-orange-500 border-orange-600" 
+                    : "bg-red-500 border-red-600"
+                }`}>
+                  {isHeatwave ? (
+                    <Sun className="w-5 h-5 text-white" />
+                  ) : (
+                    <AlertTriangle className="w-5 h-5 text-white" />
+                  )}
                 </div>
                 <div>
                   <h4 className="text-sm font-extrabold text-gray-900 leading-tight">
@@ -200,7 +228,11 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                       <div 
                         key={lvl}
                         className={`w-3.5 h-3.5 rounded-xs ${
-                          active ? "bg-red-500 shadow-sm" : "bg-gray-200"
+                          active 
+                            ? isHeatwave 
+                              ? "bg-orange-500 shadow-sm" 
+                              : "bg-red-500 shadow-sm" 
+                            : "bg-gray-200"
                         }`} 
                       />
                     );
@@ -216,13 +248,27 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
               <div className="space-y-3">
                 <div className="text-xs text-gray-600 leading-relaxed font-semibold bg-gray-50 border border-gray-200/60 p-4 rounded-xl shadow-inner min-h-[140px] flex flex-col justify-between">
                   <div>
-                    <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider block mb-1">CoT Response Narrative</span>
-                    CIRO verified an active flood warning in {selectedIncident.location} at coordinate [{selectedIncident.lat.toFixed(4)}, {selectedIncident.lng.toFixed(4)}]. 
-                    The severity index is evaluated to {selectedIncident.severity_score}/10, exposing approximately {selectedIncident.estimated_population.toLocaleString()} citizens at high risk. 
-                    Tactical resource allocation and emergency evacuation procedures have been successfully finalized.
+                    <span className={`text-[10px] font-bold uppercase tracking-wider block mb-1 ${
+                      isHeatwave ? "text-orange-500" : "text-red-500"
+                    }`}>
+                      CoT Response Narrative
+                    </span>
+                    {isHeatwave ? (
+                      <>
+                        CIRO verified an active extreme heatwave warning in {selectedIncident.location} at coordinate [{selectedIncident.lat.toFixed(4)}, {selectedIncident.lng.toFixed(4)}]. 
+                        The severity index is evaluated to {selectedIncident.severity_score}/10, placing approximately {selectedIncident.estimated_population.toLocaleString()} citizens at critical risk of thermal shock and grid outages. 
+                        Hydration deployment and cooling systems have been scheduled.
+                      </>
+                    ) : (
+                      <>
+                        CIRO verified an active flood warning in {selectedIncident.location} at coordinate [{selectedIncident.lat.toFixed(4)}, {selectedIncident.lng.toFixed(4)}]. 
+                        The severity index is evaluated to {selectedIncident.severity_score}/10, exposing approximately {selectedIncident.estimated_population.toLocaleString()} citizens at high risk. 
+                        Tactical resource allocation and emergency evacuation procedures have been successfully finalized.
+                      </>
+                    )}
                   </div>
                   <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold border-t border-gray-200/50 pt-2 mt-2">
-                    <span>ETA Peak Peak: {selectedIncident.peak_impact_eta}</span>
+                    <span>ETA Peak: {selectedIncident.peak_impact_eta}</span>
                     <span>Confidence: {(selectedIncident.confidence * 100).toFixed(0)}%</span>
                   </div>
                 </div>
@@ -246,8 +292,10 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                 </div>
                 <div className="flex justify-between py-1 border-b border-gray-50">
                   <span className="text-gray-500 font-medium">Active Threat Factors:</span>
-                  <span className="font-semibold text-red-600 truncate max-w-[140px]" title={selectedIncident.risk_factors?.join(", ")}>
-                    {selectedIncident.risk_factors?.length ? selectedIncident.risk_factors.join(", ") : "Heavy Rain"}
+                  <span className={`font-semibold truncate max-w-[140px] ${
+                    isHeatwave ? "text-orange-600" : "text-red-600"
+                  }`} title={selectedIncident.risk_factors?.join(", ")}>
+                    {selectedIncident.risk_factors?.length ? selectedIncident.risk_factors.join(", ") : isHeatwave ? "Extreme Heat" : "Heavy Rain"}
                   </span>
                 </div>
               </div>
@@ -262,7 +310,9 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                     onClick={() => setActiveTab("actions")}
                     className={`flex items-center gap-1 pb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       activeTab === "actions"
-                        ? "border-emerald-500 text-emerald-600"
+                        ? isHeatwave 
+                          ? "border-orange-500 text-orange-600" 
+                          : "border-emerald-500 text-emerald-600"
                         : "border-transparent text-gray-400 hover:text-gray-600"
                     }`}
                   >
@@ -273,7 +323,9 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                     onClick={() => setActiveTab("logs")}
                     className={`flex items-center gap-1 pb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       activeTab === "logs"
-                        ? "border-emerald-500 text-emerald-600"
+                        ? isHeatwave 
+                          ? "border-orange-500 text-orange-600" 
+                          : "border-emerald-500 text-emerald-600"
                         : "border-transparent text-gray-400 hover:text-gray-600"
                     }`}
                   >
@@ -284,7 +336,9 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                     onClick={() => setActiveTab("notifications")}
                     className={`flex items-center gap-1 pb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       activeTab === "notifications"
-                        ? "border-emerald-500 text-emerald-600"
+                        ? isHeatwave 
+                          ? "border-orange-500 text-orange-600" 
+                          : "border-emerald-500 text-emerald-600"
                         : "border-transparent text-gray-400 hover:text-gray-600"
                     }`}
                   >
@@ -292,6 +346,20 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                     <span>Stakeholders ({notifications.length})</span>
                   </button>
                 </div>
+
+                {selectedIncident && onViewReport && (
+                  <button
+                    onClick={() => onViewReport(selectedIncident.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider transition-all border shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap cursor-pointer ${
+                      isHeatwave
+                        ? "bg-orange-500 border-orange-600 hover:bg-orange-600 text-white"
+                        : "bg-emerald-500 border-emerald-600 hover:bg-emerald-600 text-white"
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>View Swarm Report</span>
+                  </button>
+                )}
               </div>
 
               {/* Tab content */}
@@ -307,9 +375,13 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                 ) : (
                   <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
                     {actions.map((act) => (
-                      <div key={act.id} className="flex flex-col md:flex-row md:items-center justify-between p-2.5 bg-white border border-gray-200 rounded-lg gap-2 hover:border-emerald-300 transition-colors shadow-2xs">
+                      <div key={act.id} className={`flex flex-col md:flex-row md:items-center justify-between p-2.5 bg-white border border-gray-200 rounded-lg gap-2 transition-colors shadow-2xs ${
+                        isHeatwave ? "hover:border-orange-300" : "hover:border-emerald-300"
+                      }`}>
                         <div className="flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                          <CheckCircle2 className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                            isHeatwave ? "text-orange-500" : "text-emerald-500"
+                          }`} />
                           <div>
                             <span className="text-[11px] font-bold text-gray-800 uppercase tracking-wide block">
                               {act.type.replace(/_/g, " ")}
@@ -323,6 +395,7 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                           {act.status}
                         </span>
                       </div>
+
                     ))}
                   </div>
                 )
@@ -345,7 +418,9 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                         border: "border-gray-200"
                       };
                       return (
-                        <div key={log.id} className="flex flex-col p-3 bg-white border border-gray-200 rounded-xl gap-2 shadow-2xs hover:border-emerald-200 transition-colors">
+                        <div key={log.id} className={`flex flex-col p-3 bg-white border border-gray-200 rounded-xl gap-2 shadow-2xs transition-colors ${
+                          isHeatwave ? "hover:border-orange-200" : "hover:border-emerald-200"
+                        }`}>
                           <div className="flex items-center justify-between">
                             <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 border rounded-md tracking-wider ${meta.bg} ${meta.color} ${meta.border}`}>
                               {meta.label}
@@ -417,7 +492,11 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                             {filtered.map((item) => (
                               <div key={item.id} className="border-b border-gray-100 last:border-b-0 pb-3 last:pb-0">
                                 <div className="flex items-center justify-between mb-1.5">
-                                  <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded-sm bg-red-50 text-red-600 border border-red-200/50">
+                                  <span className={`text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded-sm border ${
+                                    isHeatwave 
+                                      ? "bg-orange-50 text-orange-600 border-orange-200/50" 
+                                      : "bg-red-50 text-red-600 border-red-200/50"
+                                  }`}>
                                     {item.stakeholder}
                                   </span>
                                   <span className="text-[9px] text-gray-400 font-bold">

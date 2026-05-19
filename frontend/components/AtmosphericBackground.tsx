@@ -1,9 +1,14 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import { THEME } from "../lib/theme";
+import { StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function AtmosphericBackground() {
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: THEME.colors.surfaceWarm }]} />
+    <LinearGradient
+      colors={["#FFFFFF", "#F9FAFB", "#E0F2FE"]}
+      style={StyleSheet.absoluteFill}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0.5, y: 1 }}
+    />
   );
 }

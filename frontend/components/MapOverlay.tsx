@@ -9,22 +9,40 @@ interface MapOverlayProps {
 }
 
 const MapOverlay: React.FC<MapOverlayProps> = ({ incidents, selectedIncident }) => {
-  const getSeverityColors = (score: number) => {
-    if (score >= 7.5) {
+  const getSeverityColors = (score: number, isHeatwave: boolean) => {
+    if (isHeatwave) {
+      if (score >= 7.5) {
+        return {
+          fill: "rgba(239, 68, 68, 0.12)",
+          stroke: "#EF4444"
+        };
+      } else if (score >= 4.5) {
+        return {
+          fill: "rgba(245, 158, 11, 0.09)",
+          stroke: "#F59E0B"
+        };
+      }
       return {
-        fill: "rgba(220, 38, 38, 0.08)",
-        stroke: THEME.colors.status.critical
+        fill: "rgba(245, 158, 11, 0.05)",
+        stroke: "#F59E0B"
       };
-    } else if (score >= 4.5) {
+    } else {
+      if (score >= 7.5) {
+        return {
+          fill: "rgba(239, 68, 68, 0.08)",
+          stroke: THEME.colors.status.critical
+        };
+      } else if (score >= 4.5) {
+        return {
+          fill: "rgba(20, 184, 166, 0.06)",
+          stroke: THEME.colors.primary
+        };
+      }
       return {
-        fill: "rgba(15, 118, 110, 0.06)",
-        stroke: THEME.colors.primary
+        fill: "rgba(16, 185, 129, 0.07)",
+        stroke: THEME.colors.accent
       };
     }
-    return {
-      fill: "rgba(16, 185, 129, 0.07)",
-      stroke: THEME.colors.primary
-    };
   };
 
   const blockedCoords = selectedIncident ? [
@@ -46,7 +64,7 @@ const MapOverlay: React.FC<MapOverlayProps> = ({ incidents, selectedIncident }) 
   return (
     <>
       {incidents.map((incident) => {
-        const colors = getSeverityColors(incident.severity_score);
+        const colors = getSeverityColors(incident.severity_score, incident.disaster_type === "heatwave");
         
         // Generate a simple octagon around the incident point for the "flood zone"
         const radius = 0.005; // ~500m
