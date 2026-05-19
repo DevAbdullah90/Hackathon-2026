@@ -130,12 +130,14 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden flex flex-col h-full">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden flex flex-col h-full">
+      {/* Top Accent Gradient Bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-600 to-emerald-600" />
       {/* Card Header */}
-      <div className="px-4 pt-4 pb-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+      <div className="px-4 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-red-500 animate-pulse" />
-          <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Active Hazards</h3>
+          <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Active Hazards</h3>
         </div>
 
         <div className="flex items-center gap-2">
@@ -252,7 +254,7 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
             </div>
 
             {/* Bottom Row: Tabs & Content */}
-            <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 flex flex-col min-h-[300px]">
+            <div className="border border-gray-200 rounded-xl p-4 bg-slate-50/60 flex flex-col min-h-[300px]">
               {/* Tab headers */}
               <div className="flex border-b border-gray-200 pb-2 mb-3 items-center justify-between overflow-x-auto scrollbar-none">
                 <div className="flex gap-2 sm:gap-4 flex-nowrap">
@@ -368,7 +370,7 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                 ) : (
                   <div className="flex flex-col flex-1">
                     {/* Sub-tabs for stakeholders */}
-                    <div className="flex bg-gray-100 rounded-lg p-1 gap-1 mb-3 self-start overflow-x-auto max-w-full scrollbar-none">
+                    <div className="flex bg-slate-100 rounded-lg p-1 gap-1 mb-3 self-start overflow-x-auto max-w-full scrollbar-none">
                       {[
                         { key: "public", label: "📢 Public" },
                         { key: "police", label: "🚨 Police" },
