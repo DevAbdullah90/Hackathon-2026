@@ -26,13 +26,15 @@ export default function CTECCPanel() {
   }, []);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden h-full flex flex-col justify-between">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden h-full flex flex-col justify-between">
+      {/* Top Accent Gradient Bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-600 to-teal-600" />
       <div>
         {/* Card Header */}
-        <div className="px-4 pt-4 pb-3 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-4 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Cpu className="w-4 h-4 text-emerald-600 animate-pulse" />
-            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">AI Specialist Workforce</h3>
+            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">AI Specialist Workforce</h3>
           </div>
 
           <div className="flex items-center gap-3">

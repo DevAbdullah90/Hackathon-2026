@@ -287,8 +287,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Right scrollable content */}
-          <div className="flex-1 overflow-y-auto bg-gray-50 
-                          p-3 md:p-4 space-y-4 min-w-0">
+          <div className="flex-1 overflow-y-auto bg-slate-50/50 bg-grid-pattern p-4 md:p-6 space-y-6 min-w-0">
             <div className="fade-in" style={{ animationDelay: "0ms" }}>
               <MetricsGrid />
             </div>
