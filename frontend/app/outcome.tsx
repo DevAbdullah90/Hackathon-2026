@@ -22,7 +22,8 @@ import {
   Car, 
   MapPin, 
   Activity,
-  BarChart2
+  BarChart2,
+  AlertTriangle
 } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
@@ -118,6 +119,65 @@ export default function OutcomeScreen({ route, navigation }: any) {
               <Clock size={20} color={THEME.colors.text.secondary} />
               <Text style={styles.statValue}>45s</Text>
               <Text style={styles.statLabel}>MEAN DETECTION TIME</Text>
+            </BlurView>
+          </View>
+
+          {/* Visual Route Rerouting Card */}
+          <View style={styles.routeCardContainer}>
+            <BlurView intensity={20} tint="light" style={styles.routeCard}>
+              <View style={styles.routeHeader}>
+                <Activity size={16} color={THEME.colors.primary} />
+                <Text style={styles.routeTitle}>ACTIVE MULTI-AGENT DETOUR PLAN</Text>
+              </View>
+
+              {/* Graphical Layout */}
+              <View style={styles.diagramContainer}>
+                {/* Node A (Start) */}
+                <View style={styles.nodeWrapper}>
+                  <View style={[styles.nodeCircle, { backgroundColor: "#3b82f6" }]} />
+                  <Text style={styles.nodeText}>Jauhar Chowrangi Chowk</Text>
+                </View>
+
+                {/* Vertical tracks */}
+                <View style={styles.tracksContainer}>
+                  {/* Blocked Track (Red) */}
+                  <View style={styles.trackRow}>
+                    <View style={styles.dashLineRed} />
+                    <View style={styles.statusBadgeRed}>
+                      <AlertTriangle size={9} color="#ffffff" style={{ marginRight: 4 }} />
+                      <Text style={styles.badgeText}>🔴 BLOCKED: 1.2M FLOOD</Text>
+                    </View>
+                    <View style={styles.dashLineRed} />
+                  </View>
+
+                  {/* Detour Track (Green) */}
+                  <View style={[styles.trackRow, { marginTop: 12 }]}>
+                    <View style={styles.solidLineGreen} />
+                    <View style={styles.statusBadgeGreen}>
+                      <Text style={styles.badgeText}>🟢 BYPASS DETOUR ACTIVE (CLEAR)</Text>
+                    </View>
+                    <View style={styles.solidLineGreen} />
+                  </View>
+                </View>
+
+                {/* Node B (End) */}
+                <View style={styles.nodeWrapper}>
+                  <View style={[styles.nodeCircle, { backgroundColor: "#10b981" }]} />
+                  <Text style={styles.nodeText}>University Road Corridor</Text>
+                </View>
+              </View>
+
+              {/* Explainer Stats */}
+              <View style={styles.routeMetaGrid}>
+                <View style={styles.routeMetaCard}>
+                  <Text style={styles.metaLabel}>DETOUR IMPACT</Text>
+                  <Text style={styles.metaValue}>+4.2 Mins ETA</Text>
+                </View>
+                <View style={styles.routeMetaCard}>
+                  <Text style={styles.metaLabel}>VEHICLES REROUTED</Text>
+                  <Text style={styles.metaValue}>50+ Diverted</Text>
+                </View>
+              </View>
             </BlurView>
           </View>
 
@@ -380,5 +440,129 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: THEME.fonts.heading,
     letterSpacing: 2,
+  },
+  routeCardContainer: {
+    width: "100%",
+    borderRadius: THEME.borderRadius.md,
+    overflow: "hidden",
+    marginBottom: THEME.spacing.lg,
+  },
+  routeCard: {
+    backgroundColor: THEME.colors.background,
+    padding: THEME.spacing.lg,
+    borderWidth: 1,
+    borderColor: THEME.colors.surfaceBorder,
+  },
+  routeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: THEME.spacing.lg,
+  },
+  routeTitle: {
+    color: THEME.colors.text.primary,
+    fontSize: 10,
+    fontFamily: THEME.fonts.mono,
+    letterSpacing: 2,
+    fontWeight: "bold",
+  },
+  diagramContainer: {
+    backgroundColor: "rgba(0, 0, 0, 0.03)",
+    borderRadius: 8,
+    padding: THEME.spacing.md,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: THEME.colors.surfaceBorder,
+    marginBottom: THEME.spacing.md,
+  },
+  nodeWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    width: "100%",
+    paddingHorizontal: 8,
+  },
+  nodeCircle: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#ffffff",
+  },
+  nodeText: {
+    fontSize: 10,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.primary,
+    fontWeight: "bold",
+  },
+  tracksContainer: {
+    width: "100%",
+    paddingVertical: 12,
+    paddingLeft: 5,
+  },
+  trackRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  dashLineRed: {
+    flex: 1,
+    height: 2,
+    borderWidth: 1,
+    borderColor: "#ef4444",
+    borderStyle: "dashed",
+    opacity: 0.6,
+  },
+  solidLineGreen: {
+    flex: 1,
+    height: 3,
+    backgroundColor: "#10b981",
+  },
+  statusBadgeRed: {
+    backgroundColor: "#ef4444",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginHorizontal: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statusBadgeGreen: {
+    backgroundColor: "#10b981",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginHorizontal: 8,
+  },
+  badgeText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "bold",
+    fontFamily: THEME.fonts.mono,
+  },
+  routeMetaGrid: {
+    flexDirection: "row",
+    gap: THEME.spacing.md,
+  },
+  routeMetaCard: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.01)",
+    borderWidth: 1,
+    borderColor: THEME.colors.surfaceBorder,
+    borderRadius: 6,
+    padding: 8,
+    alignItems: "center",
+  },
+  metaLabel: {
+    fontSize: 8,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.muted,
+  },
+  metaValue: {
+    fontSize: 12,
+    fontFamily: THEME.fonts.heading,
+    color: THEME.colors.text.primary,
+    marginTop: 4,
   },
 });

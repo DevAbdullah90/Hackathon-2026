@@ -5,6 +5,7 @@ Tool for emitting reasoning logs. Saves to DB and broadcasts to WebSocket.
 """
 
 import json
+import contextvars
 from datetime import datetime
 from uuid import UUID
 from typing import Optional
@@ -13,6 +14,9 @@ from app.db.session import async_session_factory
 from app.models.reasoning_logs import ReasoningLog, ChainOfThought
 from app.api.api_v1.endpoints.websocket import manager
 from agents import function_tool
+
+# Thread-safe ContextVar to pass signal ID to the log tracing subsystem
+active_signal_id = contextvars.ContextVar("active_signal_id", default=None)
 
 @function_tool
 async def emit_log(
@@ -45,7 +49,13 @@ async def emit_log(
         await session.refresh(log_entry)
     
     # 2. Broadcast to WebSocket
-    target_id = incident_id if incident_id else "triage"
+    sig_id = active_signal_id.get()
+    if incident_id:
+        target_id = incident_id
+    elif sig_id:
+        target_id = f"triage_{sig_id}"
+    else:
+        target_id = "triage"
     
     payload = {
         "id": str(log_entry.id),

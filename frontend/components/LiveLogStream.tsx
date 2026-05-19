@@ -56,6 +56,23 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
     let active = true;
 
     const loadHistory = async () => {
+      if (incidentId.startsWith("triage_")) {
+        console.log(`🔌 [LiveLogStream] Triage session active. Skipping history fetch.`);
+        if (active) {
+          setLogs([
+            {
+              id: "sys-init",
+              message: `Establishing secure connection to CIRO Specialist Network. Signal processing initiated...`,
+              timestamp: new Date().toISOString(),
+              level: "info",
+              agent: "SYS",
+            }
+          ]);
+        }
+        return;
+      }
+
+      console.log(`🔌 [LiveLogStream] Fetching log history for: ${incidentId}`);
       try {
         const history = await api.getReasoningLogs(incidentId);
         if (!active) return;

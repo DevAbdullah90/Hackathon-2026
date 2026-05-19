@@ -89,3 +89,32 @@ class ChainOfThoughtRead(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
+# ── Actions ───────────────────────────────────────────────────────────────────
+
+class ActionRead(BaseModel):
+    id: uuid.UUID
+    incident_id: uuid.UUID
+    type: str
+    status: str
+    predicted_side_effects: Optional[str] = None
+    action_metadata: Optional[Dict[str, Any]] = None
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+
+class ResourceRead(BaseModel):
+    id: uuid.UUID
+    type: str
+    total_count: int
+    available_count: int
+    assigned_to_incident: Optional[uuid.UUID] = None
+    location: Optional[str] = None
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+

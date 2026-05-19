@@ -6,6 +6,7 @@ import * as SplashScreen from "expo-splash-screen";
 import WelcomeScreen from "./app/welcome";
 import Dashboard from "./app/index";
 import FloodMap from "./app/map";
+import ProcessingScreen from "./app/processing";
 import ReasoningCenter from "./app/reasoning";
 import SimView from "./app/simulation";
 import OutcomeScreen from "./app/outcome";
@@ -17,7 +18,8 @@ export type RootStackParamList = {
     Welcome: undefined;
     Dashboard: undefined;
     Map: undefined;
-    Reasoning: undefined;
+    Processing: { signalId: string };
+    Reasoning: { incidentId: string; location: string };
     Simulation: undefined;
     Outcome: undefined;
 };
@@ -43,6 +45,7 @@ export default function App() {
                 <Stack.Screen name="Welcome" component={WelcomeScreen} />
                 <Stack.Screen name="Dashboard" component={Dashboard} />
                 <Stack.Screen name="Map" component={FloodMap} />
+                <Stack.Screen name="Processing" component={ProcessingScreen} />
                 <Stack.Screen name="Reasoning" component={ReasoningCenter} />
                 <Stack.Screen name="Simulation" component={SimView} />
                 <Stack.Screen name="Outcome" component={OutcomeScreen} />

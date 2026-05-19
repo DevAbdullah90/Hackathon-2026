@@ -1,20 +1,21 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { 
-  Video, 
   Wifi, 
-  Zap, 
   AlertTriangle, 
-  Car, 
-  Droplets, 
+  Cpu, 
+  Activity, 
+  Users, 
+  Droplets,
   ChevronDown 
 } from "lucide-react";
+import { api, DashboardStats } from "@/lib/api";
 
 interface MetricCardProps {
   icon: React.ReactNode;
   iconBg: string;
-  value: string;
+  value: string | number;
   subValue?: string;
   subLabel?: string;
   label: string;
@@ -29,7 +30,7 @@ function MetricCard({
   label 
 }: MetricCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-3 md:p-4 shadow-xs hover:shadow-md transition-all duration-200 cursor-default flex flex-col justify-between h-full">
+    <div className="bg-white rounded-xl border border-gray-200 p-3 md:p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-default flex flex-col justify-between h-full min-h-[96px]">
       {/* Top Row: Icon (Left) & Value (Right) */}
       <div className="flex items-center justify-between w-full">
         {/* Icon Circle */}
@@ -50,7 +51,7 @@ function MetricCard({
       </div>
 
       {/* Bottom Row: Label */}
-      <div className="text-xs font-semibold text-gray-500 mt-3 truncate">
+      <div className="text-xs font-semibold text-gray-500 mt-3 truncate uppercase tracking-wider">
         {label}
       </div>
     </div>
@@ -58,73 +59,100 @@ function MetricCard({
 }
 
 export default function MetricsGrid() {
+  const [stats, setStats] = useState<DashboardStats>({
+    total_signals: 0,
+    active_crisis_sectors: 0,
+    total_agent_decisions: 0,
+    allocated_ambulances: 0,
+    allocated_rescue_crews: 0,
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = async () => {
+    try {
+      const data = await api.getDashboardStats();
+      setStats(data);
+    } catch (err) {
+      console.error("Failed to load dashboard stats: ", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 3000); // 3s real-time active polling
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="w-full bg-white p-3 md:p-4">
+    <div className="w-full bg-white p-3 md:p-4 rounded-xl border border-gray-200 shadow-xs">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-[#111827]">
-          Key Metrics
+        <h3 className="text-base font-bold text-[#111827] uppercase tracking-wide">
+          CIRO Command Metrics
         </h3>
-        <div className="flex items-center gap-1 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors">
-          <span className="text-sm font-medium">Last 24 Hours</span>
-          <ChevronDown className="w-4 h-4" />
+        <div className="flex items-center gap-1 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors select-none">
+          <span className="text-xs font-semibold uppercase tracking-wider">Real-Time</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
         </div>
       </div>
 
       {/* 2x3 Responsive Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
-        {/* Card 1: Camera Connect */}
+        {/* Ingested Signals */}
         <MetricCard
-          icon={<Video className="w-4 h-4 md:w-5 md:h-5 text-[#3b82f6]" />}
+          icon={<Wifi className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />}
           iconBg="bg-blue-50"
-          value="351"
-          subValue="/351"
-          label="Camera Connect"
+          value={stats.total_signals}
+          subLabel="Ingested"
+          label="Crisis Telemetries"
         />
 
-        {/* Card 2: V2X Connect */}
+        {/* Active Crisis Sectors */}
         <MetricCard
-          icon={<Wifi className="w-4 h-4 md:w-5 md:h-5 text-[#a855f7]" />}
-          iconBg="bg-purple-50"
-          value="43"
-          subValue="/43"
-          label="V2X Connect"
-        />
-
-        {/* Card 3: Signal Flash */}
-        <MetricCard
-          icon={<Zap className="w-4 h-4 md:w-5 md:h-5 text-[#06b6d4]" />}
-          iconBg="bg-cyan-50"
-          value="5"
-          subLabel="24 Hrs"
-          label="Signal Flash"
-        />
-
-        {/* Card 4: Conflict Event */}
-        <MetricCard
-          icon={<AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-[#f59e0b]" />}
-          iconBg="bg-amber-50"
-          value="21"
-          subLabel="24 Hrs"
-          label="Conflict Event"
-        />
-
-        {/* Card 5: Accident Events */}
-        <MetricCard
-          icon={<Car className="w-4 h-4 md:w-5 md:h-5 text-[#22c55e]" />}
-          iconBg="bg-green-50"
-          value="3"
-          subLabel="24 Hrs"
-          label="Accident Events"
-        />
-
-        {/* Card 6: Flood Events */}
-        <MetricCard
-          icon={<Droplets className="w-4 h-4 md:w-5 md:h-5 text-[#ef4444]" />}
+          icon={<AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-red-500" />}
           iconBg="bg-red-50"
-          value="0"
-          subLabel="24 Hrs"
-          label="Flood Events"
+          value={stats.active_crisis_sectors}
+          subLabel="Sectors"
+          label="Active Hazards"
+        />
+
+        {/* Total Agent Decisions */}
+        <MetricCard
+          icon={<Cpu className="w-4 h-4 md:w-5 md:h-5 text-purple-500" />}
+          iconBg="bg-purple-50"
+          value={stats.total_agent_decisions}
+          subLabel="Decisions"
+          label="Agent CoT Logs"
+        />
+
+        {/* Allocated Ambulances */}
+        <MetricCard
+          icon={<Activity className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />}
+          iconBg="bg-emerald-50"
+          value={stats.allocated_ambulances}
+          subLabel="Ambulance"
+          label="Ambulance Dispatch"
+        />
+
+        {/* Dispatched Rescue Crews */}
+        <MetricCard
+          icon={<Users className="w-4 h-4 md:w-5 md:h-5 text-amber-500" />}
+          iconBg="bg-amber-50"
+          value={stats.allocated_rescue_crews}
+          subLabel="Teams"
+          label="Rescue Dispatched"
+        />
+
+        {/* Dewatering Assets */}
+        <MetricCard
+          icon={<Droplets className="w-4 h-4 md:w-5 md:h-5 text-cyan-500" />}
+          iconBg="bg-cyan-50"
+          value={stats.active_crisis_sectors > 0 ? stats.active_crisis_sectors * 2 : 0}
+          subLabel="Crews"
+          label="Dewatering Pumps"
         />
       </div>
     </div>

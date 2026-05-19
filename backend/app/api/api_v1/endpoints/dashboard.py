@@ -88,22 +88,38 @@ async def get_agent_workforce(*, session: AsyncSession = Depends(get_session)) -
     now = datetime.utcnow()
     cutoff_time = now - timedelta(seconds=15)
 
-    for agent in agents:
-        query = (
-            select(ReasoningLog)
-            .where(ReasoningLog.agent_name == agent)
-            .order_by(ReasoningLog.created_at.desc())
-            .limit(1)
-        )
-        res = await session.execute(query)
-        latest_log = res.scalar_one_or_none()
+    # Single-Query Optimization using Window Function row_number()
+    from sqlalchemy import func
 
+    subq = (
+        select(
+            ReasoningLog.id.label("log_id"),
+            ReasoningLog.agent_name.label("agent_name"),
+            ReasoningLog.created_at.label("created_at"),
+            ReasoningLog.incident_id.label("incident_id"),
+            func.row_number().over(
+                partition_by=ReasoningLog.agent_name,
+                order_by=ReasoningLog.created_at.desc()
+            ).label("rn")
+        )
+        .where(ReasoningLog.agent_name.in_(agents))
+        .subquery()
+    )
+
+    query = select(subq).where(subq.c.rn == 1)
+    res = await session.execute(query)
+    rows = res.all()
+
+    # Map results by agent name
+    log_map = {row.agent_name: row for row in rows}
+
+    for agent in agents:
+        latest_log = log_map.get(agent)
         status = "IDLE"
         active_incident = None
 
         if latest_log:
-            # Note: SQLite stores datetime naive, so we just compare them
-            # Ensure latest_log.created_at is naive if now is naive
+            # SQLite stores datetime naive, so we just compare them
             if latest_log.created_at and latest_log.created_at >= cutoff_time:
                 status = "PROCESSING"
                 if latest_log.incident_id:
