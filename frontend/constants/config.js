@@ -2,9 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CONFIG = void 0;
 exports.CONFIG = {
-    // Backend URL — pointed to local computer IP on Wi-Fi
-    API_BASE_URL: "http://192.168.1.6:8000",
-    WS_BASE_URL: "ws://192.168.1.6:8000",
+    API_BASE_URL: "https://hackathon-2026-production-ff6c.up.railway.app",
+    WS_BASE_URL: "wss://hackathon-2026-production-ff6c.up.railway.app",
     GOOGLE_MAPS_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_KEY_HERE",
     // Islamabad center coordinates
     ISLAMABAD_CENTER: {

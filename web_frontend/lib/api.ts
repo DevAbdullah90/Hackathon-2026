@@ -82,15 +82,24 @@ export interface GlobalTimelineLog {
   created_at: string;
 }
 
+export interface Notification {
+  id: string;
+  incident_id: string;
+  stakeholder: string;
+  message: string;
+  sent_at: string;
+}
+
 export interface PipelineStatus {
   signal_id: string;
   incident_id: string | null;
-  status: string; // 'PROCESSING' | 'CONFIRMED' | 'REJECTED'
+  status: string; // \'PROCESSING\' | \'CONFIRMED\' | \'REJECTED\'
   stage: string;
   stage_index: number;
-  stage_status: string; // 'RUNNING' | 'COMPLETED' | 'FAILED'
+  stage_status: string; // \'RUNNING\' | \'COMPLETED\' | \'FAILED\' | \'SKIPPED\'
   message: string;
   updated_at: string;
+  agent_states?: Record<string, string>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -349,18 +358,29 @@ export const api = {
         stage_status: data.stage_status,
         message: data.message,
         updated_at: data.updated_at,
+        agent_states: data.agent_states || undefined,
       };
     } catch (err) {
       console.warn(`🛡️ [API FALLBACK] getPipelineStatus(${signalId}) -> serving mock status updates.`, err);
       return {
         signal_id: signalId,
-        incident_id: "inc-g10",
+        incident_id: "inc-jauhar",
         status: "CONFIRMED",
-        stage: "notification_agent",
-        stage_index: 6,
+        stage: "logging_agent",
+        stage_index: 8,
         stage_status: "COMPLETED",
         message: "Tactical plan complete. Public and local teams notified!",
-        updated_at: nowStr()
+        updated_at: nowStr(),
+        agent_states: {
+          signal_agent: "COMPLETED",
+          detection_agent: "COMPLETED",
+          verification_agent: "SKIPPED",
+          severity_agent: "COMPLETED",
+          resource_allocation_agent: "COMPLETED",
+          planning_agent: "COMPLETED",
+          notification_agent: "COMPLETED",
+          logging_agent: "COMPLETED"
+        }
       };
     }
   },
@@ -380,6 +400,61 @@ export const api = {
     } catch (err) {
       console.warn("🛡️ [API FALLBACK] triggerMockSignal() failed to hit backend.", err);
       return null;
+    }
+  },
+
+  /**
+   * Manually inject a custom flood signal to bypass duplicate checks.
+   */
+  async injectCustomSignal(payload: {
+    city: string;
+    source: string;
+    type: string;
+    comment: string;
+    lat: number;
+    lng: number;
+  }): Promise<{ signal_id: string; status?: string } | null> {
+    try {
+      const response = await makeRequest<any>("/signals/inject", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      if (response && response.status === "DUPLICATE") {
+        return { signal_id: response.signal_id, status: "DUPLICATE" };
+      }
+      return { signal_id: String(response.id), status: "NEW" };
+    } catch (err) {
+      console.warn("🛡️ [API FALLBACK] injectCustomSignal() failed to hit backend.", err);
+      return null;
+    }
+  },
+
+  /**
+   * Retrieve all stakeholder notifications generated for a specific incident.
+   */
+  async getIncidentNotifications(incidentId: string): Promise<Notification[]> {
+    const MOCK_NOTIFICATIONS: Record<string, Notification[]> = {
+      "inc-jauhar": [
+        { id: "notif-1", incident_id: "inc-jauhar", stakeholder: "public", message: "URGENT FLOOD ALERT: Severe inundation reported in Gulistan-e-Jauhar Block 18. Avoid ground levels and relocate parked vehicles to high ground.", sent_at: nowStr() },
+        { id: "notif-2", incident_id: "inc-jauhar", stakeholder: "police", message: "CRITICAL INCIDENT DISPATCH: Sector Command Karachi. Initiate road closures at Jauhar Chowrangi towards Block 18. Divert traffic to alternate arterial routes.", sent_at: nowStr() },
+        { id: "notif-3", incident_id: "inc-jauhar", stakeholder: "utility", message: "INFRASTRUCTURE WARNING: Block 18 grid station area inundated. Shut down local transformers immediately to prevent electrical hazard.", sent_at: nowStr() },
+        { id: "notif-4", incident_id: "inc-jauhar", stakeholder: "hospital", message: "MEDICAL STANDBY: Dow University Hospital & local trauma center. Prepare for possible waterborne incident inflow. Emergency backup power check required.", sent_at: nowStr() }
+      ]
+    };
+
+    try {
+      const data = await makeRequest<any[]>(`/incidents/${incidentId}/notifications`);
+      if (!data || data.length === 0) return MOCK_NOTIFICATIONS[incidentId] || MOCK_NOTIFICATIONS["inc-jauhar"] || [];
+      return data.map((item) => ({
+        id: String(item.id),
+        incident_id: String(item.incident_id),
+        stakeholder: item.stakeholder,
+        message: item.message,
+        sent_at: item.sent_at
+      }));
+    } catch (err) {
+      console.warn(`🛡️ [API FALLBACK] getIncidentNotifications(${incidentId}) -> serving fallback.`, err);
+      return MOCK_NOTIFICATIONS[incidentId] || MOCK_NOTIFICATIONS["inc-jauhar"] || [];
     }
   }
 };
