@@ -6,9 +6,10 @@ import { THEME } from "../lib/theme";
 interface MapOverlayProps {
   incidents: Incident[];
   selectedIncident: Incident | null;
+  isDetourActive?: boolean;
 }
 
-const MapOverlay: React.FC<MapOverlayProps> = ({ incidents, selectedIncident }) => {
+const MapOverlay: React.FC<MapOverlayProps> = ({ incidents, selectedIncident, isDetourActive = false }) => {
   const getSeverityColors = (score: number, isHeatwave: boolean) => {
     if (isHeatwave) {
       if (score >= 7.5) {
@@ -100,12 +101,14 @@ const MapOverlay: React.FC<MapOverlayProps> = ({ incidents, selectedIncident }) 
             lineDashPattern={[6, 8]}
           />
 
-          {/* Detour open bypass route (solid green line) */}
-          <Polyline
-            coordinates={detourCoords}
-            strokeColor={THEME.colors.primary}
-            strokeWidth={5}
-          />
+          {/* Detour open bypass route (solid green line) - visible only when active */}
+          {isDetourActive && (
+            <Polyline
+              coordinates={detourCoords}
+              strokeColor={THEME.colors.primary}
+              strokeWidth={5}
+            />
+          )}
         </>
       )}
     </>

@@ -1,0 +1,82 @@
+================================================================================
+  ANTIGRAVITY AI AGENT — TASK SESSION LOG
+  Task: Frontend Fallback Resilience & Map Hydration Fixes
+  Powered by Google DeepMind · Advanced Agentic Coding
+================================================================================
+
+Session ID      : d4ef64f3-8dc1-4b8f-a130-bd52d4cf9c0a
+Agent Model     : Gemini 3.1 Pro (High)
+Branch          : master
+Task Owner      : Uneeza
+Started At      : 2026-05-19T23:00:00Z
+Completed At    : 2026-05-19T23:18:00Z
+
+--------------------------------------------------------------------------------
+TASK DESCRIPTION
+--------------------------------------------------------------------------------
+
+  Objective: Ensure robust frontend resilience when backend servers are disconnected or 
+             slow, and resolve critical React 19 hydration crashes preventing the
+             interactive dashboard map from rendering.
+
+  Scope    :
+    1. Implement a visually engaging offline/fallback simulation sequence for the Multi-Agent pipeline.
+    2. Establish a multi-URL dynamic fallback routing system for both Web (Next.js) and Mobile (Expo).
+    3. Resolve the Next.js `react-leaflet` strict-mode `appendChild` hydration mismatch crash.
+    4. Start the FastAPI development server to restore live dashboard connectivity.
+
+--------------------------------------------------------------------------------
+SKILLS INVOKED
+--------------------------------------------------------------------------------
+
+  Skills used: automated-testing, frontend-debugging, React-hooks
+  Tools used: view_file, write_to_file, replace_file_content, multi_replace_file_content, run_command, command_status
+
+--------------------------------------------------------------------------------
+IMPLEMENTATION & FIXES
+--------------------------------------------------------------------------------
+
+  1. ANIMATED OFFLINE PIPELINE FALLBACK (NEXT.JS):
+     - Identified that when offline, the telemetry fallback instantly resolved, breaking the UI loader.
+     - Implemented a custom 8-stage interactive visual simulation loop in `TopBar.tsx`.
+     - The dashboard now successfully steps through the mock pipeline agent-by-agent (every 2 seconds)
+       before smoothly sliding open the final tactical report.
+
+  2. MULTI-ENVIRONMENT DYNAMIC API ROUTING:
+     - **Web**: Updated `web_frontend/lib/api.ts` to try `localhost:8000` first. If the browser 
+       throws a `TypeError: Failed to fetch`, it seamlessly swaps the active endpoint to the 
+       Railway production server and retries the fetch.
+     - **Mobile**: Integrated the same fallback logic into `frontend/lib/api.ts` by tapping into 
+       the existing `fetch` exponential backoff mechanism. Mobile will auto-switch to production on 
+       the very first network dropped packet / timeout.
+
+  3. REACT LEAFLET MAP DOM CRASH FIX:
+     - Resolved the notorious `Cannot read properties of undefined (reading 'appendChild')` error 
+       thrown by the `TileLayer` component during Next.js Hot Module Replacement / Strict Mode.
+     - Migrated `MapPanel.tsx` away from using `typeof window === "undefined"` and implemented 
+       a strict `mounted` React lifecycle hook (`useEffect`) to guarantee the map DOM container 
+       only initializes after the React tree has stabilized.
+
+--------------------------------------------------------------------------------
+FILES MODIFIED / CREATED
+--------------------------------------------------------------------------------
+
+  web_frontend/components/dashboard/TopBar.tsx      <- MODIFIED (animated mock pipeline)
+  web_frontend/components/dashboard/MapPanel.tsx    <- MODIFIED (mounted state fix for Leaflet)
+  web_frontend/lib/api.ts                           <- MODIFIED (dynamic API URL fallback)
+  frontend/constants/config.ts                      <- MODIFIED (switched to local dev IP)
+  frontend/lib/api.ts                               <- MODIFIED (mobile fallback backoff)
+  .antigravity/uneeza_logs/task-012-frontend-fallback-and-map-fixes.log <- CREATED
+
+--------------------------------------------------------------------------------
+NEXT STEPS / HANDOFF
+--------------------------------------------------------------------------------
+
+  1. The local FastAPI server is currently running in the background on port 8000. 
+  2. For the hackathon presentation, you can demonstrate the robustness of the system by 
+     shutting down the local backend entirely; the frontend will flawlessly drop into 
+     the animated fallback/production routing without crashing the browser!
+
+--------------------------------------------------------------------------------
+END OF TASK LOG
+================================================================================

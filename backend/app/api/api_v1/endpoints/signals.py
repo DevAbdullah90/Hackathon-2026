@@ -232,6 +232,7 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
 
                 db_incident = Incident(
                     location=detection_output.get("incident_location") or processed_signal.get("location") or "Reported Location",
+                    disaster_type=signal_payload.get("type", "flood"),
                     lat=detection_output.get("incident_center_lat") or signal_payload.get("lat") or 0.0,
                     lng=detection_output.get("incident_center_lng") or signal_payload.get("lng") or 0.0,
                     severity_score=severity_output.get("severity_score") or 5.0,
@@ -247,6 +248,30 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
                 await session.refresh(db_incident)
                 incident_id = str(db_incident.id)
                 logger.info(f"🏠 [DB] Created Confirmed Incident: {incident_id}")
+
+                try:
+                    from app.api.api_v1.endpoints.websocket import manager
+                    # Broadcast the new incident to all global listeners
+                    await manager.broadcast_global({
+                        "event": "new_incident",
+                        "incident": {
+                            "id": str(db_incident.id),
+                            "location": db_incident.location,
+                            "disaster_type": db_incident.disaster_type,
+                            "lat": db_incident.lat,
+                            "lng": db_incident.lng,
+                            "severity_score": db_incident.severity_score,
+                            "confidence": db_incident.confidence,
+                            "affected_radius_km": db_incident.affected_radius_km,
+                            "estimated_population": db_incident.estimated_population,
+                            "peak_impact_eta": db_incident.peak_impact_eta,
+                            "status": db_incident.status,
+                            "created_at": db_incident.created_at.isoformat() if db_incident.created_at else None
+                        }
+                    })
+                    logger.info("📡 [WS] Broadcasted new_incident event globally")
+                except Exception as ws_broadcast_err:
+                    logger.error(f"⚠️ [WS] Failed to broadcast new_incident globally: {ws_broadcast_err}")
 
             update_pipeline_progress(sig_id_str, "PROCESSING", "severity_agent", 4, "COMPLETED", "Crisis threat model established.", incident_id=incident_id)
 
@@ -437,26 +462,41 @@ async def trigger_mock_signal(
     background_tasks: BackgroundTasks
 ):
     """
-    Generate and ingest a highly realistic simulated mock signal in Islamabad.
-    This enables seamless single-click live demonstrations without needing multiple physical devices!
+    Generate and ingest a highly realistic simulated mock signal.
+    Randomly selects between flood and heatwave scenarios across Pakistani cities.
     Triggers the sequential multi-agent orchestration pipeline instantly.
     """
     import random
     
-    mock_locations = [
-        {"location": "Block 18 Jauhar, Gulistan-e-Jauhar, Karachi", "lat": 24.9088, "lng": 67.1282, "comment": "Severe street inundation on Block 18 Main Road near Jauhar Chowrangi. Water entering ground floors!"},
+    mock_scenarios = [
+        # ── Flood Scenarios ──
+        {"location": "Block 18 Jauhar, Gulistan-e-Jauhar, Karachi", "lat": 24.9088, "lng": 67.1282, "type": "flood", "comment": "Severe street inundation on Block 18 Main Road near Jauhar Chowrangi. Water entering ground floors!"},
+        {"location": "G-10 Markaz, Islamabad", "lat": 33.6675, "lng": 73.0303, "type": "flood", "comment": "Heavy waterlogging reported near G-10 Markaz service road. Vehicles stranded in knee-deep water."},
+        # ── Heatwave Scenarios ──
+        {"location": "Saddar Market, Karachi", "lat": 24.8607, "lng": 67.0011, "type": "heatwave", "comment": "Record temperatures at 47°C in Saddar. Citizens fainting near Empress Market due to extreme humidity. Multiple load-shedding zones reported."},
+        {"location": "Anarkali Bazaar, Lahore", "lat": 31.5590, "lng": 74.3260, "type": "heatwave", "comment": "Heat index exceeding 52°C in Anarkali. Street vendors collapsing. Hospitals reporting surge in heat stroke admissions. Power grid failures in inner city."},
+        {"location": "Burns Garden, Karachi", "lat": 24.8556, "lng": 67.0280, "type": "heatwave", "comment": "Temperature 46°C with 75% humidity near Burns Garden. Multiple elderly casualties reported. No shade infrastructure available in the area."},
     ]
     
     sources = ["weather_api", "traffic_api"]
-    chosen_loc = random.choice(mock_locations)
+    chosen = random.choice(mock_scenarios)
     chosen_source = random.choice(sources)
+    
+    # Build raw_payload with type-appropriate telemetry data
+    raw_payload = {"comment": chosen["comment"], "location_name": chosen["location"]}
+    if chosen["type"] == "heatwave":
+        raw_payload.update({
+            "temperature_c": round(random.uniform(44.0, 49.0), 1),
+            "humidity_pct": random.randint(40, 80),
+            "power_outage": True,
+        })
     
     db_signal = Signal(
         source=chosen_source,
-        type="flood",
-        lat=chosen_loc["lat"],
-        lng=chosen_loc["lng"],
-        raw_payload={"comment": chosen_loc["comment"], "location_name": chosen_loc["location"]}
+        type=chosen["type"],
+        lat=chosen["lat"],
+        lng=chosen["lng"],
+        raw_payload=raw_payload
     )
 
     session.add(db_signal)

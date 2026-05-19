@@ -12,8 +12,8 @@ const getDevMachineIp = (): string => {
 const devIp = getDevMachineIp();
 
 export const CONFIG = {
-  API_BASE_URL: "https://hackathon-2026-production-ff6c.up.railway.app",
-  WS_BASE_URL: "wss://hackathon-2026-production-ff6c.up.railway.app",
+  API_BASE_URL: `http://${devIp}:8000`,
+  WS_BASE_URL: `ws://${devIp}:8000`,
 
   GOOGLE_MAPS_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_KEY_HERE",
 

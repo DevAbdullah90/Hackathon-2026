@@ -41,12 +41,38 @@ export default function FloodMap({ route, navigation }: any) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reporting, setReporting] = useState(false);
+  const [isDetourActive, setIsDetourActive] = useState(false);
 
   const [shelters, setShelters] = useState<any[]>([]);
   const [activeRoute, setActiveRoute] = useState<any | null>(null);
   const [fetchingRoute, setFetchingRoute] = useState(false);
 
   const selectedIncidentId = route.params?.selectedIncidentId;
+  const selectedIncidentRef = useRef<Incident | null>(null);
+
+  useEffect(() => {
+    selectedIncidentRef.current = selectedIncident;
+  }, [selectedIncident]);
+
+  const checkDetourActive = async (incidentId: string) => {
+    try {
+      const actions = await api.getIncidentActions(incidentId);
+      const activeOrCompleted = actions.some(
+        (a) => ["ACTIVE", "ON_SITE", "COMPLETED", "DISPATCHED", "SENT"].includes(a.status.toUpperCase())
+      );
+      setIsDetourActive(activeOrCompleted);
+    } catch (err) {
+      setIsDetourActive(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedIncident) {
+      checkDetourActive(selectedIncident.id);
+    } else {
+      setIsDetourActive(false);
+    }
+  }, [selectedIncident]);
 
   const fetchShelters = async () => {
     try {
@@ -117,6 +143,65 @@ export default function FloodMap({ route, navigation }: any) {
       setFetchingRoute(false);
     }
   };
+
+  useEffect(() => {
+    const wsUrl = `${CONFIG.WS_BASE_URL.replace("http", "ws").replace("https", "wss")}/api/v1/ws/global/stream`;
+    console.log(`🔌 [FloodMap] Connecting to global WebSocket: ${wsUrl}`);
+    
+    let socket: WebSocket | null = null;
+    let reconnectTimeout: any = null;
+    let isMounted = true;
+
+    const connect = () => {
+      if (!isMounted) return;
+      socket = new WebSocket(wsUrl);
+
+      socket.onopen = () => {
+        console.log(`📡 [FloodMap] Connected to global WebSocket`);
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log(`📡 [FloodMap] Received global event:`, data.event);
+          if (data.event === "new_incident") {
+            fetchIncidents();
+          } else if (data.event === "simulation_progress") {
+            fetchIncidents();
+            const currentSel = selectedIncidentRef.current;
+            if (currentSel && data.incident_id === currentSel.id) {
+              checkDetourActive(currentSel.id);
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to parse global websocket message in FloodMap", err);
+        }
+      };
+
+      socket.onclose = () => {
+        console.log(`🔌 [FloodMap] Global WebSocket disconnected, reconnecting in 5s...`);
+        reconnectTimeout = setTimeout(() => {
+          connect();
+        }, 5000);
+      };
+
+      socket.onerror = (error) => {
+        console.warn(`⚠️ [FloodMap] Global WebSocket error:`, error);
+      };
+    };
+
+    connect();
+
+    return () => {
+      isMounted = false;
+      if (socket) {
+        socket.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+    };
+  }, []);
 
   const handleIncidentPress = (incident: Incident) => {
     setSelectedIncident(incident);
@@ -220,7 +305,7 @@ export default function FloodMap({ route, navigation }: any) {
             mapType="standard"
             userInterfaceStyle="light"
           >
-            <MapOverlay incidents={incidents} selectedIncident={selectedIncident} />
+            <MapOverlay incidents={incidents} selectedIncident={selectedIncident} isDetourActive={isDetourActive} />
 
             {incidents.map((incident) => (
               <Marker
