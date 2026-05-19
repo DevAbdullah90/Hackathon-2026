@@ -46,6 +46,14 @@ class Incident(SQLModel, table=True):
         default=None,
         sa_column=Column(JSON),
     )
+    confirmations_count: int = Field(
+        default=0,
+        description="Crowdsourced confirmations count",
+    )
+    refutations_count: int = Field(
+        default=0,
+        description="Crowdsourced refutations count",
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         index=True,

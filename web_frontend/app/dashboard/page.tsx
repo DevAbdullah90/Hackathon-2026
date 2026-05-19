@@ -7,6 +7,7 @@ import TopBar from "@/components/dashboard/TopBar";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import EventsPanel from "@/components/dashboard/EventsPanel";
 import CTECCPanel from "@/components/dashboard/CTECCPanel";
+import SafeHavensPanel from "@/components/dashboard/SafeHavensPanel";
 import { Incident } from "@/lib/api";
 import { X, Navigation } from "lucide-react";
 
@@ -338,13 +339,14 @@ export default function DashboardPage() {
               <MetricsGrid selectedIncident={selectedIncident} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-4 fade-in" style={{ animationDelay: "200ms" }}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-4 fade-in" style={{ animationDelay: "200ms" }}>
               <EventsPanel 
                 selectedIncident={selectedIncident} 
                 onSelectIncident={setSelectedIncident} 
                 onViewReport={setViewIncidentReportId}
               />
               <CTECCPanel />
+              <SafeHavensPanel />
             </div>
           </div>
 

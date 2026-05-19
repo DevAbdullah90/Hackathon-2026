@@ -25,6 +25,7 @@ async def clear_db():
         async with engine.begin() as conn:
             # Delete in order to respect any potential (though currently missing) FKs
             await conn.execute(text("DELETE FROM reasoning_logs"))
+            await conn.execute(text("DELETE FROM vehicle_locations"))
             await conn.execute(text("DELETE FROM incidents"))
             await conn.execute(text("DELETE FROM signals"))
             

@@ -15,27 +15,16 @@ from dotenv import load_dotenv
 from app.models.signals import Signal
 from app.models.incidents import Incident
 from app.models.reasoning_logs import ReasoningLog, ChainOfThought
+from app.models.vehicle_locations import VehicleLocation
+from app.models.safe_havens import SafeHaven
 
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-async def init_db_manually():
-    print("Initializing database tables manually...")
-    
-    # Clean the URL for asyncpg
-    clean_url = DATABASE_URL.split('?')[0]
-    engine = create_async_engine(clean_url, connect_args={"ssl": True}, echo=True)
-    
-    try:
-        async with engine.begin() as conn:
-            # This will create all tables defined in SQLModel.metadata
-            await conn.run_sync(SQLModel.metadata.create_all)
-        print("\nSuccess! All tables (signals, incidents, reasoning_logs) have been created.")
-    except Exception as e:
-        print(f"\nError during table creation: {e}")
-    finally:
-        await engine.dispose()
+from app.db.session import init_db
 
 if __name__ == "__main__":
-    asyncio.run(init_db_manually())
+    print("Running official database initialization and seeding...")
+    asyncio.run(init_db())
+    print("Database initialization complete.")

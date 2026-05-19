@@ -21,6 +21,41 @@ export interface Incident {
   risk_factors?: any;
   created_at: string;
   disaster_type?: string;
+  confirmations_count?: number;
+  refutations_count?: number;
+}
+
+export interface VehicleLocation {
+  id: string;
+  vehicle_id: string;
+  vehicle_type: "rescue_boat" | "ambulance" | "utility_crew";
+  incident_id: string;
+  start_lat: number;
+  start_lng: number;
+  target_lat: number;
+  target_lng: number;
+  current_lat: number;
+  current_lng: number;
+  dispatch_time: string;
+  duration_seconds: number;
+  status: "en_route" | "arrived";
+}
+
+export interface SafeHaven {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  capacity: number;
+  current_occupancy: number;
+  created_at: string;
+}
+
+export interface SafeHavenRouteResponse {
+  safe_haven: SafeHaven;
+  path: { lat: number; lng: number }[];
+  distance_km: number;
+  avoided_flooded_zones_count: number;
 }
 
 export interface Action {
@@ -792,4 +827,85 @@ export const api = {
       return { signal_id: "sig-" + Math.random().toString(36).substr(2, 9), status: "MOCK" };
     }
   },
+
+  /**
+   * Submit citizen vote (confirm/refute) on an incident.
+   */
+  async verifyIncident(incidentId: string, vote: "confirm" | "refute"): Promise<Incident> {
+    try {
+      return await makeRequest<Incident>(`/api/v1/incidents/${incidentId}/verify`, {
+        method: "POST",
+        body: JSON.stringify({ vote }),
+      });
+    } catch (err) {
+      console.log(`🛡️ [API FALLBACK] verifyIncident(${incidentId}, ${vote}) failed.`, err);
+      throw err;
+    }
+  },
+
+  /**
+   * Retrieve real-time vehicle locations (fleet telemetry).
+   */
+  async getFleetLocations(): Promise<VehicleLocation[]> {
+    try {
+      return await makeRequest<VehicleLocation[]>("/api/v1/resources/fleet");
+    } catch (err) {
+      console.log("🛡️ [API FALLBACK] getFleetLocations() failed.", err);
+      return [];
+    }
+  },
+
+  /**
+   * Retrieve all municipal shelters.
+   */
+  async getSafeHavens(): Promise<SafeHaven[]> {
+    try {
+      return await makeRequest<SafeHaven[]>("/api/v1/safe-havens");
+    } catch (err) {
+      console.log("🛡️ [API FALLBACK] getSafeHavens() failed -> serving mock shelters.");
+      return [
+        { id: "sh-g10", name: "G-10 Community Center", lat: 33.6650, lng: 73.0320, capacity: 500, current_occupancy: 420, created_at: now() },
+        { id: "sh-f8", name: "F-8 Markaz Shelter", lat: 33.7120, lng: 73.0420, capacity: 600, current_occupancy: 240, created_at: now() },
+        { id: "sh-cantt", name: "Karachi Cantonment Station", lat: 24.8465, lng: 67.0325, capacity: 1000, current_occupancy: 650, created_at: now() },
+        { id: "sh-gulshan", name: "Gulshan-e-Iqbal Town Office", lat: 24.9180, lng: 67.0970, capacity: 400, current_occupancy: 310, created_at: now() }
+      ];
+    }
+  },
+
+  /**
+   * Get dynamic evacuation route to the closest shelter.
+   */
+  async getEvacuationRoute(lat: number, lng: number): Promise<SafeHavenRouteResponse> {
+    try {
+      return await makeRequest<SafeHavenRouteResponse>(`/api/v1/safe-havens/route?lat=${lat}&lng=${lng}`);
+    } catch (err) {
+      console.log("🛡️ [API FALLBACK] getEvacuationRoute() failed -> generating mock path.");
+      const mockHavens = [
+        { id: "sh-g10", name: "G-10 Community Center", lat: 33.6650, lng: 73.0320, capacity: 500, current_occupancy: 420, created_at: now() },
+        { id: "sh-f8", name: "F-8 Markaz Shelter", lat: 33.7120, lng: 73.0420, capacity: 600, current_occupancy: 240, created_at: now() },
+        { id: "sh-cantt", name: "Karachi Cantonment Station", lat: 24.8465, lng: 67.0325, capacity: 1000, current_occupancy: 650, created_at: now() },
+        { id: "sh-gulshan", name: "Gulshan-e-Iqbal Town Office", lat: 24.9180, lng: 67.0970, capacity: 400, current_occupancy: 310, created_at: now() }
+      ];
+      const closest = mockHavens.reduce((prev, curr) => {
+        const prevDist = Math.hypot(prev.lat - lat, prev.lng - lng);
+        const currDist = Math.hypot(curr.lat - lat, curr.lng - lng);
+        return currDist < prevDist ? prev : prev;
+      });
+      const path: { lat: number; lng: number }[] = [];
+      const N = 15;
+      for (let i = 0; i <= N; i++) {
+        const t = i / N;
+        path.push({
+          lat: lat + t * (closest.lat - lat),
+          lng: lng + t * (closest.lng - lng)
+        });
+      }
+      return {
+        safe_haven: closest,
+        path,
+        distance_km: Math.hypot(closest.lat - lat, closest.lng - lng) * 111.0,
+        avoided_flooded_zones_count: 0
+      };
+    }
+  }
 };

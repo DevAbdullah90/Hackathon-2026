@@ -15,7 +15,8 @@ from app.models.incidents import Incident
 from app.models.reasoning_logs import ReasoningLog, ChainOfThought
 from app.models.actions import Action
 from app.models.notifications import Notification
-from app.models.schemas import IncidentRead, ReasoningLogRead, ChainOfThoughtRead, ActionRead, NotificationRead
+from app.models.resources import Resource
+from app.models.schemas import IncidentRead, ReasoningLogRead, ChainOfThoughtRead, ActionRead, NotificationRead, VerificationRequest
 from app.db.session import get_session
 
 router = APIRouter()
@@ -156,6 +157,50 @@ async def read_incident_notifications(
     result = await session.execute(query)
     notifications = result.scalars().all()
     return notifications
+
+
+@router.post("/{incident_id}/verify", response_model=IncidentRead)
+async def verify_incident(
+    *,
+    session: AsyncSession = Depends(get_session),
+    incident_id: UUID,
+    payload: VerificationRequest
+):
+    """
+    Submit a citizen confirmation or refutation (crowdsourced vote) for an incident.
+    If refutations exceed confirmations + 3, the status is set to 'retracted' and resources are freed.
+    """
+    incident = await session.get(Incident, incident_id)
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incident not found"
+        )
+
+    if payload.vote == "confirm":
+        incident.confirmations_count = (incident.confirmations_count or 0) + 1
+    elif payload.vote == "refute":
+        incident.refutations_count = (incident.refutations_count or 0) + 1
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid vote value. Must be 'confirm' or 'refute'"
+        )
+
+    # Retraction trigger: If refutations > confirmations + 3, flag as retracted
+    if (incident.refutations_count or 0) > (incident.confirmations_count or 0) + 3:
+        incident.status = "retracted"
+        # Free up resources allocated to this incident by deleting them
+        resource_query = select(Resource).where(Resource.assigned_to_incident == incident_id)
+        resource_res = await session.execute(resource_query)
+        resources_to_free = resource_res.scalars().all()
+        for r in resources_to_free:
+            await session.delete(r)
+
+    session.add(incident)
+    await session.commit()
+    await session.refresh(incident)
+    return incident
 
 
 

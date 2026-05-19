@@ -298,6 +298,44 @@ export default function EventsPanel({ selectedIncident, onSelectIncident, onView
                     {selectedIncident.risk_factors?.length ? selectedIncident.risk_factors.join(", ") : isHeatwave ? "Extreme Heat" : "Heavy Rain"}
                   </span>
                 </div>
+
+                {/* Citizen Consensus Poll */}
+                <div className="pt-3 mt-2 border-t border-gray-100 space-y-2">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Citizen Consensus Poll</span>
+                  <div className="flex justify-between items-center text-[10px] font-bold">
+                    <span className="text-emerald-600 flex items-center gap-1">
+                      👍 {selectedIncident.confirmations_count || 0} Confirmed
+                    </span>
+                    <span className="text-rose-500 flex items-center gap-1">
+                      👎 {selectedIncident.refutations_count || 0} Clear
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden flex">
+                    {((selectedIncident.confirmations_count || 0) + (selectedIncident.refutations_count || 0)) > 0 ? (
+                      <>
+                        <div 
+                          className="bg-emerald-500 h-full transition-all duration-500" 
+                          style={{ 
+                            width: `${((selectedIncident.confirmations_count || 0) / ((selectedIncident.confirmations_count || 0) + (selectedIncident.refutations_count || 0))) * 100}%` 
+                          }}
+                        />
+                        <div 
+                          className="bg-rose-500 h-full transition-all duration-500 flex-1"
+                        />
+                      </>
+                    ) : (
+                      <div className="bg-gray-300 w-full h-full" />
+                    )}
+                  </div>
+                  <div className="flex justify-between text-[9px] text-gray-400 font-medium">
+                    <span>Retraction: refutations &gt; confirmations + 3</span>
+                    {((selectedIncident.refutations_count || 0) > 0) && (
+                      <span className="text-rose-500 font-bold">
+                        {selectedIncident.refutations_count} / {(selectedIncident.confirmations_count || 0) + 3} towards retraction
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 

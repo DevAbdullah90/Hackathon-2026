@@ -6,6 +6,8 @@ from .resources import Resource
 from .actions import Action
 from .notifications import Notification
 from .reasoning_logs import ReasoningLog, ChainOfThought
+from .vehicle_locations import VehicleLocation
+from .safe_havens import SafeHaven
 
 # Export all models for easier access
 __all__ = [
@@ -16,4 +18,6 @@ __all__ = [
     "Notification",
     "ReasoningLog",
     "ChainOfThought",
+    "VehicleLocation",
+    "SafeHaven",
 ]
