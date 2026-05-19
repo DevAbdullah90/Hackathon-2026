@@ -4,13 +4,13 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   RefreshControl,
   ActivityIndicator,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import { THEME } from "../lib/theme";
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
   },
   alertDescription: {
     fontSize: 9,
-    fontFamily: THEME.fonts.regular,
+    fontFamily: THEME.fonts.body,
     color: "#9CA3AF",
     marginBottom: THEME.spacing.xs,
   },

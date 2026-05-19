@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from "react";
-import {
-  View, 
+import { View, 
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  SafeAreaView, 
+   
   StatusBar, 
   ScrollView, 
   ActivityIndicator, 
-  Alert,
-} from "react-native";
+  Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import ExecutionTimeline from "../components/ExecutionTimeline";
