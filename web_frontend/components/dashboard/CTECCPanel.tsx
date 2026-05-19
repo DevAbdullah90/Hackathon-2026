@@ -1,65 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
-import { Bell, Settings, Bookmark } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Cpu, Settings, Activity, Zap } from "lucide-react";
+import { api, AgentWorkforceMember } from "@/lib/api";
 
-type Status = "In Progress" | "Dispatched" | "Notified" | "Triggered";
+export default function CTECCPanel() {
+  const [agents, setAgents] = useState<AgentWorkforceMember[]>([]);
+  const [loading, setLoading] = useState(true);
 
-interface StatusRowProps {
-  department: string;
-  status: Status;
-  onClick: () => void;
-}
-
-function StatusRow({ department, status, onClick }: StatusRowProps) {
-  const getBadgeStyle = (currentStatus: string) => {
-    switch (currentStatus) {
-      case "In Progress":
-        return "bg-red-50 text-red-600 border border-red-100";
-      case "Dispatched":
-        return "bg-green-50 text-green-600 border border-green-100";
-      case "Notified":
-        return "bg-orange-50 text-orange-600 border border-orange-100";
-      case "Triggered":
-        return "bg-gray-100 text-gray-500 border border-gray-200";
-      default:
-        return "bg-gray-50 text-gray-400";
+  const fetchWorkforce = async () => {
+    try {
+      const data = await api.getAgentWorkforce();
+      setAgents(data);
+    } catch (err) {
+      console.error("Failed to load agent workforce in CTECCPanel:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
-      <span className="text-sm text-gray-700 font-semibold">{department}</span>
-      <span 
-        onClick={onClick}
-        className={`text-xs font-semibold px-2.5 py-0.5 rounded-md cursor-pointer select-none transition-all hover:opacity-80 active:scale-95 ${getBadgeStyle(status)}`}
-      >
-        {status}
-      </span>
-    </div>
-  );
-}
-
-export default function CTECCPanel() {
-  const statuses: Status[] = ["In Progress", "Dispatched", "Notified", "Triggered"];
-
-  const [dispatchData, setDispatchData] = useState<{ department: string; status: Status }[]>([
-    { department: "Medical Department", status: "In Progress" },
-    { department: "Police Department", status: "Dispatched" },
-    { department: "Fire Department", status: "Dispatched" },
-    { department: "Water Department", status: "Notified" },
-    { department: "Transport Department", status: "Notified" },
-    { department: "V2X Broadcast System", status: "Triggered" },
-  ]);
-
-  const handleBadgeClick = (index: number) => {
-    setDispatchData(prev => prev.map((item, i) => {
-      if (i !== index) return item;
-      const currentIdx = statuses.indexOf(item.status);
-      const nextIdx = (currentIdx + 1) % statuses.length;
-      return { ...item, status: statuses[nextIdx] };
-    }));
-  };
+  useEffect(() => {
+    fetchWorkforce();
+    const interval = setInterval(fetchWorkforce, 3000); // 3s real-time active polling
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden h-full flex flex-col justify-between">
@@ -67,31 +31,68 @@ export default function CTECCPanel() {
         {/* Card Header */}
         <div className="px-4 pt-4 pb-3 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bell className="w-4 h-4 text-gray-600 animate-swing" />
-            <h3 className="text-sm font-semibold text-gray-800">CTECC</h3>
+            <Cpu className="w-4 h-4 text-emerald-600 animate-pulse" />
+            <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">AI Specialist Workforce</h3>
           </div>
 
           <div className="flex items-center gap-3">
-            <Settings className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600 transition-colors" />
-            <Bookmark className="w-4 h-4 text-orange-400 fill-orange-400 cursor-pointer" />
-            <div className="h-4 w-px bg-gray-200" />
-            <span className="text-xs text-gray-400">Last update: 20:32</span>
-            <span className="text-xs text-gray-400 font-semibold bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">
-              Event ID: 7C2-21
-            </span>
+            <div className="flex items-center gap-1.5 text-xs text-gray-400 font-semibold select-none">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+              <span>Multi-Agent Core</span>
+            </div>
           </div>
         </div>
 
-        {/* Status List */}
-        <div className="px-4 pb-4 pt-2 space-y-0">
-          {dispatchData.map((row, index) => (
-            <StatusRow
-              key={index}
-              department={row.department}
-              status={row.status}
-              onClick={() => handleBadgeClick(index)}
-            />
-          ))}
+        {/* Workforce Grid */}
+        <div className="p-4 grid grid-cols-2 gap-3">
+          {loading ? (
+            <div className="col-span-2 text-xs text-gray-400 py-12 text-center animate-pulse font-semibold">
+              Querying agent states...
+            </div>
+          ) : agents.length === 0 ? (
+            <div className="col-span-2 text-xs text-gray-400 py-12 text-center font-medium">
+              No agents registered. Check FastAPI console logs.
+            </div>
+          ) : (
+            agents.map((agentItem, idx) => {
+              const isProcessing = agentItem.status === "PROCESSING";
+              return (
+                <div 
+                  key={idx} 
+                  className={`p-3 rounded-xl border transition-all duration-300 flex flex-col justify-between min-h-[84px] shadow-2xs ${
+                    isProcessing 
+                      ? "bg-emerald-50/50 border-emerald-300 shadow-emerald-50/50 scale-[1.02]" 
+                      : "bg-gray-50/60 border-gray-100 hover:border-gray-200"
+                  }`}
+                >
+                  {/* Agent Header */}
+                  <div className="flex justify-between items-start gap-1">
+                    <span className="text-[11px] font-bold text-gray-800 leading-tight">
+                      {agentItem.agent}
+                    </span>
+                    {isProcessing && <Zap className="w-3.5 h-3.5 text-emerald-500 animate-bounce flex-shrink-0" />}
+                  </div>
+
+                  {/* Agent Status Badge */}
+                  <div className="flex items-center justify-between border-t border-gray-200/40 pt-2 mt-2">
+                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 border rounded-md tracking-wider ${
+                      isProcessing 
+                        ? "bg-emerald-100 text-emerald-700 border-emerald-300 animate-pulse" 
+                        : "bg-gray-100 text-gray-400 border-gray-200"
+                    }`}>
+                      {agentItem.status}
+                    </span>
+
+                    {agentItem.active_incident && (
+                      <span className="text-[9px] font-bold text-gray-400 bg-white border border-gray-200 px-1 py-0.5 rounded">
+                        Sec: {agentItem.active_incident.substring(0, 7)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

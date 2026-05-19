@@ -13,7 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.incidents import Incident
 from app.models.reasoning_logs import ReasoningLog, ChainOfThought
-from app.models.schemas import IncidentRead, ReasoningLogRead, ChainOfThoughtRead
+from app.models.actions import Action
+from app.models.schemas import IncidentRead, ReasoningLogRead, ChainOfThoughtRead, ActionRead
 from app.db.session import get_session
 
 router = APIRouter()
@@ -101,5 +102,33 @@ async def read_incident_cot(
     result = await session.execute(query)
     cots = result.scalars().all()
     return cots
+
+
+@router.get("/{incident_id}/actions", response_model=List[ActionRead])
+async def read_incident_actions(
+    *,
+    session: AsyncSession = Depends(get_session),
+    incident_id: UUID
+):
+    """
+    Retrieve all emergency actions planned for a specific incident.
+    """
+    # Check if the incident exists first
+    incident = await session.get(Incident, incident_id)
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incident not found"
+        )
+
+    query = (
+        select(Action)
+        .where(Action.incident_id == incident_id)
+        .order_by(Action.updated_at.asc())
+    )
+    result = await session.execute(query)
+    actions = result.scalars().all()
+    return actions
+
 
 

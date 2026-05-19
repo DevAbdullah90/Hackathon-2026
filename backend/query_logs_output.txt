@@ -1,0 +1,172 @@
+=== REASONING LOGS (12) ===
+[2026-05-18T20:03:04.530006] Agent: detection_agent | Incident ID: None
+Log Text:
+### 🔍 Incident Detector — 20:03 UTC
+**Incident**: Pre-confirmation
+**Status**: MONITORING
+
+The Incident Detector identified a potential flash flood in the F-6 Sector of Islamabad. With a confidence score of zero and one signal detected, the incident remains unconfirmed and will be monitored for further verification.
+
+**Key Output**:
+- Confidence Score: 0.0
+- Supporting Evidence: Signal from user GPS indicating a flash flood.
+- Next Action: Monitoring ongoing for further verification.
+
+---
+--------------------------------------------------
+[2026-05-18T20:03:23.666394] Agent: verification_agent | Incident ID: None
+Log Text:
+### ✅ Verification Agent — 20:03 UTC
+**Incident**: Pre-confirmation
+**Status**: ALERT RETRACTED
+
+The Verification Agent has confirmed that normal traffic conditions exist, indicating no flooding is occurring in the area. As a result, the alert regarding potential flooding has been retracted, and relevant authorities will be notified accordingly.
+
+**Key Output**:
+- Verification Score: 0.0
+- Evidence: Normal traffic conditions observed
+- Next action: Notify relevant authorities of the retraction.
+
+---
+--------------------------------------------------
+[2026-05-18T20:14:02.123809] Agent: signal_agent | Incident ID: 1850144a-a3e6-46da-b85d-23ce15749caa
+Log Text:
+### 📡 Signal Processor — 20:13 UTC
+**Incident**: Pre-confirmation
+**Status**: CONFLICT FLAGGED
+
+The Signal Processor identified a flood report from a traffic API, which is typically unrelated to such incidents. The credibility score flagged a conflict indicating that the data may not be reliable. Note: This source reported water entering shops in G-10 Markaz, Islamabad, where drainage is completely blocked.
+
+**Key Output**:
+- Conflict flagged
+- Source: traffic API
+- Next steps: Further investigation required to confirm flood status.
+
+---
+--------------------------------------------------
+[2026-05-18T20:14:45.091954] Agent: verification_agent | Incident ID: 1850144a-a3e6-46da-b85d-23ce15749caa
+Log Text:
+### ✅ Verification Agent — 20:14 UTC
+**Incident**: Pre-confirmation
+**Status**: VERIFIED — CONFIRMED
+
+The Verification Agent confirmed the incident of flooding in Sialkot based on evidence from local news and blocked traffic conditions. A verification score of 0.6 indicates the reliability of the sources supporting this confirmation.
+
+**Key Output:**
+- Verification Score: 0.6
+- Evidence: News confirms flooding and traffic blockage
+- Next action: Route incident to the Severity Agent for further action.
+
+---
+--------------------------------------------------
+[2026-05-18T20:15:13.814345] Agent: ⚠️ Risk Analyzer | Incident ID: 1850144a-a3e6-46da-b85d-23ce15749caa
+Log Text:
+### ⚠️ Risk Analyzer — 20:15 UTC
+**Incident**: 1850144a-a3e6-46da-b85d-23ce15749caa  
+**Status**: ELEVATED — SEVERITY 5.9/10  
+The Risk Analyzer assessed a flood incident in G-10 Sector, Islamabad, scoring it at five point nine out of ten for severity. Key risk factors included heavy rainfall at twenty-eight point four millimeters per hour expected to continue for two and a half hours, along with blockage on all primary roads affecting access to G-9 Sector, approximately three kilometers away.  
+
+**Key Output**:
+- Severity Score: 5.9  
+- Risk Factors: Rainfall intensity > 30mm/hr; blockage on primary roads  
+- Affected Radius: 0.7 km  
+---
+--------------------------------------------------
+[2026-05-18T20:16:27.254443] Agent: planning_agent | Incident ID: 1850144a-a3e6-46da-b85d-23ce15749caa
+Log Text:
+### 📋 Response Planner — 20:16 UTC
+**Incident**: 1850144a-a3e6-46da-b85d-23ce15749caa  
+**Status**: RESPONSE PLAN GENERATED  
+A comprehensive response plan has been initiated following the confirmed flooding in G-10 Sector. The actions include alerting citizens to stay away from the area, rerouting traffic to prevent congestion, deploying two drainage crews to manage floodwaters, and coordinating medical evacuation with one ambulance and one rescue team to address potential casualties.
+
+**Key Output**:  
+- 4 actions created  
+- Flooding risk in G-10 Sector  
+- Alerts issued and resources dispatched for immediate response  
+---
+--------------------------------------------------
+[2026-05-18T20:20:27.973101] Agent: signal_agent | Incident ID: 31fb6a45-fc7d-4f63-aba6-20a3a6873801
+Log Text:
+### 📡 Signal Processor — 20:20 UTC
+**Incident**: Pre-confirmation  
+**Status**: CONFLICT FLAGGED  
+
+The Signal Processor detected a flood signal at Ufone Towers in Islamabad. However, a conflict was noted due to contradicting information from previous signals regarding traffic issues in the area, leading to uncertainty about the current situation.
+
+**Key Output**:  
+- Credibility score: 0.9  
+- Conflict noted: Contradictory signals about traffic issues  
+- Next steps: Review further signals for confirmation of flooding.
+--------------------------------------------------
+[2026-05-18T20:20:46.781321] Agent: detection_agent | Incident ID: 31fb6a45-fc7d-4f63-aba6-20a3a6873801
+Log Text:
+### 🔍 Incident Detector — 20:20 UTC
+**Incident**: Pre-confirmation
+**Status**: MONITORING
+
+The Incident Detector reported a potential incident in Blue Area, Islamabad, but the detection was marked as unconfirmed due to a low confidence score of zero. Further investigation revealed conflicting signals, specifically from traffic reporting flooding near Jinnah Avenue, which requires closer monitoring.
+
+**Key Output**:
+- 0 signals detected
+- Conflicting signal regarding flooding near Jinnah Avenue
+- Monitor the situation for further developments
+---
+--------------------------------------------------
+[2026-05-18T20:21:17.252995] Agent: verification_agent | Incident ID: 31fb6a45-fc7d-4f63-aba6-20a3a6873801
+Log Text:
+### ✅ Verification Agent — 20:21 UTC
+**Incident**: Pre-confirmation
+**Status**: VERIFIED — CONFIRMED
+
+The Verification Agent confirmed the incident based on traffic analysis, which indicated a complete standstill. This suggests flooding or a major blockage in the area, warranting further attention.
+
+**Key Output:**
+- Verification Score: 0.0
+- Key Evidence: Traffic at a standstill with speed 0 km/h
+- Recommended Action: Transfer to Triage Agent for further action.
+---
+--------------------------------------------------
+[2026-05-18T20:21:43.792565] Agent: severity_agent | Incident ID: 31fb6a45-fc7d-4f63-aba6-20a3a6873801
+Log Text:
+### ⚠️ Risk Analyzer — 20:21 UTC
+**Incident**: 31fb6a45-fc7d-4f63-aba6-20a3a6873801  
+**Status**: ELEVATED — SEVERITY 6.3/10
+
+The Risk Analyzer assessed the situation in Blue Area, Islamabad, scoring an elevated severity of 6.3. Heavy rainfall measured at 28.4 millimeters per hour is expected to continue for approximately two and a half hours, supported by a red weather alert. The analysis indicates accessibility issues due to traffic, with a travel time of seven minutes to the nearest sector.
+
+**Key Output**:
+- 6.3
+- Heavy rainfall intensity of 28.4 mm/hr
+- Continue monitoring and prepare for potential escalation.
+
+---
+--------------------------------------------------
+[2026-05-18T20:22:32.189546] Agent: planning_agent | Incident ID: 31fb6a45-fc7d-4f63-aba6-20a3a6873801
+Log Text:
+### 📋 Response Planner — 20:22 UTC
+**Incident**: 31fb6a45-fc7d-4f63-aba6-20a3a6873801
+**Status**: RESPONSE PLAN GENERATED
+
+The Response Planner generated a comprehensive strategy addressing the flooding in the G-10 Sector. Citizens will receive alerts regarding the severe weather conditions, and traffic will be redirected to minimize congestion. Two drainage crews have been dispatched to alleviate the flooding, alongside a rescue team and an ambulance for potential medical emergencies.
+
+**Key Output**:
+- 2 drainage crews dispatched
+- Alert to citizens about flooding in G-10 Sector
+- Traffic rerouted through G-6 Sector
+
+---
+--------------------------------------------------
+[2026-05-18T20:22:56.899912] Agent: notification_agent | Incident ID: 31fb6a45-fc7d-4f63-aba6-20a3a6873801
+Log Text:
+### 📢 Notification Broadcaster — 20:22 UTC
+**Incident**: 31fb6a45-fc7d-4f63-aba6-20a3a6873801
+**Status**: STAKEHOLDERS NOTIFIED
+
+All notifications have been successfully dispatched to stakeholders regarding the ongoing incident. This ensures that all relevant parties are informed and can act appropriately during the emergency response.
+
+**Key Output**:
+- All notifications sent
+- Stakeholders informed
+- None
+---
+--------------------------------------------------

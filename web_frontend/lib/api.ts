@@ -1,0 +1,385 @@
+// web_frontend/lib/api.ts
+// Central API service connecting Next.js web_frontend to FastAPI backend.
+
+export const API_BASE_URL = "http://localhost:8000/api/v1";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. DATA MODELS & TYPES
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface Incident {
+  id: string;
+  location: string;
+  lat: number;
+  lng: number;
+  severity_score: number;
+  confidence: number;
+  affected_radius_km: number;
+  estimated_population: number;
+  peak_impact_eta: string;
+  status: string;
+  risk_factors?: string[];
+  created_at: string;
+}
+
+export interface Action {
+  id: string;
+  incident_id: string;
+  type: string;
+  status: string;
+  predicted_side_effects?: string;
+  metadata?: any;
+  updated_at: string;
+}
+
+export interface ReasoningLog {
+  id: string;
+  incident_id: string;
+  agent_name: string;
+  log_text: string;
+  log_level: string;
+  created_at: string;
+}
+
+export interface ChainOfThought {
+  id: string;
+  incident_id: string;
+  agent_name: string;
+  cot_steps: string;
+  created_at: string;
+}
+
+export interface Resource {
+  id: string;
+  type: string;
+  total_count: number;
+  available_count: number;
+  assigned_to_incident?: string | null;
+  location?: string | null;
+  updated_at: string;
+}
+
+export interface DashboardStats {
+  total_signals: number;
+  active_crisis_sectors: number;
+  total_agent_decisions: number;
+  allocated_ambulances: number;
+  allocated_rescue_crews: number;
+}
+
+export interface AgentWorkforceMember {
+  agent: string;
+  status: "IDLE" | "PROCESSING";
+  active_incident: string | null;
+}
+
+export interface GlobalTimelineLog {
+  id: string;
+  incident_id: string | null;
+  agent_name: string;
+  log_text: string;
+  log_level: string;
+  created_at: string;
+}
+
+export interface PipelineStatus {
+  signal_id: string;
+  incident_id: string | null;
+  status: string; // 'PROCESSING' | 'CONFIRMED' | 'REJECTED'
+  stage: string;
+  stage_index: number;
+  stage_status: string; // 'RUNNING' | 'COMPLETED' | 'FAILED'
+  message: string;
+  updated_at: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. CURATED DEMO FALLBACK DATA (Demo Resilience)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const nowStr = () => new Date().toISOString();
+
+export const MOCK_INCIDENTS: Incident[] = [
+  {
+    id: "inc-jauhar",
+    location: "Block 18 Jauhar, Gulistan-e-Jauhar, Karachi",
+    lat: 24.9088,
+    lng: 67.1282,
+    severity_score: 8.9,
+    confidence: 0.96,
+    affected_radius_km: 1.8,
+    estimated_population: 6400,
+    peak_impact_eta: "12 min",
+    status: "ACTIVE",
+    risk_factors: ["heavy_rain", "drainage_blockage", "road_ponding"],
+    created_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: "inc-block13",
+    location: "Block 13 Gulistan-e-Jauhar, Karachi",
+    lat: 24.9142,
+    lng: 67.1125,
+    severity_score: 6.2,
+    confidence: 0.89,
+    affected_radius_km: 1.1,
+    estimated_population: 3100,
+    peak_impact_eta: "25 min",
+    status: "ACTIVE",
+    risk_factors: ["localized_ponding", "drainage_overflow"],
+    created_at: new Date(Date.now() - 7200000).toISOString(),
+  },
+  {
+    id: "inc-block15",
+    location: "Block 15 Gulistan-e-Jauhar, Karachi",
+    lat: 24.9031,
+    lng: 67.1354,
+    severity_score: 7.5,
+    confidence: 0.92,
+    affected_radius_km: 1.5,
+    estimated_population: 4800,
+    peak_impact_eta: "18 min",
+    status: "ACTIVE",
+    risk_factors: ["urban_runoff", "basement_flooding"],
+    created_at: new Date(Date.now() - 10800000).toISOString(),
+  }
+];
+
+export const MOCK_RESOURCES: Resource[] = [
+  { id: "r1", type: "ambulance", total_count: 10, available_count: 6, updated_at: nowStr() },
+  { id: "r2", type: "rescue_team", total_count: 8, available_count: 5, updated_at: nowStr() },
+  { id: "r3", type: "drainage_crew", total_count: 12, available_count: 8, updated_at: nowStr() },
+  { id: "r4", type: "police_patrol", total_count: 15, available_count: 12, updated_at: nowStr() },
+];
+
+export const MOCK_ACTIONS: Record<string, Action[]> = {
+  "inc-g10": [
+    { id: "act-g10-1", incident_id: "inc-g10", type: "DEPLOY_DRAINAGE_CREW", status: "DISPATCHED", predicted_side_effects: "Clears drainage vents in G-10 Markaz. Expected to lower water level by 15cm/hr.", updated_at: nowStr() },
+    { id: "act-g10-2", incident_id: "inc-g10", type: "DISPATCH_RESCUE", status: "IN PROGRESS", predicted_side_effects: "Ambulance units dispatched. High traffic on Jinnah Ave.", updated_at: nowStr() },
+    { id: "act-g10-3", incident_id: "inc-g10", type: "ALERT_CITIZENS", status: "NOTIFIED", predicted_side_effects: "SMS alerts broadcast to all active mobile subscribers in F-9 & G-10.", updated_at: nowStr() },
+  ],
+  "inc-f6": [
+    { id: "act-f6-1", incident_id: "inc-f6", type: "ALERT_CITIZENS", status: "NOTIFIED", predicted_side_effects: "Margalla hill run-off danger notification sent.", updated_at: nowStr() },
+    { id: "act-f6-2", incident_id: "inc-f6", type: "DISPATCH_RESCUE", status: "DISPATCHED", predicted_side_effects: "Standby units deployed near Sector F-6.", updated_at: nowStr() },
+  ]
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. CORE API CLIENT METHODS
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function makeRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const url = `${API_BASE_URL}${path}`;
+  
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  try {
+    const res = await fetch(url, { ...options, headers });
+    if (!res.ok) {
+      throw new Error(`API HTTP Error: ${res.status} ${res.statusText}`);
+    }
+    return await res.json();
+  } catch (err) {
+    throw err;
+  }
+}
+
+export const api = {
+  /**
+   * Fetch active incidents list
+   */
+  async getActiveIncidents(): Promise<Incident[]> {
+    try {
+      const data = await makeRequest<any[]>("/incidents/active");
+      if (!data || data.length === 0) return MOCK_INCIDENTS;
+      return data.map((item) => ({
+        id: String(item.id),
+        location: item.location,
+        lat: Number(item.lat),
+        lng: Number(item.lng),
+        severity_score: Number(item.severity_score),
+        confidence: Number(item.confidence),
+        affected_radius_km: Number(item.affected_radius_km || 1.0),
+        estimated_population: Number(item.estimated_population || 1000),
+        peak_impact_eta: item.peak_impact_eta || "N/A",
+        status: item.status || "ACTIVE",
+        risk_factors: item.risk_factors || [],
+        created_at: item.created_at,
+      }));
+    } catch (err) {
+      console.warn("🛡️ [API FALLBACK] getActiveIncidents() -> serving mock Islamabad sectors.", err);
+      return MOCK_INCIDENTS;
+    }
+  },
+
+  /**
+   * Fetch planned actions for an incident
+   */
+  async getIncidentActions(incidentId: string): Promise<Action[]> {
+    try {
+      const data = await makeRequest<any[]>(`/incidents/${incidentId}/actions`);
+      if (!data || data.length === 0) return MOCK_ACTIONS[incidentId] || [];
+      return data.map((item) => ({
+        id: String(item.id),
+        incident_id: incidentId,
+        type: item.type,
+        status: item.status.toUpperCase(),
+        predicted_side_effects: item.predicted_side_effects || "N/A",
+        metadata: item.action_metadata || {},
+        updated_at: item.updated_at,
+      }));
+    } catch (err) {
+      console.warn(`🛡️ [API FALLBACK] getIncidentActions(${incidentId}) -> serving mock actions.`, err);
+      return MOCK_ACTIONS[incidentId] || [];
+    }
+  },
+
+  /**
+   * Fetch reasoning logs for a confirmed incident
+   */
+  async getIncidentLogs(incidentId: string): Promise<ReasoningLog[]> {
+    try {
+      const data = await makeRequest<any[]>(`/incidents/${incidentId}/logs`);
+      if (!data) return [];
+      return data.map((item) => ({
+        id: String(item.id),
+        incident_id: String(item.incident_id),
+        agent_name: item.agent_name,
+        log_text: item.log_text,
+        log_level: item.log_level || "INFO",
+        created_at: item.created_at,
+      }));
+    } catch (err) {
+      console.warn(`🛡️ [API FALLBACK] getIncidentLogs(${incidentId}) -> serving empty logs.`, err);
+      return [];
+    }
+  },
+
+  /**
+   * Fetch resource allocation matrices
+   */
+  async getResources(): Promise<Resource[]> {
+    try {
+      const data = await makeRequest<any[]>("/resources");
+      if (!data || data.length === 0) return MOCK_RESOURCES;
+      return data.map((item) => ({
+        id: String(item.id),
+        type: item.type,
+        total_count: Number(item.total_count),
+        available_count: Number(item.available_count),
+        assigned_to_incident: item.assigned_to_incident,
+        location: item.location,
+        updated_at: item.updated_at,
+      }));
+    } catch (err) {
+      console.warn("🛡️ [API FALLBACK] getResources() -> serving fallback emergency catalog.", err);
+      return MOCK_RESOURCES;
+    }
+  },
+
+  /**
+   * Fetch core tactical dashboard stats counters
+   */
+  async getDashboardStats(): Promise<DashboardStats> {
+    try {
+      return await makeRequest<DashboardStats>("/dashboard/stats");
+    } catch (err) {
+      console.warn("🛡️ [API FALLBACK] getDashboardStats() -> serving fallback counters.", err);
+      return {
+        total_signals: 12,
+        active_crisis_sectors: MOCK_INCIDENTS.length,
+        total_agent_decisions: 36,
+        allocated_ambulances: 4,
+        allocated_rescue_crews: 3,
+      };
+    }
+  },
+
+  /**
+   * Fetch active multi-agent status grid
+   */
+  async getAgentWorkforce(): Promise<AgentWorkforceMember[]> {
+    try {
+      return await makeRequest<AgentWorkforceMember[]>("/dashboard/agent-workforce");
+    } catch (err) {
+      console.warn("🛡️ [API FALLBACK] getAgentWorkforce() -> serving fallback agent workforce.", err);
+      return [
+        { agent: "Signal Agent", status: "IDLE", active_incident: null },
+        { agent: "Detection Agent", status: "IDLE", active_incident: null },
+        { agent: "Severity Agent", status: "IDLE", active_incident: null },
+        { agent: "Verification Agent", status: "IDLE", active_incident: null },
+        { agent: "Logging Agent", status: "IDLE", active_incident: null },
+        { agent: "Resource Allocation Agent", status: "IDLE", active_incident: null },
+        { agent: "Planning Agent", status: "IDLE", active_incident: null },
+        { agent: "Notification Agent", status: "IDLE", active_incident: null },
+      ];
+    }
+  },
+
+  /**
+   * Fetch global COT logstream
+   */
+  async getGlobalTimeline(): Promise<GlobalTimelineLog[]> {
+    try {
+      return await makeRequest<GlobalTimelineLog[]>("/dashboard/global-timeline");
+    } catch (err) {
+      console.warn("🛡️ [API FALLBACK] getGlobalTimeline() -> serving fallback timeline.", err);
+      return [
+        { id: "1", incident_id: "inc-g10", agent_name: "signal_agent", log_text: "Parsed raw mobile GPS signals from G-10 Markaz.", log_level: "INFO", created_at: nowStr() },
+        { id: "2", incident_id: "inc-g10", agent_name: "detection_agent", log_text: "Flood crisis cluster identified at [33.6844, 73.0479]. Spatial confidence: 96%.", log_level: "WARNING", created_at: nowStr() },
+        { id: "3", incident_id: "inc-f6", agent_name: "resource_allocation_agent", log_text: "Mobilized ambulance unit (id: r1) to F-6 sector incident.", log_level: "INFO", created_at: nowStr() },
+      ];
+    }
+  },
+
+  /**
+   * Poll multi-agent pipeline progress tracking status
+   */
+  async getPipelineStatus(signalId: string): Promise<PipelineStatus> {
+    try {
+      const data = await makeRequest<any>(`/signals/${signalId}/status`);
+      return {
+        signal_id: String(data.signal_id),
+        incident_id: data.incident_id ? String(data.incident_id) : null,
+        status: data.status,
+        stage: data.stage,
+        stage_index: Number(data.stage_index),
+        stage_status: data.stage_status,
+        message: data.message,
+        updated_at: data.updated_at,
+      };
+    } catch (err) {
+      console.warn(`🛡️ [API FALLBACK] getPipelineStatus(${signalId}) -> serving mock status updates.`, err);
+      return {
+        signal_id: signalId,
+        incident_id: "inc-g10",
+        status: "CONFIRMED",
+        stage: "notification_agent",
+        stage_index: 6,
+        stage_status: "COMPLETED",
+        message: "Tactical plan complete. Public and local teams notified!",
+        updated_at: nowStr()
+      };
+    }
+  },
+
+  /**
+   * Trigger a random simulated mock telemetry signal in Islamabad
+   */
+  async triggerMockSignal(): Promise<{ signal_id: string; status?: string } | null> {
+    try {
+      const response = await makeRequest<any>("/signals/mock", {
+        method: "POST",
+      });
+      if (response && response.status === "DUPLICATE") {
+        return { signal_id: response.signal_id, status: "DUPLICATE" };
+      }
+      return { signal_id: String(response.id), status: "NEW" };
+    } catch (err) {
+      console.warn("🛡️ [API FALLBACK] triggerMockSignal() failed to hit backend.", err);
+      return null;
+    }
+  }
+};

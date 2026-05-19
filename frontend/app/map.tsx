@@ -107,14 +107,21 @@ export default function FloodMap({ route, navigation }: any) {
         console.log("GPS position fetch timed out or failed, using default coordinates:", locError);
       }
 
-      const success = await api.reportFlood(coords.latitude, coords.longitude, source);
+      const res = await api.reportFlood(coords.latitude, coords.longitude, source);
 
-      if (success) {
+      if (res && res.signal_id) {
         Alert.alert(
           "TELEMETRY INJECTED",
-          `A simulated ${source} alert at coordinates [${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}] has been fed into the multi-agent pipeline.`
+          `A simulated ${source} alert at coordinates [${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}] has been fed into the multi-agent pipeline. Launching triage tracker...`,
+          [
+            {
+              text: "Launch Triage Tracker",
+              onPress: () => {
+                navigation.navigate("Processing", { signalId: res.signal_id });
+              }
+            }
+          ]
         );
-        fetchIncidents();
       }
     } catch (error) {
       Alert.alert("TRANSMISSION FAILED", "Failed to feed signal to command center.");
@@ -137,7 +144,7 @@ export default function FloodMap({ route, navigation }: any) {
             mapType="standard"
             userInterfaceStyle="light"
           >
-            <MapOverlay incidents={incidents} />
+            <MapOverlay incidents={incidents} selectedIncident={selectedIncident} />
 
             {incidents.map((incident) => (
               <Marker

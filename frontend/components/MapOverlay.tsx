@@ -1,13 +1,14 @@
 import React from "react";
-import { Polygon } from "react-native-maps";
+import { Polygon, Polyline } from "react-native-maps";
 import { Incident } from "../lib/api";
 import { THEME } from "../lib/theme";
 
 interface MapOverlayProps {
   incidents: Incident[];
+  selectedIncident: Incident | null;
 }
 
-const MapOverlay: React.FC<MapOverlayProps> = ({ incidents }) => {
+const MapOverlay: React.FC<MapOverlayProps> = ({ incidents, selectedIncident }) => {
   const getSeverityColors = (score: number) => {
     if (score >= 7.5) {
       return {
@@ -25,6 +26,22 @@ const MapOverlay: React.FC<MapOverlayProps> = ({ incidents }) => {
       stroke: THEME.colors.primary
     };
   };
+
+  const blockedCoords = selectedIncident ? [
+    { latitude: selectedIncident.lat - 0.005, longitude: selectedIncident.lng - 0.005 },
+    { latitude: selectedIncident.lat - 0.002, longitude: selectedIncident.lng - 0.002 },
+    { latitude: selectedIncident.lat, longitude: selectedIncident.lng },
+    { latitude: selectedIncident.lat + 0.002, longitude: selectedIncident.lng + 0.002 },
+    { latitude: selectedIncident.lat + 0.005, longitude: selectedIncident.lng + 0.005 }
+  ] : [];
+
+  const detourCoords = selectedIncident ? [
+    { latitude: selectedIncident.lat - 0.005, longitude: selectedIncident.lng - 0.005 },
+    { latitude: selectedIncident.lat - 0.004, longitude: selectedIncident.lng + 0.001 },
+    { latitude: selectedIncident.lat - 0.001, longitude: selectedIncident.lng + 0.005 },
+    { latitude: selectedIncident.lat + 0.002, longitude: selectedIncident.lng + 0.004 },
+    { latitude: selectedIncident.lat + 0.005, longitude: selectedIncident.lng + 0.005 }
+  ] : [];
 
   return (
     <>
@@ -54,6 +71,25 @@ const MapOverlay: React.FC<MapOverlayProps> = ({ incidents }) => {
           />
         );
       })}
+
+      {selectedIncident && (
+        <>
+          {/* Blocked primary route (dashed red line) */}
+          <Polyline
+            coordinates={blockedCoords}
+            strokeColor={THEME.colors.status.critical}
+            strokeWidth={4.5}
+            lineDashPattern={[6, 8]}
+          />
+
+          {/* Detour open bypass route (solid green line) */}
+          <Polyline
+            coordinates={detourCoords}
+            strokeColor={THEME.colors.primary}
+            strokeWidth={5}
+          />
+        </>
+      )}
     </>
   );
 };

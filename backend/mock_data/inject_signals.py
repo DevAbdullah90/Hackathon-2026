@@ -9,15 +9,15 @@ import httpx
 
 API_URL = "http://127.0.0.1:8000/api/v1/signals/"
 
-# We simulate a cluster of signals around G-10 Sector, Islamabad
+# We simulate a cluster of signals around Block 18 Jauhar, Gulistan-e-Jauhar, Karachi
 SIGNALS = [
     {
         "source": "weather_api",
         "type": "flood_risk",
-        "lat": 33.6844,
-        "lng": 73.0479,
+        "lat": 24.9088,
+        "lng": 67.1282,
         "raw_payload": {
-            "location": "G-10, Islamabad",
+            "location": "Block 18 Jauhar, Gulistan-e-Jauhar, Karachi",
             "alert": "Heavy Rainfall",
             "intensity_mm_per_hr": 35.0,
             "duration_hrs": 3.0
@@ -26,11 +26,11 @@ SIGNALS = [
     {
         "source": "user_gps",
         "type": "flood",
-        "lat": 33.6844,
-        "lng": 73.0479,
+        "lat": 24.9088,
+        "lng": 67.1282,
         "raw_payload": {
-            "lat": 33.6844,
-            "lng": 73.0479,
+            "lat": 24.9088,
+            "lng": 67.1282,
             "type": "flood",
             "source": "user_gps",
             "message": "Water entering my house!"
@@ -39,11 +39,11 @@ SIGNALS = [
     {
         "source": "user_gps",
         "type": "flood",
-        "lat": 33.6851,
-        "lng": 73.0481,
+        "lat": 24.9095,
+        "lng": 67.1285,
         "raw_payload": {
-            "lat": 33.6851,
-            "lng": 73.0481,
+            "lat": 24.9095,
+            "lng": 67.1285,
             "type": "flood",
             "source": "user_gps",
             "message": "Main road blocked by water."
@@ -52,11 +52,11 @@ SIGNALS = [
     {
         "source": "user_gps",
         "type": "flood",
-        "lat": 33.6840,
-        "lng": 73.0477,
+        "lat": 24.9082,
+        "lng": 67.1278,
         "raw_payload": {
-            "lat": 33.6840,
-            "lng": 73.0477,
+            "lat": 24.9082,
+            "lng": 67.1278,
             "type": "flood",
             "source": "user_gps",
             "message": "Cars stuck in deep water."

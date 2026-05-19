@@ -7,6 +7,9 @@ module.exports = {
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: false,
+    updates: {
+      enabled: false
+    },
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",

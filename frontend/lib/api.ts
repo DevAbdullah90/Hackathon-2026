@@ -46,6 +46,51 @@ export interface ChainOfThought {
   created_at: string;
 }
 
+export interface Resource {
+  id: string;
+  type: string;
+  total_count: number;
+  available_count: number;
+  assigned_to_incident?: string | null;
+  location?: string | null;
+  updated_at: string;
+}
+
+export interface DashboardStats {
+  total_signals: number;
+  active_crisis_sectors: number;
+  total_agent_decisions: number;
+  allocated_ambulances: number;
+  allocated_rescue_crews: number;
+}
+
+export interface AgentWorkforceMember {
+  agent: string;
+  status: "IDLE" | "PROCESSING";
+  active_incident: string | null;
+}
+
+export interface GlobalTimelineLog {
+  id: string;
+  incident_id: string | null;
+  agent_name: string;
+  log_text: string;
+  log_level: string;
+  created_at: string;
+}
+
+export interface PipelineStatus {
+  signal_id: string;
+  incident_id: string | null;
+  status: string; // 'PROCESSING' | 'CONFIRMED' | 'REJECTED'
+  stage: string;
+  stage_index: number;
+  stage_status: string; // 'RUNNING' | 'COMPLETED' | 'FAILED'
+  message: string;
+  updated_at: string;
+}
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. ERROR STRUCTURES & HANDLERS
@@ -238,6 +283,14 @@ const MOCK_ACTIONS: Record<string, Action[]> = {
   ],
 };
 
+const MOCK_RESOURCES: Resource[] = [
+  { id: "res-1", type: "ambulance", total_count: 12, available_count: 8, location: "Sector G-9 Depot", updated_at: now() },
+  { id: "res-2", type: "rescue_team", total_count: 8, available_count: 5, location: "Saddar Headquarters", updated_at: now() },
+  { id: "res-3", type: "drainage_crew", total_count: 15, available_count: 11, location: "CDA Staging Area 2", updated_at: now() },
+  { id: "res-4", type: "police_unit", total_count: 20, available_count: 14, location: "Islamabad Traffic Base", updated_at: now() },
+];
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. PREMIUM REQUEST ORCHESTRATION ENGINE (Vibe Coder Grade)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -260,12 +313,9 @@ async function makeRequest<T>(
   delay = RETRY_DELAY_BASE
 ): Promise<T> {
   const url = `${CONFIG.API_BASE_URL}${path}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
 
   const requestOptions: RequestInit = {
     ...options,
-    signal: controller.signal,
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
@@ -278,8 +328,13 @@ async function makeRequest<T>(
   try {
     console.log(`📡 [API CALL] ${requestOptions.method || "GET"} ${path} (Attempt: ${MAX_RETRIES - retriesLeft + 1}/${MAX_RETRIES})`);
 
-    const response = await fetch(url, requestOptions);
-    clearTimeout(timeoutId);
+    // Pure JS timeout race that works flawlessly on all mobile devices and Expo Go
+    const fetchPromise = fetch(url, requestOptions);
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout")), DEFAULT_TIMEOUT)
+    );
+
+    const response = await Promise.race([fetchPromise, timeoutPromise]);
 
     const duration = Date.now() - startTime;
     console.log(`✨ [API RESPONSE] ${requestOptions.method || "GET"} ${path} -> HTTP ${response.status} (${duration}ms)`);
@@ -297,14 +352,16 @@ async function makeRequest<T>(
     // Success response parsing
     return (await response.json()) as T;
   } catch (error: any) {
-    clearTimeout(timeoutId);
-
-    const isTimeout = error.name === "AbortError";
-    const isNetworkError = error instanceof TypeError || error.message?.includes("Network request failed");
+    const isTimeout = error.message === "Timeout";
+    const isNetworkError = 
+      error instanceof TypeError || 
+      error.message?.includes("Network request failed") || 
+      error.message?.includes("Aborted") || 
+      error.name === "AbortError";
 
     console.warn(`⚠️ [API FAILURE] ${requestOptions.method || "GET"} ${path}: ${error.message}`);
 
-    // If it's a transient failure (network/timeout), attempt exponential backoff retry
+    // If it's a transient failure (network/timeout/Wi-Fi dropped packet), attempt retry
     if ((isTimeout || isNetworkError) && retriesLeft > 0) {
       console.log(`🔄 [API RETRY] Retrying in ${delay}ms... (${retriesLeft} retries remaining)`);
       await sleep(delay);
@@ -380,7 +437,7 @@ export const api = {
     }
   },
 
-  async reportFlood(lat: number, lng: number, source: string = "user_gps"): Promise<boolean> {
+  async reportFlood(lat: number, lng: number, source: string = "user_gps"): Promise<{ signal_id: string; status?: string } | null> {
     try {
       const response = await makeRequest<any>("/api/v1/signals/", {
         method: "POST",
@@ -397,10 +454,13 @@ export const api = {
           },
         }),
       });
-      return !!response;
+      if (response && response.status === "DUPLICATE") {
+        return { signal_id: response.signal_id, status: "DUPLICATE" };
+      }
+      return { signal_id: String(response.id), status: "NEW" };
     } catch (err) {
       console.log(`🛡️ [API FALLBACK] reportFlood() -> Simulated successfully offline with source: ${source}.`);
-      return true;
+      return { signal_id: "sig-" + Math.random().toString(36).substr(2, 9), status: "MOCK" };
     }
   },
 
@@ -494,6 +554,153 @@ export const api = {
     } catch (err) {
       console.log(`🛡️ [API FALLBACK] getChainOfThought(${incidentId}) -> Serving mock CoT traces.`);
       return MOCK_COT_LOGS[incidentId] || [];
+    }
+  },
+
+  /**
+   * Fetch all actions associated with an incident using the newly implemented REST endpoint.
+   */
+  async getIncidentActions(incidentId: string): Promise<Action[]> {
+    try {
+      const data = await makeRequest<any[]>(`/api/v1/incidents/${incidentId}/actions`);
+      return data.map((item) => ({
+        id: String(item.id),
+        incident_id: incidentId,
+        type: item.type,
+        status: item.status.toUpperCase(),
+        predicted_side_effects: item.predicted_side_effects,
+        metadata: item.action_metadata,
+        updated_at: item.updated_at,
+      }));
+    } catch (err) {
+      console.log(`🛡️ [API FALLBACK] getIncidentActions(${incidentId}) failed -> Falling back to simulationTimeline cache.`);
+      return this.getSimulationState(incidentId);
+    }
+  },
+
+  /**
+   * Fetch all emergency resources and current allocations.
+   */
+  async getResources(): Promise<Resource[]> {
+    try {
+      const data = await makeRequest<any[]>("/api/v1/resources");
+      return data.map((item) => ({
+        id: String(item.id),
+        type: item.type,
+        total_count: item.total_count,
+        available_count: item.available_count,
+        assigned_to_incident: item.assigned_to_incident,
+        location: item.location,
+        updated_at: item.updated_at,
+      }));
+    } catch (err) {
+      console.log("🛡️ [API FALLBACK] getResources() failed -> serving mock resources.");
+      return MOCK_RESOURCES;
+    }
+  },
+
+  /**
+   * Poll multi-agent pipeline progress tracking status.
+   */
+  async getPipelineStatus(signalId: string): Promise<PipelineStatus> {
+    try {
+      const data = await makeRequest<any>(`/api/v1/signals/${signalId}/status`);
+      return {
+        signal_id: String(data.signal_id),
+        incident_id: data.incident_id ? String(data.incident_id) : null,
+        status: data.status,
+        stage: data.stage,
+        stage_index: data.stage_index,
+        stage_status: data.stage_status,
+        message: data.message,
+        updated_at: data.updated_at,
+      };
+    } catch (err) {
+      console.log(`🛡️ [API FALLBACK] getPipelineStatus(${signalId}) failed -> serving local simulated progress.`);
+      // Mock step-by-step telemetry progress offline
+      return {
+        signal_id: signalId,
+        incident_id: "inc-g10",
+        status: "CONFIRMED",
+        stage: "notification_agent",
+        stage_index: 6,
+        stage_status: "COMPLETED",
+        message: "Tactical plan complete. Public and local teams notified! (Mocked Confirmed)",
+        updated_at: now()
+      };
+    }
+  },
+
+  /**
+   * Fetch Web Dashboard stats
+   */
+  async getDashboardStats(): Promise<DashboardStats> {
+    try {
+      return await makeRequest<DashboardStats>("/api/v1/dashboard/stats");
+    } catch (err) {
+      console.log("🛡️ [API FALLBACK] getDashboardStats() -> serving fallback counters.");
+      return {
+        total_signals: 14,
+        active_crisis_sectors: MOCK_INCIDENTS.length,
+        total_agent_decisions: 48,
+        allocated_ambulances: 4,
+        allocated_rescue_crews: 3,
+      };
+    }
+  },
+
+  /**
+   * Fetch live agent workforce state
+   */
+  async getAgentWorkforce(): Promise<AgentWorkforceMember[]> {
+    try {
+      return await makeRequest<AgentWorkforceMember[]>("/api/v1/dashboard/agent-workforce");
+    } catch (err) {
+      console.log("🛡️ [API FALLBACK] getAgentWorkforce() -> serving mock agent workforce.");
+      return [
+        { agent: "Signal Agent", status: "IDLE", active_incident: null },
+        { agent: "Detection Agent", status: "IDLE", active_incident: null },
+        { agent: "Severity Agent", status: "IDLE", active_incident: null },
+        { agent: "Verification Agent", status: "IDLE", active_incident: null },
+        { agent: "Logging Agent", status: "IDLE", active_incident: null },
+        { agent: "Resource Allocation Agent", status: "IDLE", active_incident: null },
+        { agent: "Planning Agent", status: "IDLE", active_incident: null },
+        { agent: "Notification Agent", status: "IDLE", active_incident: null },
+      ];
+    }
+  },
+
+  /**
+   * Fetch global timeline activity
+   */
+  async getGlobalTimeline(): Promise<GlobalTimelineLog[]> {
+    try {
+      return await makeRequest<GlobalTimelineLog[]>("/api/v1/dashboard/global-timeline");
+    } catch (err) {
+      console.log("🛡️ [API FALLBACK] getGlobalTimeline() -> serving mock global activity.");
+      return [
+        { id: "1", incident_id: "inc-g10", agent_name: "signal_agent", log_text: "System initialized signal trace verification", log_level: "INFO", created_at: now() },
+        { id: "2", incident_id: "inc-g10", agent_name: "severity_agent", log_text: "Assessed G-10 Markaz rainfall severity to 8.9", log_level: "WARNING", created_at: now() },
+        { id: "3", incident_id: "inc-g13", agent_name: "resource_allocation_agent", log_text: "Standby rescue assets allocated for sector G-13", log_level: "INFO", created_at: now() },
+      ];
+    }
+  },
+
+  /**
+   * Trigger a random simulated mock telemetry signal in Islamabad
+   */
+  async triggerMockSignal(): Promise<{ signal_id: string; status?: string } | null> {
+    try {
+      const response = await makeRequest<any>("/api/v1/signals/mock", {
+        method: "POST",
+      });
+      if (response && response.status === "DUPLICATE") {
+        return { signal_id: response.signal_id, status: "DUPLICATE" };
+      }
+      return { signal_id: String(response.id), status: "NEW" };
+    } catch (err) {
+      console.log("🛡️ [API FALLBACK] triggerMockSignal() -> generated simulated signal locally offline.");
+      return { signal_id: "sig-" + Math.random().toString(36).substr(2, 9), status: "MOCK" };
     }
   },
 };
