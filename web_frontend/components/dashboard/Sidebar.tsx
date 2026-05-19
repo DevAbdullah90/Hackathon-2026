@@ -3,10 +3,6 @@
 import React from "react";
 import { 
   LayoutDashboard, 
-  Cpu, 
-  BarChart3, 
-  BellRing, 
-  Settings, 
   ChevronLeft,
   Activity,
   X,
@@ -22,10 +18,6 @@ interface SidebarProps {
 export default function Sidebar({ activePage, onNavigate, onClose }: SidebarProps) {
   const navItems = [
     { name: "Dashboard", icon: LayoutDashboard },
-    { name: "Emergency Teams", icon: Cpu },
-    { name: "Analytics Feed", icon: BarChart3 },
-    { name: "Global Alerts", icon: BellRing },
-    { name: "Command Config", icon: Settings },
   ];
 
   return (
