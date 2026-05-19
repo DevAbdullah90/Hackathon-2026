@@ -21,6 +21,10 @@ class Incident(SQLModel, table=True):
         nullable=False,
     )
     location: str = Field(description="Human-readable area name, e.g. G-10 Sector")
+    disaster_type: str = Field(
+        default="flood",
+        description="'flood' | 'heatwave' — extensible for future crisis types",
+    )
     lat: float
     lng: float
     severity_score: float = Field(description="Scored 1-10 by the Severity Agent")
