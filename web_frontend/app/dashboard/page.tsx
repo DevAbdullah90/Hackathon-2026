@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState, useEffect, useRef } from "react";
-import Sidebar from "@/components/dashboard/Sidebar";
+
 import TopBar from "@/components/dashboard/TopBar";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import EventsPanel from "@/components/dashboard/EventsPanel";
@@ -265,36 +265,13 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-20 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
 
-      {/* Sidebar */}
-      <div className={`
-        fixed lg:relative z-30 h-full
-        transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-      `}>
-        <Sidebar
-          activePage={activePage}
-          onNavigate={(page) => {
-            setActivePage(page);
-            setSidebarOpen(false);
-          }}
-          onClose={() => setSidebarOpen(false)}
-        />
-      </div>
 
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
 
         {/* TopBar */}
         <TopBar 
-          onMenuToggle={() => setSidebarOpen(!sidebarOpen)} 
           onPipelineComplete={handlePipelineComplete}
         />
 
