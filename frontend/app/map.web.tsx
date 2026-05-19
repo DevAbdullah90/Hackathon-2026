@@ -1,17 +1,16 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
+import { View,
   StyleSheet,
   TouchableOpacity,
   Text,
-  SafeAreaView,
+  
   ScrollView,
   Dimensions,
   Modal,
   Alert,
   StatusBar,
-  ActivityIndicator,
-} from "react-native";
+  ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import SeverityBadge from "../components/SeverityBadge";
 import { api, Incident } from "../lib/api";
 import { THEME } from "../lib/theme";

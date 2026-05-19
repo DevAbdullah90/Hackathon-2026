@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { 
-  View, 
+import { View, 
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  SafeAreaView, 
+   
   StatusBar, 
   ScrollView, 
-  Dimensions
-} from "react-native";
+  Dimensions } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import { api, Incident } from "../lib/api";

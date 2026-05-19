@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
+import { View,
   Text,
   StyleSheet,
-  SafeAreaView,
+  
   StatusBar,
   ActivityIndicator,
-  TouchableOpacity
-} from "react-native";
+  TouchableOpacity } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import Animated, {
   FadeInDown,
