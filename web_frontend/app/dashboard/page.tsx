@@ -5,7 +5,6 @@ import { useState, useEffect, useRef } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import TopBar from "@/components/dashboard/TopBar";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
-import TrafficInsights from "@/components/dashboard/TrafficInsights";
 import EventsPanel from "@/components/dashboard/EventsPanel";
 import CTECCPanel from "@/components/dashboard/CTECCPanel";
 import { Incident } from "@/lib/api";
@@ -316,9 +315,7 @@ export default function DashboardPage() {
             <div className="fade-in" style={{ animationDelay: "0ms" }}>
               <MetricsGrid />
             </div>
-            <div className="fade-in" style={{ animationDelay: "100ms" }}>
-              <TrafficInsights />
-            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-4 fade-in" style={{ animationDelay: "200ms" }}>
               <EventsPanel 
                 selectedIncident={selectedIncident} 

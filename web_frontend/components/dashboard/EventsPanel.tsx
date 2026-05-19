@@ -254,45 +254,42 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
             {/* Bottom Row: Tabs & Content */}
             <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 flex flex-col min-h-[300px]">
               {/* Tab headers */}
-              <div className="flex border-b border-gray-200 pb-2 mb-3 items-center justify-between">
-                <div className="flex gap-4">
+              <div className="flex border-b border-gray-200 pb-2 mb-3 items-center justify-between overflow-x-auto scrollbar-none">
+                <div className="flex gap-2 sm:gap-4 flex-nowrap">
                   <button
                     onClick={() => setActiveTab("actions")}
-                    className={`flex items-center gap-1.5 pb-1 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 pb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       activeTab === "actions"
                         ? "border-emerald-500 text-emerald-600"
                         : "border-transparent text-gray-400 hover:text-gray-600"
                     }`}
                   >
-                    <Shield className="w-3.5 h-3.5" />
-                    <span>Planner Actions ({actions.length})</span>
+                    <Shield className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>Actions ({actions.length})</span>
                   </button>
                   <button
                     onClick={() => setActiveTab("logs")}
-                    className={`flex items-center gap-1.5 pb-1 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 pb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       activeTab === "logs"
                         ? "border-emerald-500 text-emerald-600"
                         : "border-transparent text-gray-400 hover:text-gray-600"
                     }`}
                   >
-                    <Shield className="w-3.5 h-3.5" />
-                    <span>AI Swarm Logs ({reasoningLogs.length})</span>
+                    <Activity className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span>Swarm Logs ({reasoningLogs.length})</span>
                   </button>
                   <button
                     onClick={() => setActiveTab("notifications")}
-                    className={`flex items-center gap-1.5 pb-1 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 pb-1 text-[10px] sm:text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                       activeTab === "notifications"
                         ? "border-emerald-500 text-emerald-600"
                         : "border-transparent text-gray-400 hover:text-gray-600"
                     }`}
                   >
-                    <MessageSquare className="w-3.5 h-3.5" />
+                    <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
                     <span>Stakeholders ({notifications.length})</span>
                   </button>
                 </div>
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                  Swarm Core
-                </span>
               </div>
 
               {/* Tab content */}
@@ -371,19 +368,19 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                 ) : (
                   <div className="flex flex-col flex-1">
                     {/* Sub-tabs for stakeholders */}
-                    <div className="flex bg-gray-100 rounded-lg p-1 gap-1 mb-3 self-start">
+                    <div className="flex bg-gray-100 rounded-lg p-1 gap-1 mb-3 self-start overflow-x-auto max-w-full scrollbar-none">
                       {[
                         { key: "public", label: "📢 Public" },
-                        { key: "police", label: "🚨 Police / Traffic" },
+                        { key: "police", label: "🚨 Police" },
                         { key: "utility", label: "⚡ Utility" },
-                        { key: "hospital", label: "🏥 Hospitals" },
+                        { key: "hospital", label: "🏥 Medical" },
                       ].map((item) => {
                         const isSubActive = subTab === item.key;
                         return (
                           <button
                             key={item.key}
                             onClick={() => setSubTab(item.key as any)}
-                            className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                               isSubActive ? "bg-white text-gray-900 shadow-2xs font-extrabold" : "text-gray-500 hover:bg-white/40"
                             }`}
                           >
