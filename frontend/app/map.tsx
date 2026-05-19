@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { BlurView } from "expo-blur";
-import MapView, { Marker, Callout } from "react-native-maps";
+import MapView, { Marker, Callout, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CONFIG } from "../constants/config";
@@ -42,7 +42,20 @@ export default function FloodMap({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [reporting, setReporting] = useState(false);
 
+  const [shelters, setShelters] = useState<any[]>([]);
+  const [activeRoute, setActiveRoute] = useState<any | null>(null);
+  const [fetchingRoute, setFetchingRoute] = useState(false);
+
   const selectedIncidentId = route.params?.selectedIncidentId;
+
+  const fetchShelters = async () => {
+    try {
+      const data = await api.getSafeHavens();
+      setShelters(data);
+    } catch (err) {
+      console.log("Failed to load map shelters:", err);
+    }
+  };
 
   const fetchIncidents = async () => {
     const data = await api.getActiveIncidents();
@@ -59,9 +72,51 @@ export default function FloodMap({ route, navigation }: any) {
 
   useEffect(() => {
     fetchIncidents();
-    const interval = setInterval(fetchIncidents, 10000);
+    fetchShelters();
+    const interval = setInterval(() => {
+      fetchIncidents();
+      fetchShelters();
+    }, 10000);
     return () => clearInterval(interval);
   }, [selectedIncidentId]);
+
+  const handleNavigateToShelter = async () => {
+    setFetchingRoute(true);
+    try {
+      let lat = CONFIG.ISLAMABAD_CENTER.latitude;
+      let lng = CONFIG.ISLAMABAD_CENTER.longitude;
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        lat = position.coords.latitude;
+        lng = position.coords.longitude;
+      } else if (selectedIncident) {
+        lat = selectedIncident.lat;
+        lng = selectedIncident.lng;
+      }
+
+      const routeData = await api.getEvacuationRoute(lat, lng);
+      setActiveRoute(routeData);
+
+      if (routeData.path && routeData.path.length > 0 && mapRef.current) {
+        mapRef.current.fitToCoordinates(
+          routeData.path.map((p) => ({ latitude: p.lat, longitude: p.lng })),
+          {
+            edgePadding: { top: 120, right: 80, bottom: 260, left: 80 },
+            animated: true,
+          }
+        );
+      }
+    } catch (err) {
+      console.log("Error querying evacuation route:", err);
+      Alert.alert("ROUTING ERROR", "Could not calculate detour route to the nearest shelter.");
+    } finally {
+      setFetchingRoute(false);
+    }
+  };
 
   const handleIncidentPress = (incident: Incident) => {
     setSelectedIncident(incident);
@@ -202,6 +257,50 @@ export default function FloodMap({ route, navigation }: any) {
                 </Callout>
               </Marker>
             ))}
+
+            {/* Safe Haven Shelters */}
+            {shelters.map((shelter) => (
+              <Marker
+                key={`shelter-${shelter.id}`}
+                coordinate={{ latitude: shelter.lat, longitude: shelter.lng }}
+              >
+                <View style={styles.shelterMarkerContainer}>
+                  <Text style={{ fontSize: 16 }}>🏠</Text>
+                </View>
+                <Callout tooltip>
+                  <View style={styles.shelterCalloutContainer}>
+                    <Text style={styles.shelterCalloutTitle}>{shelter.name}</Text>
+                    <Text style={styles.shelterCalloutText}>Capacity: {shelter.current_occupancy}/{shelter.capacity}</Text>
+                    <Text style={styles.shelterCalloutStatus}>
+                      {((shelter.current_occupancy / shelter.capacity) * 100).toFixed(0)}% Occupied
+                    </Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
+
+            {/* Evacuation Route Detour Polyline Overlay */}
+            {activeRoute && (
+              <Polyline
+                coordinates={activeRoute.path.map((p: any) => ({ latitude: p.lat, longitude: p.lng }))}
+                strokeColor="#10b981"
+                strokeWidth={5}
+              />
+            )}
+
+            {/* Evacuation Target Shelter Anchor Flag */}
+            {activeRoute && (
+              <Marker
+                coordinate={{
+                  latitude: activeRoute.path[activeRoute.path.length - 1].lat,
+                  longitude: activeRoute.path[activeRoute.path.length - 1].lng,
+                }}
+              >
+                <View style={styles.routeEndMarker}>
+                  <Text style={{ fontSize: 14 }}>🚩</Text>
+                </View>
+              </Marker>
+            )}
           </MapView>
 
           <View style={styles.mapHeaderWrap}>
@@ -351,11 +450,54 @@ export default function FloodMap({ route, navigation }: any) {
                   <Cpu size={18} color="#FFFFFF" />
                   <Text style={styles.modalActionText}>INITIALIZE ORCHESTRATOR</Text>
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalPrimaryAction, { backgroundColor: "#10b981", marginTop: 12 }]}
+                  onPress={() => {
+                    setIsModalVisible(false);
+                    handleNavigateToShelter();
+                  }}
+                >
+                  <Navigation size={18} color="#FFFFFF" />
+                  <Text style={styles.modalActionText}>NAVIGATE TO SHELTER</Text>
+                </TouchableOpacity>
               </View>
             )}
           </View>
         </View>
       </Modal>
+
+      {/* Route Information HUD Overlay */}
+      {activeRoute && (
+        <View style={styles.routeHud}>
+          <BlurView intensity={90} tint="light" style={styles.routeHudBlur}>
+            <View style={styles.routeHudHeader}>
+              <View style={styles.routeHudTitleRow}>
+                <Navigation size={14} color="#10b981" />
+                <Text style={styles.routeHudTitle}>DETOUR NAVIGATION ACTIVE</Text>
+              </View>
+              <TouchableOpacity onPress={() => setActiveRoute(null)}>
+                <X size={16} color={THEME.colors.text.muted} />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.routeHudShelterName}>{activeRoute.safe_haven.name}</Text>
+            
+            <View style={styles.routeHudStats}>
+              <View style={styles.routeHudStat}>
+                <Text style={styles.routeHudStatLabel}>EST. DISTANCE</Text>
+                <Text style={styles.routeHudStatValue}>{activeRoute.distance_km.toFixed(2)} km</Text>
+              </View>
+              <View style={styles.routeHudStat}>
+                <Text style={styles.routeHudStatLabel}>AVOIDED FLOOD ZONES</Text>
+                <Text style={[styles.routeHudStatValue, { color: "#10b981" }]}>
+                  {activeRoute.avoided_flooded_zones_count}
+                </Text>
+              </View>
+            </View>
+          </BlurView>
+        </View>
+      )}
     </View>
   );
 }
@@ -682,5 +824,118 @@ const styles = StyleSheet.create({
     fontFamily: THEME.fonts.heading,
     fontWeight: "900",
     letterSpacing: 2,
+  },
+  shelterMarkerContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#ffffff",
+    borderWidth: 2,
+    borderColor: "#10b981",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  shelterCalloutContainer: {
+    width: 180,
+    padding: 10,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  shelterCalloutTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#1e293b",
+    marginBottom: 4,
+  },
+  shelterCalloutText: {
+    fontSize: 10,
+    color: "#64748b",
+  },
+  shelterCalloutStatus: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#10b981",
+    marginTop: 2,
+  },
+  routeEndMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
+    borderWidth: 2,
+    borderColor: "#ef4444",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  routeHud: {
+    position: "absolute",
+    top: 90,
+    left: 20,
+    right: 20,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(226, 232, 240, 0.8)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    zIndex: 9999,
+  },
+  routeHudBlur: {
+    padding: 14,
+  },
+  routeHudHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  routeHudTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  routeHudTitle: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#10b981",
+    letterSpacing: 1.5,
+  },
+  routeHudShelterName: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#1e293b",
+    marginBottom: 10,
+  },
+  routeHudStats: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(241, 245, 249, 0.6)",
+    paddingTop: 8,
+  },
+  routeHudStat: {
+    flex: 1,
+  },
+  routeHudStatLabel: {
+    fontSize: 8,
+    color: "#94a3b8",
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  routeHudStatValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#334155",
   },
 });

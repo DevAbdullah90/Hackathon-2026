@@ -62,9 +62,16 @@ class IncidentRead(BaseModel):
     peak_impact_eta: Optional[str] = None
     status: str
     risk_factors: Optional[List[str]] = None
+    confirmations_count: Optional[int] = None
+    refutations_count: Optional[int] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class VerificationRequest(BaseModel):
+    """Request schema for POST /api/v1/incidents/{incident_id}/verify"""
+    vote: str = Field(..., description="'confirm' | 'refute'", example="confirm")
 
 
 # ── Reasoning Logs ────────────────────────────────────────────────────────────
@@ -140,5 +147,32 @@ class ResourceRead(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Safe Havens ───────────────────────────────────────────────────────────────
+
+class SafeHavenRead(BaseModel):
+    id: uuid.UUID
+    name: str
+    lat: float
+    lng: float
+    capacity: int
+    current_occupancy: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class RouteCoordinate(BaseModel):
+    lat: float
+    lng: float
+
+
+class SafeHavenRouteResponse(BaseModel):
+    safe_haven: SafeHavenRead
+    path: List[RouteCoordinate]
+    distance_km: float
+    avoided_flooded_zones_count: int
+
 
 

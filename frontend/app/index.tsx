@@ -15,7 +15,8 @@ import {
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import { THEME } from "../lib/theme";
 import SeverityBadge from "../components/SeverityBadge";
-import { api, Incident, DashboardStats, AgentWorkforceMember, GlobalTimelineLog } from "../lib/api";
+import { api, Incident, DashboardStats, AgentWorkforceMember, GlobalTimelineLog, VehicleLocation } from "../lib/api";
+import * as Location from "expo-location";
 import {
   LayoutDashboard,
   Map as MapIcon,
@@ -38,11 +39,13 @@ interface DashboardProps {
 interface IncidentCardProps {
   item: Incident;
   navigation: any;
+  vehicles?: VehicleLocation[];
 }
 
-const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation }) => {
+const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation, vehicles }) => {
   const severityPercentage = (item.severity_score / 10) * 100;
   const isCritical = item.severity_score >= 7.5;
+  const incidentVehicles = vehicles || [];
 
   return (
     <View style={styles.cardWrapper}>
@@ -80,10 +83,65 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation }) => {
             />
           </View>
 
+          {/* Real-time Telemetry Dispatch Progress */}
+          {incidentVehicles.length > 0 && (
+            <View style={styles.telemetryContainer}>
+              <Text style={styles.telemetryTitle}>🛸 RESPONDER SWARM TELEMETRY</Text>
+              {incidentVehicles.map((v) => {
+                const totalDist = getHaversineDistance(v.start_lat, v.start_lng, v.target_lat, v.target_lng);
+                const remainingDist = getHaversineDistance(v.current_lat, v.current_lng, v.target_lat, v.target_lng);
+                const fraction = totalDist > 0 ? Math.max(0, Math.min(1.0 - (remainingDist / totalDist), 1.0)) : 1.0;
+                const etaMins = Math.max(0, Math.ceil((1.0 - fraction) * (v.duration_seconds / 60)));
+                const emoji = v.vehicle_type === "rescue_boat" ? "🚤" : v.vehicle_type === "ambulance" ? "🚑" : "🛠️";
+                const isArrived = v.status === "arrived" || fraction >= 1.0;
+
+                return (
+                  <View key={v.id} style={styles.vehicleRow}>
+                    <View style={styles.vehicleInfoRow}>
+                      <Text style={styles.vehicleText}>
+                        {emoji} {v.vehicle_id}
+                      </Text>
+                      <Text style={styles.vehicleEtaText}>
+                        {isArrived
+                          ? "On Site"
+                          : `${remainingDist.toFixed(1)} km away (ETA: ${etaMins}m)`}
+                      </Text>
+                    </View>
+                    <View style={styles.telemetryProgressBarContainer}>
+                      <View
+                        style={[
+                          styles.telemetryProgressBarFill,
+                          {
+                            width: `${fraction * 100}%`,
+                            backgroundColor: isArrived
+                              ? THEME.colors.status.success
+                              : THEME.colors.primary,
+                          },
+                        ]}
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
           <View style={styles.cardStatsGrid}>
             <View style={styles.cardStat}>
               <Text style={styles.cardStatLabel}>CONFIDENCE</Text>
               <Text style={styles.cardStatValue}>{(item.confidence * 100).toFixed(0)}%</Text>
+            </View>
+            <View style={styles.cardStat}>
+              <Text style={styles.cardStatLabel}>CONFIRMS</Text>
+              <Text style={[styles.cardStatValue, { color: THEME.colors.status.success }]}>
+                👍 {item.confirmations_count || 0}
+              </Text>
+            </View>
+            <View style={styles.cardStat}>
+              <Text style={styles.cardStatLabel}>REFUTES</Text>
+              <Text style={[styles.cardStatValue, { color: THEME.colors.status.critical }]}>
+                👎 {item.refutations_count || 0}
+              </Text>
             </View>
             <View style={styles.cardStat}>
               <Text style={styles.cardStatLabel}>POPULATION</Text>
@@ -388,12 +446,24 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
   );
 };
 
+function getHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
   if (Platform.OS === "web") {
     return <WebDashboard navigation={navigation} />;
   }
 
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [mockTriggering, setMockTriggering] = useState(false);
@@ -401,6 +471,48 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
   // In-App Radar Alert Notification State
   const [activeAlert, setActiveAlert] = useState<Incident | null>(null);
   const seenIncidentIdsRef = useRef<Set<string>>(new Set());
+
+  // Proximity validation overlay state
+  const [proximityIncident, setProximityIncident] = useState<Incident | null>(null);
+  const hasPromptedProximityRef = useRef<Set<string>>(new Set());
+
+  const fetchVehicles = async () => {
+    try {
+      const data = await api.getFleetLocations();
+      setVehicles(data);
+    } catch (e) {
+      console.warn("Failed to retrieve live fleet locations:", e);
+    }
+  };
+
+  const checkProximityAndPrompt = async (activeIncidents: Incident[]) => {
+    if (activeIncidents.length === 0) return;
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Location permission not granted");
+        return;
+      }
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const userLat = position.coords.latitude;
+      const userLng = position.coords.longitude;
+
+      // Find the first active incident within 1.5 km that hasn't been prompted yet
+      const nearbyIncident = activeIncidents.find((incident) => {
+        const distance = getHaversineDistance(userLat, userLng, incident.lat, incident.lng);
+        return distance <= 1.5 && !hasPromptedProximityRef.current.has(String(incident.id));
+      });
+
+      if (nearbyIncident) {
+        setProximityIncident(nearbyIncident);
+        hasPromptedProximityRef.current.add(String(nearbyIncident.id));
+      }
+    } catch (err) {
+      console.log("Failed to check proximity:", err);
+    }
+  };
 
   const fetchIncidents = async () => {
     try {
@@ -419,6 +531,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
       }
       
       setIncidents(data);
+      await checkProximityAndPrompt(data);
     } catch (e) {
       console.warn("Failed to retrieve live incidents feed:", e);
     } finally {
@@ -429,7 +542,11 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
 
   useEffect(() => {
     fetchIncidents();
-    const interval = setInterval(fetchIncidents, 4500);
+    fetchVehicles();
+    const interval = setInterval(() => {
+      fetchIncidents();
+      fetchVehicles();
+    }, 4500);
 
     return () => clearInterval(interval);
   }, []);
@@ -437,6 +554,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
   const onRefresh = () => {
     setRefreshing(true);
     fetchIncidents();
+    fetchVehicles();
   };
 
   const handleTriggerMockSignal = async () => {
@@ -499,6 +617,66 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
               <Navigation size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
               <Text style={styles.alertActionBtnText}>LOCATE HAZARD & ENGAGE</Text>
             </TouchableOpacity>
+          </BlurView>
+        </View>
+      )}
+
+      {/* Proximity Verification Overlay */}
+      {proximityIncident && (
+        <View style={styles.alertOverlay}>
+          <BlurView intensity={95} tint="dark" style={styles.proximityCard}>
+            <View style={styles.alertHeader}>
+              <View style={styles.alertIndicator}>
+                <View style={[styles.alertPingDot, { backgroundColor: THEME.colors.primary }]} />
+                <Text style={[styles.alertTag, { color: THEME.colors.primary }]}>📡 PROXIMITY CONFIRMATION</Text>
+              </View>
+              <TouchableOpacity onPress={() => setProximityIncident(null)} style={styles.alertCloseBtn}>
+                <X size={16} color="#9CA3AF" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.alertLocation}>{proximityIncident.location}</Text>
+            <Text style={styles.alertDescription}>
+              You are detected within 1.5 km of this active operational sector. Please help verify ground conditions:
+            </Text>
+
+            <Text style={styles.proximityQuestion}>
+              Are you currently experiencing {proximityIncident.disaster_type === "heatwave" ? "extreme heat/thermal duress" : "active flooding/water inundation"} at this location?
+            </Text>
+
+            <View style={styles.proximityBtnGroup}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={async () => {
+                  try {
+                    await api.verifyIncident(proximityIncident.id, "confirm");
+                    setProximityIncident(null);
+                    fetchIncidents();
+                  } catch (e) {
+                    console.log("Failed to submit confirmation:", e);
+                  }
+                }}
+                style={[styles.proximityVoteBtn, styles.proximityConfirmBtn]}
+              >
+                <Text style={styles.proximityVoteBtnText}>👍 YES, CONFIRMED</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={async () => {
+                  try {
+                    await api.verifyIncident(proximityIncident.id, "refute");
+                    setProximityIncident(null);
+                    fetchIncidents();
+                  } catch (e) {
+                    console.log("Failed to submit refutation:", e);
+                  }
+                }}
+                style={[styles.proximityVoteBtn, styles.proximityRefuteBtn]}
+              >
+                <Text style={styles.proximityVoteBtnText}>👎 NO, CLEAR</Text>
+              </TouchableOpacity>
+            </View>
           </BlurView>
         </View>
       )}
@@ -575,6 +753,46 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
               </View>
             </TouchableOpacity>
 
+            {/* Quick Mock Proximity Check Card */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => {
+                if (incidents.length > 0) {
+                  setProximityIncident(incidents[0]);
+                } else {
+                  // If no incidents exist, create a mock one for demonstration
+                  setProximityIncident({
+                    id: "inc-mock-demo",
+                    location: "Gulistan-e-Jauhar Block 18",
+                    lat: 24.9123,
+                    lng: 67.1234,
+                    severity_score: 8.5,
+                    confidence: 0.95,
+                    affected_radius_km: 1.2,
+                    estimated_population: 4500,
+                    peak_impact_eta: "1.5 hrs",
+                    status: "MONITORING",
+                    created_at: new Date().toISOString(),
+                    disaster_type: "flood",
+                  });
+                }
+              }}
+              style={[
+                styles.mockTriggerContainer,
+                { marginTop: 12, borderColor: "rgba(14, 165, 233, 0.15)" },
+              ]}
+            >
+              <View style={styles.mockTriggerCard}>
+                <Navigation size={20} color={THEME.colors.primary} style={{ transform: [{ rotate: "45deg" }] }} />
+                <View style={styles.mockTriggerInfo}>
+                  <Text style={styles.mockTriggerTitle}>📡 SIMULATE PROXIMITY VERIFICATION</Text>
+                  <Text style={styles.mockTriggerSubtitle}>
+                    Force-trigger a crowdsourced proximity validation overlay for the nearest hazard zone.
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+
             <View style={styles.actionGrid}>
               <TouchableOpacity 
                 style={styles.actionCardContainer}
@@ -611,9 +829,17 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
             {loading ? (
               <ActivityIndicator color={THEME.colors.primary} size="large" style={styles.loader} />
             ) : incidents.length > 0 ? (
-              incidents.map((item) => (
-                <IncidentCard key={item.id} item={item} navigation={navigation} />
-              ))
+              incidents.map((item) => {
+                const incidentVehicles = vehicles.filter(v => v.incident_id === item.id);
+                return (
+                  <IncidentCard 
+                    key={item.id} 
+                    item={item} 
+                    navigation={navigation} 
+                    vehicles={incidentVehicles} 
+                  />
+                );
+              })
             ) : (
               <View style={styles.emptyState}>
                 <ShieldCheck size={32} color={THEME.colors.primary} strokeWidth={1.5} />
@@ -1428,6 +1654,95 @@ const styles = StyleSheet.create({
     fontFamily: THEME.fonts.mono,
     color: THEME.colors.text.muted,
     lineHeight: 12,
+  },
+  proximityCard: {
+    borderRadius: THEME.borderRadius.xl,
+    padding: THEME.spacing.lg,
+    borderWidth: 1,
+    borderColor: "rgba(14, 165, 233, 0.15)",
+    backgroundColor: THEME.colors.surface,
+    overflow: "hidden",
+    ...THEME.shadows.premium,
+  },
+  proximityQuestion: {
+    fontSize: 12,
+    fontFamily: THEME.fonts.heading,
+    fontWeight: "700",
+    color: THEME.colors.text.primary,
+    marginBottom: THEME.spacing.lg,
+    lineHeight: 18,
+  },
+  proximityBtnGroup: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  proximityVoteBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: THEME.borderRadius.lg,
+    justifyContent: "center",
+    alignItems: "center",
+    ...THEME.shadows.card,
+  },
+  proximityConfirmBtn: {
+    backgroundColor: THEME.colors.status.success,
+  },
+  proximityRefuteBtn: {
+    backgroundColor: THEME.colors.status.critical,
+  },
+  proximityVoteBtnText: {
+    fontSize: 11,
+    fontFamily: THEME.fonts.heading,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    letterSpacing: 1,
+  },
+  telemetryContainer: {
+    marginTop: THEME.spacing.sm,
+    marginBottom: THEME.spacing.sm,
+    padding: THEME.spacing.sm,
+    borderRadius: THEME.borderRadius.md,
+    backgroundColor: "rgba(14, 165, 233, 0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(14, 165, 233, 0.15)",
+  },
+  telemetryTitle: {
+    fontSize: 8,
+    fontFamily: THEME.fonts.heading,
+    color: THEME.colors.primary,
+    fontWeight: "bold",
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  vehicleRow: {
+    marginBottom: THEME.spacing.xs,
+  },
+  vehicleInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  vehicleText: {
+    fontSize: 10,
+    fontFamily: THEME.fonts.heading,
+    fontWeight: "700",
+    color: THEME.colors.text.primary,
+  },
+  vehicleEtaText: {
+    fontSize: 9,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.muted,
+  },
+  telemetryProgressBarContainer: {
+    height: 4,
+    backgroundColor: "rgba(14, 165, 233, 0.1)",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  telemetryProgressBarFill: {
+    height: "100%",
+    borderRadius: 2,
   },
 });
 

@@ -18,6 +18,7 @@ async def clear():
         "reasoning_logs",
         "chain_of_thought_logs",
         "signals",
+        "vehicle_locations",
         "incidents",
     ]
     

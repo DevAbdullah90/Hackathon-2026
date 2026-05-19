@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Tooltip } from "react-leaflet";
 import L from "leaflet";
 import { Search, Plus, Minus, RotateCcw, AlertTriangle, Shield, Eye } from "lucide-react";
-import { api, Incident } from "@/lib/api";
+import { api, Incident, VehicleLocation, SafeHaven } from "@/lib/api";
 
 // Fix Leaflet icon bug at top (outside component)
 if (typeof window !== "undefined") {
@@ -45,6 +45,56 @@ function createSeverityIcon(severity: number) {
       </div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
+  });
+}
+
+// Function to generate styled icons for dispatched fleet vehicles
+function createVehicleIcon(type: "rescue_boat" | "ambulance" | "utility_crew", status: string) {
+  if (typeof window === "undefined") return null;
+
+  let emoji = "🚜";
+  let color = "#3b82f6"; // Blue for utility
+  if (type === "rescue_boat") {
+    emoji = "🚤";
+    color = "#0ea5e9"; // Sky blue
+  } else if (type === "ambulance") {
+    emoji = "🚑";
+    color = "#ef4444"; // Red
+  }
+
+  const pingEffect = status === "en_route"
+    ? `<div style="position:absolute;width:28px;height:28px;border-radius:50%;background:${color};opacity:0.35;animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>`
+    : "";
+
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
+        ${pingEffect}
+        <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:white;border:2px solid ${color};
+             display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,0.3);z-index:2;">
+          <span style="font-size:12px;line-height:1;">${emoji}</span>
+        </div>
+      </div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+}
+
+function createShelterIcon() {
+  if (typeof window === "undefined") return null;
+
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;">
+        <div style="position:absolute;width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,0.12);border:1.5px solid #10b981;
+             display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.2);z-index:2;background:white;">
+          <span style="font-size:13px;line-height:1;">🏠</span>
+        </div>
+      </div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
   });
 }
 
@@ -111,6 +161,8 @@ export default function MapPanel({ selectedIncident, onSelectIncident }: MapPane
   const isServer = typeof window === "undefined";
   const KARACHI_CENTER: [number, number] = [24.9088, 67.1282];
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleLocation[]>([]);
+  const [shelters, setShelters] = useState<SafeHaven[]>([]);
 
   const fetchIncidents = async () => {
     try {
@@ -121,9 +173,33 @@ export default function MapPanel({ selectedIncident, onSelectIncident }: MapPane
     }
   };
 
+  const fetchVehicles = async () => {
+    try {
+      const data = await api.getFleetLocations();
+      setVehicles(data);
+    } catch (err) {
+      console.error("Failed to load fleet locations:", err);
+    }
+  };
+
+  const fetchShelters = async () => {
+    try {
+      const data = await api.getSafeHavens();
+      setShelters(data);
+    } catch (err) {
+      console.error("Failed to load shelters:", err);
+    }
+  };
+
   useEffect(() => {
     fetchIncidents();
-    const interval = setInterval(fetchIncidents, 3000); // 3s real-time active polling
+    fetchVehicles();
+    fetchShelters();
+    const interval = setInterval(() => {
+      fetchIncidents();
+      fetchVehicles();
+      fetchShelters();
+    }, 1500); // Poll every 1.5s for snappy tracking updates
     return () => clearInterval(interval);
   }, []);
 
@@ -207,6 +283,60 @@ export default function MapPanel({ selectedIncident, onSelectIncident }: MapPane
                         <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 bg-gray-50 px-1 border rounded">
                           {incident.status}
                         </span>
+                      </div>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
+
+          {/* Real-time Fleet Telemetry Overlay */}
+          {vehicles.map((v) => {
+            const icon = createVehicleIcon(v.vehicle_type, v.status);
+            if (!icon) return null;
+
+            return (
+              <Marker
+                key={v.id}
+                position={[v.current_lat, v.current_lng]}
+                icon={icon}
+              >
+                <Tooltip permanent direction="top" offset={[0, -10]} opacity={0.9} className="font-mono text-[9px] bg-slate-900 border border-slate-700 text-slate-100 font-extrabold uppercase p-1 px-1.5 rounded shadow z-[3000]">
+                  {v.vehicle_id} ({v.status === "en_route" ? "EN ROUTE" : "ARRIVED"})
+                </Tooltip>
+              </Marker>
+            );
+          })}
+
+          {/* Safe Haven Shelter Pins */}
+          {shelters.map((shelter) => {
+            const icon = createShelterIcon();
+            if (!icon) return null;
+            return (
+              <Marker
+                key={shelter.id}
+                position={[shelter.lat, shelter.lng]}
+                icon={icon}
+              >
+                <Popup>
+                  <div className="p-1 min-w-[180px] text-gray-800">
+                    <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-800 border-b border-gray-100 pb-1 mb-1">
+                      <Shield className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                      <span>{shelter.name}</span>
+                    </div>
+                    <div className="space-y-0.5 text-[10px]">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 font-semibold">Capacity:</span>
+                        <span className="font-bold">{shelter.capacity}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 font-semibold">Occupancy:</span>
+                        <span className="font-bold text-emerald-600">{shelter.current_occupancy}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500 font-semibold">Status:</span>
+                        <span className="font-bold text-blue-600">{((shelter.current_occupancy / shelter.capacity) * 100).toFixed(1)}% Full</span>
                       </div>
                     </div>
                   </div>

@@ -7,7 +7,7 @@ Add new routers here as the project grows.
 
 from fastapi import APIRouter
 
-from app.api.api_v1.endpoints import signals, incidents, websocket, simulation, dashboard, resources
+from app.api.api_v1.endpoints import signals, incidents, websocket, simulation, dashboard, resources, safe_havens
 
 api_router = APIRouter()
 
@@ -20,6 +20,7 @@ api_router.include_router(simulation.router, prefix="/simulation", tags=["Simula
 api_router.include_router(websocket.router,  prefix="/ws",         tags=["WebSocket"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
 api_router.include_router(resources.router, prefix="/resources", tags=["Resources"])
+api_router.include_router(safe_havens.router, prefix="/safe-havens", tags=["Safe Havens"])
 
 
 # Temporary placeholder — confirms API v1 is alive
