@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AlertTriangle, Shield, Settings, Bookmark, CheckCircle2, Navigation } from "lucide-react";
-import { api, Incident, Action, ReasoningLog } from "@/lib/api";
+import { AlertTriangle, Shield, Settings, Bookmark, CheckCircle2, Navigation, MessageSquare, Heart, Radio, Activity } from "lucide-react";
+import { api, Incident, Action, ReasoningLog, Notification } from "@/lib/api";
 
 const AGENT_META: Record<string, { label: string, color: string, bg: string, border: string }> = {
   signal_agent: { label: "Signal Parser", color: "text-blue-700", bg: "bg-blue-50", border: "border-blue-200" },
@@ -23,11 +23,14 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [reasoningLogs, setReasoningLogs] = useState<ReasoningLog[]>([]);
-  const [activeTab, setActiveTab] = useState<"actions" | "logs">("actions");
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [activeTab, setActiveTab] = useState<"actions" | "logs" | "notifications">("actions");
+  const [subTab, setSubTab] = useState<"public" | "police" | "utility" | "hospital">("public");
   
   const [loadingIncidents, setLoadingIncidents] = useState(true);
   const [loadingActions, setLoadingActions] = useState(false);
   const [loadingLogs, setLoadingLogs] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   const fetchIncidents = async () => {
     try {
@@ -76,6 +79,18 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
     }
   };
 
+  const fetchNotifications = async (id: string) => {
+    setLoadingNotifications(true);
+    try {
+      const data = await api.getIncidentNotifications(id);
+      setNotifications(data);
+    } catch (err) {
+      console.error(`Failed to load notifications for incident ${id}:`, err);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
   useEffect(() => {
     fetchIncidents();
     const interval = setInterval(fetchIncidents, 3000);
@@ -86,9 +101,11 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
     if (selectedIncident) {
       fetchActions(selectedIncident.id);
       fetchLogs(selectedIncident.id);
+      fetchNotifications(selectedIncident.id);
     } else {
       setActions([]);
       setReasoningLogs([]);
+      setNotifications([]);
     }
   }, [selectedIncident?.id]);
 
@@ -261,6 +278,17 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                     <Shield className="w-3.5 h-3.5" />
                     <span>AI Swarm Logs ({reasoningLogs.length})</span>
                   </button>
+                  <button
+                    onClick={() => setActiveTab("notifications")}
+                    className={`flex items-center gap-1.5 pb-1 text-xs font-bold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+                      activeTab === "notifications"
+                        ? "border-emerald-500 text-emerald-600"
+                        : "border-transparent text-gray-400 hover:text-gray-600"
+                    }`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Stakeholders ({notifications.length})</span>
+                  </button>
                 </div>
                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
                   Swarm Core
@@ -299,7 +327,7 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                     ))}
                   </div>
                 )
-              ) : (
+              ) : activeTab === "logs" ? (
                 loadingLogs ? (
                   <div className="text-xs text-gray-400 py-12 text-center animate-pulse font-semibold">
                     Loading AI reasoning logs from DB...
@@ -333,6 +361,79 @@ export default function EventsPanel({ selectedIncident, onSelectIncident }: Even
                         </div>
                       );
                     })}
+                  </div>
+                )
+              ) : (
+                loadingNotifications ? (
+                  <div className="text-xs text-gray-400 py-12 text-center animate-pulse font-semibold">
+                    Loading stakeholder alerts...
+                  </div>
+                ) : (
+                  <div className="flex flex-col flex-1">
+                    {/* Sub-tabs for stakeholders */}
+                    <div className="flex bg-gray-100 rounded-lg p-1 gap-1 mb-3 self-start">
+                      {[
+                        { key: "public", label: "📢 Public" },
+                        { key: "police", label: "🚨 Police / Traffic" },
+                        { key: "utility", label: "⚡ Utility" },
+                        { key: "hospital", label: "🏥 Hospitals" },
+                      ].map((item) => {
+                        const isSubActive = subTab === item.key;
+                        return (
+                          <button
+                            key={item.key}
+                            onClick={() => setSubTab(item.key as any)}
+                            className={`px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                              isSubActive ? "bg-white text-gray-900 shadow-2xs font-extrabold" : "text-gray-500 hover:bg-white/40"
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Display message for chosen stakeholder */}
+                    <div className="flex-1 bg-white border border-gray-200 rounded-xl p-4 min-h-[160px] shadow-3xs flex flex-col justify-start">
+                      {(() => {
+                        const filtered = notifications.filter((n) => {
+                          const s = n.stakeholder.toLowerCase();
+                          if (subTab === "public") return s === "public";
+                          if (subTab === "police") return s === "traffic_auth" || s === "emergency_services" || s.includes("police");
+                          if (subTab === "utility") return s === "utility";
+                          if (subTab === "hospital") return s === "hospital";
+                          return false;
+                        });
+
+                        if (filtered.length === 0) {
+                          return (
+                            <div className="text-xs text-gray-400 py-12 text-center font-medium italic w-full">
+                              Awaiting message generation from Notification Agent...
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="space-y-3 w-full">
+                            {filtered.map((item) => (
+                              <div key={item.id} className="border-b border-gray-100 last:border-b-0 pb-3 last:pb-0">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded-sm bg-red-50 text-red-600 border border-red-200/50">
+                                    {item.stakeholder}
+                                  </span>
+                                  <span className="text-[9px] text-gray-400 font-bold">
+                                    Sent: {new Date(item.sent_at).toLocaleTimeString()}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-700 leading-relaxed font-semibold whitespace-pre-wrap select-all">
+                                  {item.message}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )
               )}

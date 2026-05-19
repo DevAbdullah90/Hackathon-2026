@@ -23,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from agents import Runner
 
 from app.models.signals import Signal
-from app.models.schemas import SignalCreate, SignalRead
+from app.models.schemas import SignalCreate, SignalRead, CustomSignalPayload
 from app.db.session import get_session
 from app.ai.orchestrator import triage_agent
 import logging
@@ -43,17 +43,52 @@ def update_pipeline_progress(
     message: str,
     incident_id: Optional[str] = None
 ):
-    pipeline_status_tracker[signal_id] = {
-        "signal_id": signal_id,
-        "incident_id": incident_id,
-        "status": status_str,
-        "stage": stage,
-        "stage_index": stage_index,
-        "stage_status": stage_status,
-        "message": message,
-        "updated_at": datetime.utcnow().isoformat()
-    }
-    logger.info(f"📊 [Pipeline Progress] Signal {signal_id} -> Stage {stage} ({stage_index}/6): {stage_status} - {message}")
+    if signal_id not in pipeline_status_tracker:
+        pipeline_status_tracker[signal_id] = {
+            "signal_id": signal_id,
+            "incident_id": incident_id,
+            "status": status_str,
+            "stage": stage,
+            "stage_index": stage_index,
+            "stage_status": stage_status,
+            "message": message,
+            "updated_at": datetime.utcnow().isoformat(),
+            "agent_states": {
+                "signal_agent": "PENDING",
+                "detection_agent": "PENDING",
+                "verification_agent": "PENDING",
+                "severity_agent": "PENDING",
+                "resource_allocation_agent": "PENDING",
+                "planning_agent": "PENDING",
+                "notification_agent": "PENDING",
+                "logging_agent": "PENDING"
+            }
+        }
+    
+    tracker = pipeline_status_tracker[signal_id]
+    tracker["incident_id"] = incident_id or tracker["incident_id"]
+    tracker["status"] = status_str
+    tracker["stage"] = stage
+    tracker["stage_index"] = stage_index
+    tracker["stage_status"] = stage_status
+    tracker["message"] = message
+    tracker["updated_at"] = datetime.utcnow().isoformat()
+    
+    if "agent_states" not in tracker:
+        tracker["agent_states"] = {
+            "signal_agent": "PENDING",
+            "detection_agent": "PENDING",
+            "verification_agent": "PENDING",
+            "severity_agent": "PENDING",
+            "resource_allocation_agent": "PENDING",
+            "planning_agent": "PENDING",
+            "notification_agent": "PENDING",
+            "logging_agent": "PENDING"
+        }
+    
+    tracker["agent_states"][stage] = stage_status
+    logger.info(f"📊 [Pipeline Progress] Signal {signal_id} -> Agent {stage}: {stage_status} - {message}")
+
 
 
 async def _run_triage_pipeline(signal_payload: dict) -> None:
@@ -116,7 +151,9 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
             "incident_id": None,
             "timestamp": datetime.utcnow().isoformat()
         }
+        update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "RUNNING", "Logging Specialist auditing Signal Agent output...")
         await Runner.run(logging_agent, json.dumps(log_payload))
+        update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "COMPLETED", "Signal audit log written to ledger.")
 
         # Step 2: Detection Agent (Clustering / Verdict)
         update_pipeline_progress(sig_id_str, "PROCESSING", "detection_agent", 2, "RUNNING", "Deduplicating and running clustering algorithm...")
@@ -126,12 +163,15 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
         update_pipeline_progress(sig_id_str, "PROCESSING", "detection_agent", 2, "COMPLETED", "Verdict clustering run completed.")
 
         # Log Detection Agent step via Logging Agent!
+        update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "RUNNING", "Logging Specialist auditing Detection Agent output...")
         await Runner.run(logging_agent, json.dumps({
             "agent_name": "detection_agent",
             "agent_output": detection_output,
             "incident_id": None,
             "timestamp": datetime.utcnow().isoformat()
         }))
+        update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "COMPLETED", "Detection audit log written to ledger.")
+
 
         # Determine confirmation status
         is_confirmed = detection_output.get("confirmed", False)
@@ -157,18 +197,23 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
             update_pipeline_progress(sig_id_str, "PROCESSING", "verification_agent", 3, "COMPLETED", "Verification sequence completed.")
 
             # Log Verification Agent step via Logging Agent!
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "RUNNING", "Logging Specialist auditing Verification Agent output...")
             await Runner.run(logging_agent, json.dumps({
                 "agent_name": "verification_agent",
                 "agent_output": verification_output,
                 "incident_id": None,
                 "timestamp": datetime.utcnow().isoformat()
             }))
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "COMPLETED", "Verification audit log written to ledger.")
 
             if verification_output.get("verdict") == "CONFIRM":
                 is_confirmed = True
                 # Update location/details based on verification
                 if verification_output.get("incident_type_confirmed"):
                     detection_output["incident_location"] = verification_output.get("incident_location") or detection_output.get("incident_location")
+        else:
+            update_pipeline_progress(sig_id_str, "PROCESSING", "verification_agent", 3, "SKIPPED", "Verification skipped (high confidence cluster).")
+
 
         # Step 3: Proceed with Severity, Resource, Planning, Notification if incident is confirmed!
         if is_confirmed:
@@ -236,12 +281,14 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
                 logger.error(f"⚠️ Failed to retroactively correlate logs: {correl_err}", exc_info=True)
 
             # Log Severity Agent step via Logging Agent!
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "RUNNING", "Logging Specialist auditing Severity Agent output...", incident_id=incident_id)
             await Runner.run(logging_agent, json.dumps({
                 "agent_name": "severity_agent",
                 "agent_output": severity_output,
                 "incident_id": incident_id,
                 "timestamp": datetime.utcnow().isoformat()
             }))
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "COMPLETED", "Severity assessment audit log written.", incident_id=incident_id)
 
             # Step 4: Resource Agent (Allocation)
             update_pipeline_progress(sig_id_str, "PROCESSING", "resource_allocation_agent", 5, "RUNNING", "Analyzing emergency pool resource availability...", incident_id=incident_id)
@@ -252,12 +299,14 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
             update_pipeline_progress(sig_id_str, "PROCESSING", "resource_allocation_agent", 5, "COMPLETED", "Optimal resource allocation mapped.", incident_id=incident_id)
 
             # Log Resource Agent step via Logging Agent!
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "RUNNING", "Logging Specialist auditing Resource Agent output...", incident_id=incident_id)
             await Runner.run(logging_agent, json.dumps({
                 "agent_name": "resource_allocation_agent",
                 "agent_output": resource_output,
                 "incident_id": incident_id,
                 "timestamp": datetime.utcnow().isoformat()
             }))
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "COMPLETED", "Resource allocation audit log written.", incident_id=incident_id)
 
             # Step 5: Planning Agent (Create Tactical Action Plan!)
             update_pipeline_progress(sig_id_str, "PROCESSING", "planning_agent", 6, "RUNNING", "Formulating tactical action response steps...", incident_id=incident_id)
@@ -268,15 +317,17 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
             update_pipeline_progress(sig_id_str, "PROCESSING", "planning_agent", 6, "COMPLETED", "Synchronized response action timeline saved.", incident_id=incident_id)
 
             # Log Planning Agent step via Logging Agent!
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "RUNNING", "Logging Specialist auditing Planning Agent output...", incident_id=incident_id)
             await Runner.run(logging_agent, json.dumps({
                 "agent_name": "planning_agent",
                 "agent_output": planning_output,
                 "incident_id": incident_id,
                 "timestamp": datetime.utcnow().isoformat()
             }))
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "COMPLETED", "Tactical response actions audit log written.", incident_id=incident_id)
 
             # Step 6: Notification Agent (Stakeholder alerts)
-            update_pipeline_progress(sig_id_str, "PROCESSING", "notification_agent", 6, "RUNNING", "Dispatching alert notifications to regional crisis networks...", incident_id=incident_id)
+            update_pipeline_progress(sig_id_str, "PROCESSING", "notification_agent", 7, "RUNNING", "Dispatching alert notifications to regional crisis networks...", incident_id=incident_id)
             notification_input = {
                 "incident_id": incident_id,
                 "location": db_incident.location,
@@ -289,19 +340,26 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
             logger.info("📢 [Notification Agent] Complete")
 
             # Log Notification Agent step via Logging Agent!
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "RUNNING", "Logging Specialist auditing Notification Agent output...", incident_id=incident_id)
             await Runner.run(logging_agent, json.dumps({
                 "agent_name": "notification_agent",
                 "agent_output": {"status": "SUCCESS", "message": "All notifications dispatched to stakeholders."},
                 "incident_id": incident_id,
                 "timestamp": datetime.utcnow().isoformat()
             }))
+            update_pipeline_progress(sig_id_str, "PROCESSING", "logging_agent", 8, "COMPLETED", "Notification audit log written.", incident_id=incident_id)
             
             # 6. Mark as fully completed and confirmed!
-            update_pipeline_progress(sig_id_str, "CONFIRMED", "notification_agent", 6, "COMPLETED", "Tactical plan complete. Public and local teams notified!", incident_id=incident_id)
+            update_pipeline_progress(sig_id_str, "CONFIRMED", "notification_agent", 7, "COMPLETED", "Tactical plan complete. Public and local teams notified!", incident_id=incident_id)
+            update_pipeline_progress(sig_id_str, "CONFIRMED", "logging_agent", 8, "COMPLETED", "Disaster response ledger finalized and verified.", incident_id=incident_id)
             logger.info(f"✨ Pipeline completed successfully for incident: {incident_id}")
         else:
             logger.info("❌ [Detection Agent] Incident was NOT confirmed. Stopping pipeline execution.")
             update_pipeline_progress(sig_id_str, "REJECTED", "detection_agent", 2, "FAILED", "Telemetry was not confirmed as active flood hazard.")
+            for skipped_stage in ["verification_agent", "severity_agent", "resource_allocation_agent", "planning_agent", "notification_agent"]:
+                update_pipeline_progress(sig_id_str, "REJECTED", skipped_stage, 0, "SKIPPED", "Pipeline halted due to unconfirmed detection.")
+            update_pipeline_progress(sig_id_str, "REJECTED", "logging_agent", 8, "COMPLETED", "Disaster response ledger finalized with non-event verdict.")
+
     except Exception as e:
         logger.error(f"❌ Fatal Error running sequential production pipeline: {e}", exc_info=True)
         update_pipeline_progress(sig_id_str, "REJECTED", "signal_agent", 1, "FAILED", f"Orchestrator pipeline failed: {str(e)}")
@@ -419,6 +477,44 @@ async def trigger_mock_signal(
     return db_signal
 
 
+@router.post("/inject", response_model=SignalRead, status_code=status.HTTP_201_CREATED)
+async def inject_custom_signal(
+    *,
+    session: AsyncSession = Depends(get_session),
+    background_tasks: BackgroundTasks,
+    custom_in: CustomSignalPayload
+):
+    """
+    Manually inject a custom flood signal to bypass duplicate checks.
+    Enables judges to write custom flood scenarios, select a city, and trigger it.
+    """
+    db_signal = Signal(
+        source=custom_in.source,
+        type=custom_in.type,
+        lat=custom_in.lat,
+        lng=custom_in.lng,
+        raw_payload={"comment": custom_in.comment, "location_name": custom_in.city}
+    )
+
+    session.add(db_signal)
+    await session.commit()
+    await session.refresh(db_signal)
+
+    # Trigger Triage Agent in background tasks
+    signal_payload = {
+        "source": db_signal.source,
+        "type": db_signal.type,
+        "lat": db_signal.lat,
+        "lng": db_signal.lng,
+        "raw_payload": db_signal.raw_payload,
+        "signal_id": str(db_signal.id)
+    }
+    background_tasks.add_task(_run_triage_pipeline, signal_payload)
+
+    return db_signal
+
+
+
 @router.get("/{signal_id}/status")
 async def get_signal_pipeline_status(
     signal_id: uuid.UUID,
@@ -456,11 +552,21 @@ async def get_signal_pipeline_status(
                     "signal_id": sig_str,
                     "incident_id": str(log.incident_id),
                     "status": "CONFIRMED",
-                    "stage": "notification_agent",
-                    "stage_index": 6,
+                    "stage": "logging_agent",
+                    "stage_index": 8,
                     "stage_status": "COMPLETED",
                     "message": "Tactical plan complete. Public and local teams notified! (Restored)",
-                    "updated_at": log.created_at.isoformat()
+                    "updated_at": log.created_at.isoformat(),
+                    "agent_states": {
+                        "signal_agent": "COMPLETED",
+                        "detection_agent": "COMPLETED",
+                        "verification_agent": "SKIPPED",
+                        "severity_agent": "COMPLETED",
+                        "resource_allocation_agent": "COMPLETED",
+                        "planning_agent": "COMPLETED",
+                        "notification_agent": "COMPLETED",
+                        "logging_agent": "COMPLETED"
+                    }
                 }
 
     # If it is older than 2 minutes and not confirmed, it was likely discarded/rejected.
@@ -473,7 +579,17 @@ async def get_signal_pipeline_status(
             "stage_index": 2,
             "stage_status": "FAILED",
             "message": "Telemetry not confirmed as active flood hazard.",
-            "updated_at": db_sig.created_at.isoformat()
+            "updated_at": db_sig.created_at.isoformat(),
+            "agent_states": {
+                "signal_agent": "COMPLETED",
+                "detection_agent": "FAILED",
+                "verification_agent": "SKIPPED",
+                "severity_agent": "SKIPPED",
+                "resource_allocation_agent": "SKIPPED",
+                "planning_agent": "SKIPPED",
+                "notification_agent": "SKIPPED",
+                "logging_agent": "COMPLETED"
+            }
         }
 
     # Otherwise, return default PROCESSING state
@@ -485,8 +601,19 @@ async def get_signal_pipeline_status(
         "stage_index": 1,
         "stage_status": "RUNNING",
         "message": "Initializing multi-agent response team...",
-        "updated_at": db_sig.created_at.isoformat()
+        "updated_at": db_sig.created_at.isoformat(),
+        "agent_states": {
+            "signal_agent": "RUNNING",
+            "detection_agent": "PENDING",
+            "verification_agent": "PENDING",
+            "severity_agent": "PENDING",
+            "resource_allocation_agent": "PENDING",
+            "planning_agent": "PENDING",
+            "notification_agent": "PENDING",
+            "logging_agent": "PENDING"
+        }
     }
+
 
 
 @router.get("/", response_model=List[SignalRead])

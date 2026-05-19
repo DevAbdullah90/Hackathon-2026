@@ -33,6 +33,66 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
   const [completedReportData, setCompletedReportData] = useState<PipelineStatus | null>(null);
   const [showReport, setShowReport] = useState(false);
   
+  // Custom Signal Injector state
+  const [showCustomInjector, setShowCustomInjector] = useState(false);
+  const [injectorCity, setInjectorCity] = useState("Karachi");
+  const [injectorSource, setInjectorSource] = useState("twitter");
+  const [injectorType, setInjectorType] = useState("flash_flood");
+  const [injectorLat, setInjectorLat] = useState("24.9088");
+  const [injectorLng, setInjectorLng] = useState("67.1282");
+  const [injectorComment, setInjectorComment] = useState("Judges Custom Flood Scenario: Jauhar Chowrangi under 1.5m water, local drainage blocked.");
+
+  // Auto-fill coordinates on city selection
+  useEffect(() => {
+    if (injectorCity === "Karachi") {
+      setInjectorLat("24.9088");
+      setInjectorLng("67.1282");
+    } else if (injectorCity === "Islamabad") {
+      setInjectorLat("33.6844");
+      setInjectorLng("73.0479");
+    } else if (injectorCity === "Austin") {
+      setInjectorLat("30.2672");
+      setInjectorLng("-97.7431");
+    } else if (injectorCity === "Lahore") {
+      setInjectorLat("31.5204");
+      setInjectorLng("74.3587");
+    }
+  }, [injectorCity]);
+
+  // Custom Signal Injector Handler
+  const handleInjectCustomSignal = async () => {
+    if (triggering) return;
+    setTriggering(true);
+    setPipelineState(null);
+    setActiveSignalId(null);
+    setShowProgressPanel(true);
+    setShowCustomInjector(false);
+
+    try {
+      const payload = {
+        city: injectorCity,
+        source: injectorSource,
+        type: injectorType,
+        comment: injectorComment,
+        lat: parseFloat(injectorLat) || 24.9088,
+        lng: parseFloat(injectorLng) || 67.1282
+      };
+      
+      const response = await api.injectCustomSignal(payload);
+      if (response && response.signal_id) {
+        setActiveSignalId(response.signal_id);
+        triggerToast("Custom Incident Telemetry Injected! Initializing live multi-agent workflow...");
+      } else {
+        throw new Error("Invalid custom injection response.");
+      }
+    } catch (err) {
+      console.error("Failed to inject custom signal:", err);
+      triggerToast("Error injecting custom signal. Deploying offline mock pipeline...");
+      setTriggering(false);
+      setActiveSignalId("sig-offline-fallback");
+    }
+  };
+
   // Custom toast notifications
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -87,7 +147,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
         // Check if finished
         if (
           status.status === "REJECTED" || 
-          (status.stage === "notification_agent" && status.stage_status === "COMPLETED")
+          (status.stage === "logging_agent" && status.stage_status === "COMPLETED")
         ) {
           setTriggering(false);
           setActiveSignalId(null);
@@ -130,28 +190,31 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
     "severity_agent": 4,
     "resource_allocation_agent": 5,
     "planning_agent": 6,
-    "notification_agent": 7
+    "notification_agent": 7,
+    "logging_agent": 8
   };
 
   // Map stage_index to localized progress percentage
   const getProgressPercentage = () => {
     if (!pipelineState) return 5;
     const currentOrder = STAGE_ORDER[pipelineState.stage] || 1;
-    let base = (currentOrder / 7) * 100;
-    if (pipelineState.stage === "notification_agent" && pipelineState.stage_status === "COMPLETED") {
+    let base = (currentOrder / 8) * 100;
+    if (pipelineState.stage === "logging_agent" && pipelineState.stage_status === "COMPLETED") {
       base = 100;
     }
     return Math.min(Math.max(base, 10), 100);
   };
 
-  // Human friendly names for the 6 pipeline stages
+  // Human friendly names for the 8 pipeline stages
   const STAGES = [
     { key: "signal_agent", label: "Signal Parser" },
     { key: "detection_agent", label: "Clusterer" },
+    { key: "verification_agent", label: "Social Verifier" },
     { key: "severity_agent", label: "Severity Indexer" },
     { key: "resource_allocation_agent", label: "Resource Specialist" },
     { key: "planning_agent", label: "Planner Coordinator" },
     { key: "notification_agent", label: "Public Broadcast" },
+    { key: "logging_agent", label: "System Auditor" },
   ];
 
   return (
@@ -243,6 +306,19 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
         {/* Right side: Simulated Trigger Emergency Button */}
         <div className="flex items-center gap-3 justify-end">
           <button
+            onClick={() => setShowCustomInjector(!showCustomInjector)}
+            disabled={triggering}
+            className={`flex items-center gap-2 text-xs font-extrabold uppercase px-4 py-2.5 rounded-lg border transition-all shadow-md active:scale-95 cursor-pointer ${
+              showCustomInjector
+                ? "bg-slate-800 border-slate-900 text-white"
+                : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800"
+            }`}
+          >
+            <Terminal className="w-4 h-4" />
+            <span>🖥️ Custom Injector</span>
+          </button>
+          
+          <button
             onClick={handleTriggerSimulatedCrisis}
             disabled={triggering}
             className={`flex items-center gap-2 text-xs font-extrabold uppercase px-4 py-2.5 rounded-lg border text-white transition-all shadow-md active:scale-95 cursor-pointer ${
@@ -265,6 +341,143 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
           </button>
         </div>
       </div>
+
+      {/* Interactive Custom Signal Injector Panel */}
+      {showCustomInjector && (
+        <div className="mt-4 p-5 bg-gray-950 border border-gray-800 rounded-xl text-gray-100 flex flex-col gap-4 shadow-2xl relative animate-fade-in font-mono">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+            <div className="flex items-center gap-2">
+              <Terminal className="w-5 h-5 text-red-500 animate-pulse" />
+              <div>
+                <h4 className="text-xs font-extrabold uppercase tracking-widest text-red-400">
+                  Interactive Telemetry Injector Console
+                </h4>
+                <p className="text-[10px] text-gray-500 mt-0.5">
+                  Direct pipeline injection: simulate custom spatial disasters
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setShowCustomInjector(false)}
+              className="text-gray-500 hover:text-gray-300 cursor-pointer"
+            >
+              <X className="w-4.5 h-4.5" />
+            </button>
+          </div>
+
+          {/* Form Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* City Selection */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Target Command City
+              </label>
+              <select
+                value={injectorCity}
+                onChange={(e) => setInjectorCity(e.target.value)}
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-bold"
+              >
+                {["Karachi", "Islamabad", "Austin", "Lahore"].map((city) => (
+                  <option key={city} value={city}>
+                    {city} Region
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Source Selection */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Telemetry Source Channel
+              </label>
+              <select
+                value={injectorSource}
+                onChange={(e) => setInjectorSource(e.target.value)}
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-bold"
+              >
+                <option value="twitter">Social Twitter Feed</option>
+                <option value="weather_station">Radar Meteorological Station</option>
+                <option value="sensor">Municipal IoT Water Sensor</option>
+                <option value="phone">Emergency Hotline Call</option>
+                <option value="dashboard">Command Control Room</option>
+              </select>
+            </div>
+
+            {/* Disaster Type */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Disaster Signature Type
+              </label>
+              <select
+                value={injectorType}
+                onChange={(e) => setInjectorType(e.target.value)}
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-bold"
+              >
+                <option value="flash_flood">🚨 Flash Flooding</option>
+                <option value="heavy_rain">🌧️ Severe Precipitation</option>
+                <option value="sewer_overflow">💧 Sewerage Breakdown</option>
+                <option value="drainage_failure">🚧 Drainage Infrastructure Malfunction</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Latitude */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Incident Latitude
+              </label>
+              <input
+                type="text"
+                value={injectorLat}
+                onChange={(e) => setInjectorLat(e.target.value)}
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-mono font-bold"
+                placeholder="24.9088"
+              />
+            </div>
+
+            {/* Longitude */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                Incident Longitude
+              </label>
+              <input
+                type="text"
+                value={injectorLng}
+                onChange={(e) => setInjectorLng(e.target.value)}
+                className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-mono font-bold"
+                placeholder="67.1282"
+              />
+            </div>
+          </div>
+
+          {/* Scenario Comments */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              Scenarios / Live Telemetry Remarks
+            </label>
+            <textarea
+              rows={2}
+              value={injectorComment}
+              onChange={(e) => setInjectorComment(e.target.value)}
+              className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 font-semibold"
+              placeholder="Describe the crisis details..."
+            />
+          </div>
+
+          {/* Trigger Button */}
+          <div className="flex justify-end border-t border-gray-800 pt-3 mt-1">
+            <button
+              onClick={handleInjectCustomSignal}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs uppercase tracking-wider px-5 py-2.5 rounded-lg transition-colors cursor-pointer border border-red-700 shadow-lg shadow-red-900/20 active:scale-95"
+            >
+              <AlertOctagon className="w-4 h-4 animate-bounce" />
+              <span>🚨 Inject Custom Crisis Scenario</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Slide-out Collapsible: Multi-Agent Sequenced Pipeline Loader */}
       {showProgressPanel && (
@@ -313,27 +526,44 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
           </div>
 
           {/* Pipeline Stepper Nodes */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-8 gap-3">
             {STAGES.map((node, idx) => {
               const nodeOrder = STAGE_ORDER[node.key] || 1;
               const currentOrder = pipelineState ? (STAGE_ORDER[pipelineState.stage] || 0) : 0;
 
-              const isFailedNode = pipelineState && pipelineState.stage === node.key && pipelineState.stage_status === "FAILED";
-              const isActiveNode = pipelineState && pipelineState.stage === node.key && pipelineState.stage_status !== "FAILED" && pipelineState.stage_status !== "COMPLETED";
-              const isCompletedNode = pipelineState && (currentOrder > nodeOrder || (pipelineState.stage === node.key && pipelineState.stage_status === "COMPLETED"));
+              let status = "PENDING";
+              if (pipelineState) {
+                if (pipelineState.agent_states) {
+                  status = pipelineState.agent_states[node.key] || "PENDING";
+                } else {
+                  // Fallback to order-based estimation
+                  if (pipelineState.stage === node.key && pipelineState.stage_status === "FAILED") {
+                    status = "FAILED";
+                  } else if (pipelineState.stage === node.key && pipelineState.stage_status === "RUNNING") {
+                    status = "RUNNING";
+                  } else if (currentOrder > nodeOrder || (pipelineState.stage === node.key && pipelineState.stage_status === "COMPLETED")) {
+                    status = "COMPLETED";
+                  } else if (pipelineState.stage === node.key && pipelineState.stage_status === "SKIPPED") {
+                    status = "SKIPPED";
+                  }
+                }
+              }
 
               let dotBgColor = "bg-gray-800 border-gray-700 text-gray-500";
               let labelColor = "text-gray-500";
 
-              if (isFailedNode) {
-                dotBgColor = "bg-red-500/20 border-red-500 text-red-400 animate-pulse scale-[1.05]";
+              if (status === "FAILED") {
+                dotBgColor = "bg-red-500/20 border-red-500 text-red-400 scale-[1.05]";
                 labelColor = "text-red-400 font-extrabold";
-              } else if (isActiveNode) {
+              } else if (status === "RUNNING") {
                 dotBgColor = "bg-amber-500/10 border-amber-500 text-amber-400 animate-pulse scale-[1.05]";
                 labelColor = "text-amber-400 font-bold";
-              } else if (isCompletedNode) {
+              } else if (status === "COMPLETED") {
                 dotBgColor = "bg-emerald-500/20 border-emerald-500 text-emerald-400";
                 labelColor = "text-emerald-500/80 font-semibold";
+              } else if (status === "SKIPPED") {
+                dotBgColor = "bg-blue-950/40 border-blue-900 text-blue-400/60 line-through decoration-blue-500/20";
+                labelColor = "text-blue-400/50 font-medium italic";
               }
 
               return (
@@ -342,12 +572,14 @@ export default function TopBar({ onMenuToggle, onPipelineComplete }: TopBarProps
                   className="flex flex-col items-center text-center p-2 rounded-lg bg-gray-950/40 border border-gray-800/30"
                 >
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 ${dotBgColor}`}>
-                    {isFailedNode ? (
+                    {status === "FAILED" ? (
                       <X className="w-4 h-4 text-red-500" />
-                    ) : isActiveNode ? (
+                    ) : status === "RUNNING" ? (
                       <Loader2 className="w-4 h-4 animate-spin text-amber-500" />
-                    ) : isCompletedNode ? (
+                    ) : status === "COMPLETED" ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    ) : status === "SKIPPED" ? (
+                      <span className="text-[9px] font-bold text-blue-400/50">SKIP</span>
                     ) : (
                       idx + 1
                     )}

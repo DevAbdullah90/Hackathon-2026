@@ -22,6 +22,17 @@ class SignalCreate(BaseModel):
     raw_payload: Optional[Dict[str, Any]] = None
 
 
+class CustomSignalPayload(BaseModel):
+    """Payload for POST /api/v1/signals/inject"""
+    city: str = Field(..., example="Karachi")
+    source: str = Field(..., example="user_gps")
+    type: str = Field(default="flood", example="flood")
+    comment: str = Field(..., example="Severe flooding on University Road.")
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+
+
+
 class SignalRead(BaseModel):
     """Response schema for signal data"""
     id: uuid.UUID
@@ -102,6 +113,19 @@ class ActionRead(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# -- Notifications ------------------------------------------------------------
+
+class NotificationRead(BaseModel):
+    id: uuid.UUID
+    incident_id: uuid.UUID
+    stakeholder: str
+    message: str
+    sent_at: datetime
+
+    model_config = {"from_attributes": True}
+
 
 
 # ── Resources ─────────────────────────────────────────────────────────────────

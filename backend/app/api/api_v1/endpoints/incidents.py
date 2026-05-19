@@ -14,7 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.incidents import Incident
 from app.models.reasoning_logs import ReasoningLog, ChainOfThought
 from app.models.actions import Action
-from app.models.schemas import IncidentRead, ReasoningLogRead, ChainOfThoughtRead, ActionRead
+from app.models.notifications import Notification
+from app.models.schemas import IncidentRead, ReasoningLogRead, ChainOfThoughtRead, ActionRead, NotificationRead
 from app.db.session import get_session
 
 router = APIRouter()
@@ -129,6 +130,33 @@ async def read_incident_actions(
     result = await session.execute(query)
     actions = result.scalars().all()
     return actions
+
+
+@router.get("/{incident_id}/notifications", response_model=List[NotificationRead])
+async def read_incident_notifications(
+    *,
+    session: AsyncSession = Depends(get_session),
+    incident_id: UUID
+):
+    """
+    Retrieve all stakeholder notifications generated for a specific incident.
+    """
+    incident = await session.get(Incident, incident_id)
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incident not found"
+        )
+
+    query = (
+        select(Notification)
+        .where(Notification.incident_id == incident_id)
+        .order_by(Notification.sent_at.asc())
+    )
+    result = await session.execute(query)
+    notifications = result.scalars().all()
+    return notifications
+
 
 
 
