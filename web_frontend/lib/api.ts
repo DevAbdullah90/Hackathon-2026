@@ -1,7 +1,7 @@
 // web_frontend/lib/api.ts
 // Central API service connecting Next.js web_frontend to FastAPI backend.
 
-export const API_BASE_URL = "http://localhost:8000/api/v1";
+export const API_BASE_URL = "https://hackathon-2026-production-ff6c.up.railway.app/api/v1";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. DATA MODELS & TYPES

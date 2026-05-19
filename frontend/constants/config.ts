@@ -12,9 +12,8 @@ const getDevMachineIp = (): string => {
 const devIp = getDevMachineIp();
 
 export const CONFIG = {
-  // Backend URL — dynamically resolved to local computer IP on active Wi-Fi
-  API_BASE_URL: `http://${devIp}:8000`,
-  WS_BASE_URL: `ws://${devIp}:8000`,
+  API_BASE_URL: "https://hackathon-2026-production-ff6c.up.railway.app/api/v1",
+  WS_BASE_URL: "wss://hackathon-2026-production-ff6c.up.railway.app",
 
   GOOGLE_MAPS_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_KEY_HERE",
 
