@@ -17,6 +17,7 @@ export interface Incident {
   status: string;
   risk_factors?: any;
   created_at: string;
+  disaster_type?: string;
 }
 
 export interface Action {
@@ -137,6 +138,7 @@ const MOCK_INCIDENTS: Incident[] = [
     status: "ACTIVE",
     risk_factors: ["heavy_rain", "drainage_blockage", "road_ponding"],
     created_at: "2026-05-17T09:20:00.000Z",
+    disaster_type: "flood",
   },
   {
     id: "inc-g13",
@@ -151,7 +153,23 @@ const MOCK_INCIDENTS: Incident[] = [
     status: "ACTIVE",
     risk_factors: ["moderate_flooding", "traffic_delay"],
     created_at: "2026-05-17T09:28:00.000Z",
+    disaster_type: "flood",
   },
+  {
+    id: "inc-saddar",
+    location: "Saddar Market Area, Karachi",
+    lat: 24.8607,
+    lng: 67.0011,
+    severity_score: 9.2,
+    confidence: 0.98,
+    affected_radius_km: 2.5,
+    estimated_population: 18500,
+    peak_impact_eta: "Immediate",
+    status: "ACTIVE",
+    risk_factors: ["extreme_heat", "high_wet_bulb", "power_outages"],
+    created_at: "2026-05-18T10:00:00.000Z",
+    disaster_type: "heatwave",
+  }
 ];
 
 const MOCK_REASONING_LOGS: Record<string, ReasoningLog[]> = {
@@ -199,6 +217,24 @@ const MOCK_REASONING_LOGS: Record<string, ReasoningLog[]> = {
       created_at: now(),
     },
   ],
+  "inc-saddar": [
+    {
+      id: "log-saddar-1",
+      incident_id: "inc-saddar",
+      agent_name: "detection_agent",
+      log_text: "Satellite thermal data confirms wet-bulb index critical zone. Local sub-stations shut down due to transformer overheating.",
+      log_level: "WARNING",
+      created_at: now(),
+    },
+    {
+      id: "log-saddar-2",
+      incident_id: "inc-saddar",
+      agent_name: "notification_agent",
+      log_text: "Amber emergency grid warnings broadcast. Heat relief services staging hydration points.",
+      log_level: "INFO",
+      created_at: now(),
+    },
+  ]
 };
 
 const MOCK_COT_LOGS: Record<string, ChainOfThought[]> = {
@@ -234,6 +270,22 @@ const MOCK_COT_LOGS: Record<string, ChainOfThought[]> = {
       created_at: now(),
     },
   ],
+  "inc-saddar": [
+    {
+      id: "cot-saddar-1",
+      incident_id: "inc-saddar",
+      agent_name: "signal_agent",
+      cot_steps: "1. Scan region coordinates for thermal extremes.\n2. Correlate weather telemetry showing temperatures exceeding 46°C with wet-bulb sensor readings.\n3. Identify power grid overload signals.",
+      created_at: now(),
+    },
+    {
+      id: "cot-saddar-2",
+      incident_id: "inc-saddar",
+      agent_name: "severity_agent",
+      cot_steps: "1. Parse high-density urban sector size and active heat dome size.\n2. Estimate affected population: 18,500 people.\n3. Detect active electricity grid failure.\n4. Calculate severity score: 9.2 (Extreme Threat Severity).",
+      created_at: now(),
+    },
+  ]
 };
 
 const MOCK_ACTIONS: Record<string, Action[]> = {
@@ -281,6 +333,32 @@ const MOCK_ACTIONS: Record<string, Action[]> = {
       updated_at: now(),
     },
   ],
+  "inc-saddar": [
+    {
+      id: "action-saddar-1",
+      incident_id: "inc-saddar",
+      type: "ESTABLISH_COOLING_STATIONS",
+      status: "COMPLETED",
+      predicted_side_effects: "Shade shelters & fans active. Hydration kits distributed.",
+      updated_at: now(),
+    },
+    {
+      id: "action-saddar-2",
+      incident_id: "inc-saddar",
+      type: "DEPLOY_WATER_TANKERS",
+      status: "COMPLETED",
+      predicted_side_effects: "Replenished local backup storage reserves.",
+      updated_at: now(),
+    },
+    {
+      id: "action-saddar-3",
+      incident_id: "inc-saddar",
+      type: "ALERT_CITIZENS",
+      status: "COMPLETED",
+      predicted_side_effects: "Extreme heat advisory sent.",
+      updated_at: now(),
+    },
+  ]
 };
 
 const MOCK_RESOURCES: Resource[] = [
@@ -404,6 +482,7 @@ export const api = {
         status: item.status.toUpperCase(),
         risk_factors: item.risk_factors,
         created_at: item.created_at,
+        disaster_type: item.disaster_type || "flood",
       }));
     } catch (err) {
       console.log("🛡️ [API FALLBACK] getActiveIncidents() -> Serving cached mock Islamabad cluster.");
@@ -430,6 +509,7 @@ export const api = {
         status: item.status.toUpperCase(),
         risk_factors: item.risk_factors,
         created_at: item.created_at,
+        disaster_type: item.disaster_type || "flood",
       };
     } catch (err) {
       console.log(`🛡️ [API FALLBACK] getIncident(${id}) -> Serving from cache.`);
@@ -437,7 +517,7 @@ export const api = {
     }
   },
 
-  async reportFlood(lat: number, lng: number, source: string = "user_gps"): Promise<{ signal_id: string; status?: string } | null> {
+  async reportFlood(lat: number, lng: number, source: string = "user_gps", type: string = "flood"): Promise<{ signal_id: string; status?: string } | null> {
     try {
       const response = await makeRequest<any>("/api/v1/signals/", {
         method: "POST",
@@ -445,11 +525,11 @@ export const api = {
           source: source,
           lat: lat,
           lng: lng,
-          type: "flood",
+          type: type,
           raw_payload: {
             lat: lat,
             lng: lng,
-            type: "flood",
+            type: type,
             source: source,
           },
         }),
@@ -459,7 +539,7 @@ export const api = {
       }
       return { signal_id: String(response.id), status: "NEW" };
     } catch (err) {
-      console.log(`🛡️ [API FALLBACK] reportFlood() -> Simulated successfully offline with source: ${source}.`);
+      console.log(`🛡️ [API FALLBACK] reportFlood() -> Simulated successfully offline with source: ${source} and type: ${type}.`);
       return { signal_id: "sig-" + Math.random().toString(36).substr(2, 9), status: "MOCK" };
     }
   },

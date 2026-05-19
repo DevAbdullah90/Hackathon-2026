@@ -8,11 +8,10 @@ import { View,
   ScrollView,
   ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import LiveLogStream from "../components/LiveLogStream";
 import { THEME } from "../lib/theme";
-import { api, ChainOfThought } from "../lib/api";
+import { api, ChainOfThought, Action } from "../lib/api";
 import { 
   ChevronLeft, 
   Cpu, 
@@ -20,6 +19,8 @@ import {
   Layers,
   Terminal,
   Brain,
+  Activity,
+  CheckCircle2,
 } from "lucide-react-native";
 
 export default function ReasoningCenter({ route, navigation }: any) {
@@ -28,21 +29,125 @@ export default function ReasoningCenter({ route, navigation }: any) {
   const [cotSteps, setCotSteps] = useState<ChainOfThought[]>([]);
   const [loadingCot, setLoadingCot] = useState(true);
 
-  useEffect(() => {
-    // Fetch dynamic Chain of Thought logs
-    const fetchCot = async () => {
-      try {
-        const data = await api.getChainOfThought(incidentId);
-        setCotSteps(data);
-      } catch (err) {
-        console.warn("Failed to fetch CoT steps:", err);
-      } finally {
-        setLoadingCot(false);
-      }
-    };
-    fetchCot();
-  }, [incidentId]);
+  const [actions, setActions] = useState<Action[]>([]);
+  const [loadingActions, setLoadingActions] = useState(true);
 
+  const fetchCot = async () => {
+    try {
+      setLoadingCot(true);
+      const data = await api.getChainOfThought(incidentId);
+      setCotSteps(data);
+    } catch (err) {
+      console.warn("Failed to fetch CoT steps:", err);
+    } finally {
+      setLoadingCot(false);
+    }
+  };
+
+  const fetchActions = async () => {
+    try {
+      setLoadingActions(true);
+      const data = await api.getSimulationState(incidentId);
+      setActions(data);
+      const completedCount = data.filter(a => a.status.toUpperCase() === "COMPLETED").length;
+      const allCompleted = data.length > 0 && completedCount === data.length;
+      if (allCompleted) {
+        navigation.replace("Outcome", { incidentId, location });
+      } else {
+        navigation.replace("Simulation", { incidentId, location });
+      }
+    } catch (err) {
+      console.warn("Failed to fetch simulation actions:", err);
+    } finally {
+      setLoadingActions(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCot();
+    fetchActions();
+
+    // Add navigation focus listener to re-fetch actions when returning to this screen
+    const unsubscribe = navigation.addListener("focus", () => {
+      fetchActions();
+    });
+
+    return unsubscribe;
+  }, [incidentId, navigation]);
+
+  const getButtonConfig = () => {
+    if (loadingActions) {
+      return {
+        text: "LOADING ACTIONS...",
+        icon: <ActivityIndicator size="small" color={THEME.colors.text.muted} />,
+        disabled: true,
+        targetScreen: "Simulation",
+      };
+    }
+
+    if (!actions || actions.length === 0) {
+      return {
+        text: "AWAITING ACTIONS...",
+        icon: <ActivityIndicator size="small" color={THEME.colors.text.muted} />,
+        disabled: true,
+        targetScreen: "Simulation",
+      };
+    }
+
+    const completedCount = actions.filter(a => a.status.toUpperCase() === "COMPLETED").length;
+    const isStarted = actions.some(a => ["ACTIVE", "RUNNING", "COMPLETED", "SENT", "ON_SITE"].includes(a.status.toUpperCase()));
+    const allCompleted = actions.length > 0 && completedCount === actions.length;
+
+    if (allCompleted) {
+      return {
+        text: "VIEW COMPLETED DISPATCH",
+        icon: <CheckCircle2 size={16} color={THEME.colors.primary} />,
+        disabled: false,
+        targetScreen: "Outcome",
+      };
+    }
+
+    if (isStarted) {
+      return {
+        text: "MONITOR RESPONSE",
+        icon: <Activity size={16} color={THEME.colors.primary} />,
+        disabled: false,
+        targetScreen: "Simulation",
+      };
+    }
+
+    return {
+      text: "INITIATE SIMULATION",
+      icon: <Play size={16} color={THEME.colors.primary} fill={THEME.colors.primary} />,
+      disabled: false,
+      targetScreen: "Simulation",
+    };
+  };
+
+  if (loadingActions) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.background} />
+        <View style={StyleSheet.absoluteFill}>
+          <AtmosphericBackground />
+        </View>
+        <SafeAreaView style={[styles.safeArea, { justifyContent: "center", alignItems: "center" }]}>
+          <ActivityIndicator size="small" color={THEME.colors.primary} />
+          <Text style={{
+            color: THEME.colors.text.primary,
+            fontFamily: THEME.fonts.mono,
+            fontSize: 10,
+            letterSpacing: 2,
+            marginTop: 16
+          }}>
+            RETRIEVING MISSION INTEL...
+          </Text>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  const buttonConfig = getButtonConfig();
 
   return (
     <View style={styles.container}>
@@ -53,7 +158,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
       <SafeAreaView style={styles.safeArea}>
         {/* Top Mission Header */}
         <View>
-          <BlurView intensity={20} tint="light" style={styles.header}>
+          <View style={styles.header}>
             <TouchableOpacity 
               style={styles.backButton} 
               onPress={() => navigation.goBack()}
@@ -69,7 +174,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
                 {incidentId ? incidentId.slice(0, 8).toUpperCase() + "..." : "MISSION"}
               </Text>
             </View>
-          </BlurView>
+          </View>
         </View>
 
         <ScrollView 
@@ -81,7 +186,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
           <View style={styles.agentGrid}>
             {agentsActive.map((agent, index) => (
               <View key={agent} style={styles.agentCardContainer}>
-                <BlurView intensity={30} tint="light" style={styles.agentCard}>
+                <View style={styles.agentCard}>
                   <View style={styles.agentIconContainer}>
                     {index === 0 ? <Cpu size={16} color={THEME.colors.primary} /> : <Layers size={16} color={THEME.colors.text.primary} />}
                   </View>
@@ -90,7 +195,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
                     <View style={styles.agentStatusDot} />
                     <Text style={styles.agentStatus}>ONLINE</Text>
                   </View>
-                </BlurView>
+                </View>
               </View>
             ))}
           </View>
@@ -108,14 +213,14 @@ export default function ReasoningCenter({ route, navigation }: any) {
           </View>
 
           <View style={styles.logContainerContainer}>
-            <BlurView intensity={20} tint="light" style={styles.logContainer}>
+            <View style={styles.logContainer}>
               <LiveLogStream incidentId={incidentId} />
-            </BlurView>
+            </View>
           </View>
 
           {/* Strategy Summary / Chain of Thought Traces */}
           <View style={styles.strategyCardContainer}>
-            <BlurView intensity={25} tint="light" style={styles.strategyCard}>
+            <View style={styles.strategyCard}>
               <View style={styles.strategyHeader}>
                 <Brain size={16} color={THEME.colors.primary} />
                 <Text style={styles.strategyTitle}>CHAIN OF THOUGHT TRACES</Text>
@@ -157,7 +262,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
                   ))}
                 </View>
               )}
-            </BlurView>
+            </View>
           </View>
 
           <View style={{ height: 20 }} />
@@ -166,12 +271,15 @@ export default function ReasoningCenter({ route, navigation }: any) {
         {/* Action Footer */}
         <View style={styles.footer}>
           <TouchableOpacity 
-            style={styles.simulationButton}
-            onPress={() => navigation.navigate("Simulation", { incidentId, location })}
-            activeOpacity={0.8}
+            style={[styles.simulationButton, buttonConfig.disabled && styles.disabledButton]}
+            onPress={() => !buttonConfig.disabled && navigation.navigate(buttonConfig.targetScreen || "Simulation", { incidentId, location })}
+            activeOpacity={buttonConfig.disabled ? 1 : 0.8}
+            disabled={buttonConfig.disabled}
           >
-            <Play size={16} color={THEME.colors.background} fill={THEME.colors.background} />
-            <Text style={styles.simulationButtonText}>INITIATE SIMULATION</Text>
+            {buttonConfig.icon}
+            <Text style={[styles.simulationButtonText, buttonConfig.disabled && styles.disabledButtonText]}>
+              {buttonConfig.text}
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -191,16 +299,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.lg,
-    backgroundColor: THEME.colors.background,
+    paddingVertical: THEME.spacing.xl,
+    backgroundColor: THEME.colors.surface,
     gap: THEME.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: THEME.colors.surfaceBorder,
+    ...THEME.shadows.card,
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: THEME.colors.surfaceSoft,
     justifyContent: "center",
     alignItems: "center",
@@ -212,29 +321,32 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     color: THEME.colors.text.muted,
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 2,
     marginBottom: 4,
+    fontWeight: "700",
   },
   headerTitle: {
     color: THEME.colors.text.primary,
-    fontSize: 16,
+    fontSize: 20,
     fontFamily: THEME.fonts.heading,
-    letterSpacing: 1,
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
   missionId: {
-    backgroundColor: THEME.colors.surface,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: THEME.borderRadius.sm,
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: "rgba(14, 165, 233, 0.2)",
   },
   missionIdText: {
-    color: THEME.colors.text.muted,
+    color: THEME.colors.primary,
     fontSize: 10,
     fontFamily: THEME.fonts.mono,
+    fontWeight: "800",
   },
   content: {
     flex: 1,
@@ -247,118 +359,139 @@ const styles = StyleSheet.create({
   },
   agentCardContainer: {
     flex: 1,
-    borderRadius: THEME.borderRadius.md,
+    borderRadius: THEME.borderRadius.xl,
     overflow: "hidden",
+    ...THEME.shadows.card,
   },
   agentCard: {
-    backgroundColor: THEME.colors.background,
-    padding: THEME.spacing.md,
+    backgroundColor: THEME.colors.surface,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
     alignItems: "center",
+    borderRadius: THEME.borderRadius.xl,
   },
   agentIconContainer: {
-    marginBottom: THEME.spacing.sm,
+    marginBottom: THEME.spacing.md,
+    backgroundColor: THEME.colors.surfaceSoft,
+    padding: 10,
+    borderRadius: 12,
   },
   agentName: {
     color: THEME.colors.text.primary,
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.heading,
-    marginBottom: 6,
+    marginBottom: 8,
     letterSpacing: 1,
+    fontWeight: "800",
   },
   agentStatusRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
+    backgroundColor: "rgba(16, 185, 129, 0.08)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
   },
   agentStatusDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: THEME.colors.primary,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: THEME.colors.status.success,
   },
   agentStatus: {
-    color: THEME.colors.primary,
+    color: THEME.colors.status.success,
     fontSize: 8,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 1,
+    fontWeight: "800",
   },
   consoleHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: THEME.spacing.sm,
+    marginBottom: THEME.spacing.lg,
   },
   consoleTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
   },
   consoleTitle: {
-    color: THEME.colors.text.muted,
-    fontSize: 10,
+    color: THEME.colors.text.primary,
+    fontSize: 12,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 2,
+    fontWeight: "900",
   },
   liveBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: THEME.colors.primary,
   },
   liveText: {
     color: THEME.colors.primary,
     fontSize: 10,
     fontFamily: THEME.fonts.mono,
-    fontWeight: "bold",
-    letterSpacing: 1,
+    fontWeight: "900",
+    letterSpacing: 1.5,
   },
   logContainerContainer: {
-    borderRadius: THEME.borderRadius.md,
+    borderRadius: THEME.borderRadius.xxl,
     overflow: "hidden",
     marginBottom: THEME.spacing.xl,
+    ...THEME.shadows.premium,
   },
   logContainer: {
-    backgroundColor: THEME.colors.background,
+    backgroundColor: THEME.colors.surface,
     padding: THEME.spacing.sm,
-    height: 300,
+    height: 320,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
+    borderRadius: THEME.borderRadius.xxl,
   },
   strategyCardContainer: {
-    borderRadius: THEME.borderRadius.md,
+    borderRadius: THEME.borderRadius.xxl,
     overflow: "hidden",
     marginBottom: THEME.spacing.xl,
+    ...THEME.shadows.premium,
   },
   strategyCard: {
-    backgroundColor: THEME.colors.background,
-    padding: THEME.spacing.lg,
+    backgroundColor: THEME.colors.surface,
+    padding: THEME.spacing.xl,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
+    borderRadius: THEME.borderRadius.xxl,
   },
   strategyHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginBottom: THEME.spacing.md,
+    gap: 12,
+    marginBottom: THEME.spacing.xl,
   },
   strategyTitle: {
     color: THEME.colors.text.primary,
-    fontSize: 12,
+    fontSize: 14,
     fontFamily: THEME.fonts.heading,
     letterSpacing: 2,
+    fontWeight: "900",
   },
   strategyText: {
     color: THEME.colors.text.secondary,
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: THEME.fonts.mono,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   footer: {
     position: "absolute",
@@ -367,23 +500,23 @@ const styles = StyleSheet.create({
     right: 0,
     padding: THEME.spacing.lg,
     paddingBottom: 40,
-    backgroundColor: THEME.colors.background,
+    backgroundColor: "transparent",
   },
   simulationButton: {
-    backgroundColor: THEME.colors.accentSoft,
-    height: 56,
-    borderRadius: THEME.borderRadius.sm,
+    backgroundColor: THEME.colors.primary,
+    height: 64,
+    borderRadius: THEME.borderRadius.xl,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 12,
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.18)",
+    gap: 16,
+    ...THEME.shadows.premium,
   },
   simulationButtonText: {
-    color: THEME.colors.primary,
-    fontSize: 12,
+    color: "#FFFFFF",
+    fontSize: 14,
     fontFamily: THEME.fonts.heading,
+    fontWeight: "900",
     letterSpacing: 2,
   },
   loaderContainer: {
@@ -397,55 +530,66 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 1,
+    fontWeight: "700",
   },
   cotTimeline: {
     marginTop: THEME.spacing.md,
   },
   cotStepContainer: {
     flexDirection: "row",
-    gap: THEME.spacing.md,
-    marginBottom: THEME.spacing.lg,
+    gap: THEME.spacing.lg,
+    marginBottom: THEME.spacing.xl,
   },
   lastCotStep: {
     marginBottom: 0,
   },
   cotIndicator: {
     alignItems: "center",
-    width: 16,
+    width: 20,
   },
   cotDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: THEME.colors.primary,
-    marginTop: 4,
+    marginTop: 6,
+    ...THEME.shadows.glow,
   },
   cotLine: {
-    width: 1,
+    width: 2,
     flex: 1,
     backgroundColor: THEME.colors.primary,
-    opacity: 0.2,
-    marginTop: 4,
+    opacity: 0.1,
+    marginTop: 6,
   },
   cotContent: {
     flex: 1,
-    backgroundColor: THEME.colors.surface,
+    backgroundColor: THEME.colors.surfaceSoft,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
-    borderRadius: THEME.borderRadius.md,
-    padding: THEME.spacing.md,
+    borderRadius: THEME.borderRadius.lg,
+    padding: THEME.spacing.lg,
   },
   cotAgentHeader: {
     color: THEME.colors.primary,
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: THEME.fonts.heading,
-    letterSpacing: 1,
-    marginBottom: THEME.spacing.sm,
+    letterSpacing: 1.5,
+    marginBottom: THEME.spacing.md,
+    fontWeight: "900",
   },
   cotText: {
     color: THEME.colors.text.secondary,
-    fontSize: 11,
-    fontFamily: THEME.fonts.mono,
-    lineHeight: 18,
+    fontSize: 12,
+    fontFamily: THEME.fonts.body,
+    lineHeight: 20,
+    fontWeight: "500",
+  },
+  disabledButton: {
+    opacity: 0.5,
+    backgroundColor: THEME.colors.surface,
+  },
+  disabledButtonText: {
+    color: THEME.colors.text.muted,
   },
 });

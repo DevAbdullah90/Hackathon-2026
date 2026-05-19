@@ -16,6 +16,20 @@ _GEOCODING_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 _OSM_URL = "https://nominatim.openstreetmap.org/reverse"
 
 
+def clean_address(addr: str) -> str:
+    if not addr:
+        return addr
+    parts = [p.strip() for p in addr.split(",") if p.strip()]
+    clean_parts = []
+    for part in parts:
+        subparts = [sp for sp in part.split(" ") if "+" not in sp]
+        if subparts:
+            clean_parts.append(" ".join(subparts))
+    if clean_parts:
+        return ", ".join(clean_parts)
+    return addr
+
+
 @function_tool
 async def reverse_geocode(lat: float, lng: float) -> str:
     """Convert GPS coordinates to a human-readable area name using Google Geocoding API (with free OSM fallback).
@@ -40,7 +54,7 @@ async def reverse_geocode(lat: float, lng: float) -> str:
             data = response.json()
 
         if data.get("status") == "OK" and data.get("results"):
-            return data["results"][0]["formatted_address"]
+            return clean_address(data["results"][0]["formatted_address"])
     except Exception as e:
         print(f"⚠️ Google Geocoding failed: {e}")
 
@@ -61,10 +75,11 @@ async def reverse_geocode(lat: float, lng: float) -> str:
             
         display_name = data.get("display_name")
         if display_name:
-            parts = [p.strip() for p in display_name.split(",") if p.strip()]
+            cleaned = clean_address(display_name)
+            parts = [p.strip() for p in cleaned.split(",") if p.strip()]
             if len(parts) > 4:
                 return ", ".join(parts[:4])
-            return display_name
+            return cleaned
     except Exception as e:
         print(f"⚠️ OSM Geocoding fallback failed: {e}")
 

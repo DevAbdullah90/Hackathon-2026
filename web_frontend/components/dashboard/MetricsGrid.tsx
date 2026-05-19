@@ -7,9 +7,12 @@ import {
   Cpu, 
   Activity, 
   Users, 
-  Droplets 
+  Droplets,
+  Heart,
+  Sun,
+  Thermometer
 } from "lucide-react";
-import { api, DashboardStats } from "@/lib/api";
+import { api, DashboardStats, Incident } from "@/lib/api";
 
 interface MetricCardProps {
   icon: React.ReactNode;
@@ -57,7 +60,13 @@ function MetricCard({
   );
 }
 
-export default function MetricsGrid() {
+interface MetricsGridProps {
+  selectedIncident?: Incident | null;
+}
+
+export default function MetricsGrid({ selectedIncident }: MetricsGridProps = {}) {
+  const isHeatwave = selectedIncident?.disaster_type === "heatwave";
+
   const [stats, setStats] = useState<DashboardStats>({
     total_signals: 0,
     active_crisis_sectors: 0,
@@ -88,16 +97,22 @@ export default function MetricsGrid() {
   return (
     <div className="w-full bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
       {/* Top Accent Gradient Bar */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-600 to-emerald-500" />
+      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
+        isHeatwave ? "from-amber-500 to-orange-500" : "from-teal-600 to-emerald-500"
+      }`} />
       
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">
           Telemetry Command Center Metrics
         </h3>
-        <div className="flex items-center gap-1.5 text-slate-400 cursor-pointer hover:text-slate-600 transition-colors select-none">
+        <div className={`flex items-center gap-1.5 cursor-pointer transition-colors select-none ${
+          isHeatwave ? "text-orange-400 hover:text-orange-600" : "text-slate-400 hover:text-slate-600"
+        }`}>
           <span className="text-[10px] font-extrabold uppercase tracking-widest">Active Live Connection</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping ml-0.5" />
+          <span className={`w-2 h-2 rounded-full animate-ping ml-0.5 ${
+            isHeatwave ? "bg-orange-500" : "bg-emerald-500"
+          }`} />
         </div>
       </div>
 
@@ -114,8 +129,12 @@ export default function MetricsGrid() {
 
         {/* Active Crisis Sectors */}
         <MetricCard
-          icon={<AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-red-600 animate-pulse" />}
-          iconBg="bg-red-50/70"
+          icon={isHeatwave ? (
+            <Sun className="w-4 h-4 md:w-5 md:h-5 text-orange-500 animate-pulse" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 text-red-600 animate-pulse" />
+          )}
+          iconBg={isHeatwave ? "bg-orange-50/70" : "bg-red-50/70"}
           value={stats.active_crisis_sectors}
           subLabel="Sectors"
           label="Active Hazards"
@@ -130,31 +149,43 @@ export default function MetricsGrid() {
           label="Agent CoT Logs"
         />
 
-        {/* Allocated Ambulances */}
+        {/* Allocated Ambulances / Paramedics */}
         <MetricCard
-          icon={<Activity className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" />}
-          iconBg="bg-emerald-50/70"
+          icon={isHeatwave ? (
+            <Heart className="w-4 h-4 md:w-5 md:h-5 text-orange-600" />
+          ) : (
+            <Activity className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" />
+          )}
+          iconBg={isHeatwave ? "bg-orange-50/70" : "bg-emerald-50/70"}
           value={stats.allocated_ambulances}
-          subLabel="Dispatched"
-          label="Ambulance Dispatch"
+          subLabel={isHeatwave ? "Units" : "Dispatched"}
+          label={isHeatwave ? "Paramedic Dispatch" : "Ambulance Dispatch"}
         />
 
-        {/* Dispatched Rescue Crews */}
+        {/* Dispatched Rescue Crews / Hydration Camps */}
         <MetricCard
-          icon={<Users className="w-4 h-4 md:w-5 md:h-5 text-amber-600" />}
+          icon={isHeatwave ? (
+            <Droplets className="w-4 h-4 md:w-5 md:h-5 text-amber-600" />
+          ) : (
+            <Users className="w-4 h-4 md:w-5 md:h-5 text-amber-600" />
+          )}
           iconBg="bg-amber-50/70"
           value={stats.allocated_rescue_crews}
-          subLabel="Crews"
-          label="Rescue Dispatched"
+          subLabel={isHeatwave ? "Camps" : "Crews"}
+          label={isHeatwave ? "Hydration Camps" : "Rescue Dispatched"}
         />
 
-        {/* Dewatering Assets */}
+        {/* Dewatering Assets / Shade Canopies */}
         <MetricCard
-          icon={<Droplets className="w-4 h-4 md:w-5 md:h-5 text-cyan-600" />}
-          iconBg="bg-cyan-50/70"
-          value={stats.active_crisis_sectors > 0 ? stats.active_crisis_sectors * 2 : 0}
-          subLabel="Assets"
-          label="Dewatering Pumps"
+          icon={isHeatwave ? (
+            <Sun className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
+          ) : (
+            <Droplets className="w-4 h-4 md:w-5 md:h-5 text-cyan-600" />
+          )}
+          iconBg={isHeatwave ? "bg-orange-50/70" : "bg-cyan-50/70"}
+          value={stats.active_crisis_sectors > 0 ? stats.active_crisis_sectors * (isHeatwave ? 3 : 2) : 0}
+          subLabel={isHeatwave ? "Canopies" : "Assets"}
+          label={isHeatwave ? "Shade Canopies" : "Dewatering Pumps"}
         />
       </div>
     </div>

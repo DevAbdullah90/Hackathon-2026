@@ -21,61 +21,63 @@ const ExecutionTimeline: React.FC<ExecutionTimelineProps> = ({ actions }) => {
   };
 
   const sortedActions = [...actions].sort(
-    (a, b) => parseUTC(b.updated_at).getTime() - parseUTC(a.updated_at).getTime()
+    (a, b) => parseUTC(a.updated_at).getTime() - parseUTC(b.updated_at).getTime()
   );
 
   return (
     <View style={styles.container}>
       {sortedActions.map((action, index) => {
         const isCompleted = action.status.toUpperCase() === "COMPLETED";
-        const isInProgress = action.status.toUpperCase() === "IN_PROGRESS";
+        const isInProgress = ["ACTIVE", "RUNNING", "SENT", "ON_SITE"].includes(action.status.toUpperCase());
         
         return (
           <View key={action.id} style={styles.timelineItem}>
-            {/* Timeline Line */}
-            {index !== sortedActions.length - 1 && <View style={styles.line} />}
-            
-            {/* Icon Node */}
             <View style={[
-              styles.node, 
-              { backgroundColor: isCompleted ? THEME.colors.primary : isInProgress ? THEME.colors.text.primary : THEME.colors.surfaceElevated }
-            ]}>
-              {isCompleted ? (
-                <CheckCircle2 size={12} color={THEME.colors.background} />
-              ) : isInProgress ? (
-                <Activity size={12} color={THEME.colors.background} />
-              ) : (
-                <Clock size={12} color={THEME.colors.text.muted} />
-              )}
-            </View>
-
-            {/* Content */}
-            <View style={[
-              styles.content, 
-              isInProgress && styles.activeContent
+              styles.block,
+              isCompleted && styles.completedBlock,
+              isInProgress && styles.activeBlock,
             ]}>
               <View style={styles.headerRow}>
+                <View style={styles.typeContainer}>
+                  {isCompleted ? (
+                    <CheckCircle2 size={14} color="#FFFFFF" />
+                  ) : isInProgress ? (
+                    <Activity size={14} color="#FFFFFF" />
+                  ) : (
+                    <Clock size={14} color={THEME.colors.text.muted} />
+                  )}
+                  <Text style={[
+                    styles.actionType,
+                    (isCompleted || isInProgress) ? { color: "#FFFFFF" } : { color: THEME.colors.text.primary }
+                  ]}>
+                    {action.type.toUpperCase()}
+                  </Text>
+                </View>
                 <Text style={[
-                  styles.actionType, 
-                  { color: isCompleted ? THEME.colors.text.secondary : isInProgress ? THEME.colors.text.primary : THEME.colors.text.muted }
+                  styles.timestamp,
+                  (isCompleted || isInProgress) ? { color: "rgba(255, 255, 255, 0.8)" } : { color: THEME.colors.text.muted }
                 ]}>
-                  {action.type.toUpperCase()}
-                </Text>
-                <Text style={styles.timestamp}>
                   {parseUTC(action.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               </View>
               
-              <View style={styles.statusRow}>
+              <View style={styles.footerRow}>
                 <View style={[
-                  styles.statusDot, 
-                  { backgroundColor: isCompleted ? THEME.colors.primary : isInProgress ? THEME.colors.text.primary : THEME.colors.text.muted }
-                ]} />
-                <Text style={[
-                  styles.statusText,
-                  { color: isCompleted ? THEME.colors.primary : isInProgress ? THEME.colors.text.primary : THEME.colors.text.muted }
+                  styles.statusBadge,
+                  isCompleted ? styles.statusBadgeCompleted : isInProgress ? styles.statusBadgeActive : styles.statusBadgePending
                 ]}>
-                  {action.status.toUpperCase()}
+                  <Text style={[
+                    styles.statusText,
+                    isCompleted ? { color: "#065F46" } : isInProgress ? { color: "#1E3A8A" } : { color: THEME.colors.text.muted }
+                  ]}>
+                    {action.status.toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={[
+                  styles.agentLabel,
+                  (isCompleted || isInProgress) ? { color: "rgba(255, 255, 255, 0.7)" } : { color: THEME.colors.text.muted }
+                ]}>
+                  ORCHESTRATOR DISPATCHED
                 </Text>
               </View>
             </View>
@@ -88,73 +90,80 @@ const ExecutionTimeline: React.FC<ExecutionTimelineProps> = ({ actions }) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingLeft: 10,
+    paddingBottom: 20,
   },
   timelineItem: {
-    flexDirection: "row",
-    marginBottom: THEME.spacing.lg,
-    minHeight: 80,
+    marginBottom: THEME.spacing.md,
   },
-  node: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
-    borderWidth: 4,
-    borderColor: THEME.colors.surfaceElevated,
-  },
-  line: {
-    position: "absolute",
-    left: 15,
-    top: 32,
-    bottom: -THEME.spacing.lg,
-    width: 2,
-    backgroundColor: THEME.colors.glassBorder,
-    zIndex: 1,
-  },
-  content: {
-    flex: 1,
-    marginLeft: THEME.spacing.lg,
-    backgroundColor: THEME.colors.glass,
-    padding: THEME.spacing.md,
-    borderRadius: THEME.borderRadius.md,
+  block: {
+    backgroundColor: THEME.colors.surface,
+    borderRadius: THEME.borderRadius.lg,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: THEME.colors.glassBorder,
+    borderColor: THEME.colors.surfaceBorder,
+    ...THEME.shadows.card,
   },
-  activeContent: {
-    borderColor: THEME.colors.text.primary,
+  activeBlock: {
+    backgroundColor: THEME.colors.primary,
+    borderColor: THEME.colors.primaryDark,
+    ...THEME.shadows.glow,
+  },
+  completedBlock: {
+    backgroundColor: THEME.colors.status.success,
+    borderColor: "#059669",
+    ...THEME.shadows.card,
   },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: THEME.spacing.lg,
+  },
+  typeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   actionType: {
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: THEME.fonts.heading,
-    letterSpacing: 1,
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
   timestamp: {
     fontSize: 10,
     fontFamily: THEME.fonts.mono,
-    color: THEME.colors.text.muted,
+    fontWeight: "700",
   },
-  statusRow: {
+  footerRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: 6,
   },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  statusBadgePending: {
+    backgroundColor: THEME.colors.surfaceSoft,
+  },
+  statusBadgeActive: {
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+  },
+  statusBadgeCompleted: {
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
   },
   statusText: {
     fontSize: 9,
     fontFamily: THEME.fonts.mono,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  agentLabel: {
+    fontSize: 8,
+    fontFamily: THEME.fonts.mono,
+    fontWeight: "800",
     letterSpacing: 1,
   },
 });

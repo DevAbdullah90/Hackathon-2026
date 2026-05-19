@@ -9,9 +9,9 @@ import {
   RefreshControl,
   ActivityIndicator,
   Platform,
+  SafeAreaView,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
+
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import { THEME } from "../lib/theme";
 import SeverityBadge from "../components/SeverityBadge";
@@ -29,6 +29,7 @@ import {
   X,
   Navigation,
 } from "lucide-react-native";
+import { BlurView } from "expo-blur";
 
 interface DashboardProps {
   navigation: any;
@@ -49,7 +50,7 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation }) => {
         activeOpacity={0.9}
         onPress={() => navigation.navigate("Reasoning", { incidentId: item.id, location: item.location })}
       >
-        <BlurView intensity={30} tint="light" style={styles.card}>
+        <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderInfo}>
               <Text style={styles.cardLocation}>{item.location}</Text>
@@ -73,7 +74,7 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation }) => {
                 styles.severityBarFill,
                 {
                   width: `${severityPercentage}%`,
-                  backgroundColor: isCritical ? THEME.colors.text.primary : THEME.colors.primary,
+                  backgroundColor: isCritical ? THEME.colors.status.critical : THEME.colors.primary,
                 },
               ]}
             />
@@ -97,7 +98,7 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation }) => {
             </View>
             <ChevronRight size={16} color={THEME.colors.text.muted} />
           </View>
-        </BlurView>
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -527,24 +528,24 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
         >
           {/* High-End KPI Dashboard */}
           <View style={styles.kpiContainer}>
-            <BlurView intensity={20} tint="light" style={styles.kpiCard}>
+            <View style={styles.kpiCard}>
               <View style={styles.kpiIconWrapper}>
-                <Target size={16} color={THEME.colors.background} />
+                <Target size={16} color="#FFFFFF" />
               </View>
               <View style={styles.kpiInfo}>
                 <Text style={styles.kpiValue}>{incidents.length}</Text>
                 <Text style={styles.kpiLabel}>ACTIVE ZONES</Text>
               </View>
-            </BlurView>
-            <BlurView intensity={20} tint="light" style={styles.kpiCard}>
-              <View style={[styles.kpiIconWrapper, { backgroundColor: THEME.colors.surfaceElevated }]}>
-                <Users size={16} color={THEME.colors.text.primary} />
+            </View>
+            <View style={styles.kpiCard}>
+              <View style={[styles.kpiIconWrapper, { backgroundColor: THEME.colors.accent }]}>
+                <Users size={16} color="#FFFFFF" />
               </View>
               <View style={styles.kpiInfo}>
                 <Text style={styles.kpiValue}>{(incidents.reduce((acc, i) => acc + i.estimated_population, 0) / 1000).toFixed(1)}k</Text>
                 <Text style={styles.kpiLabel}>POPULATION AFFECTED</Text>
               </View>
-            </BlurView>
+            </View>
           </View>
 
           {/* Quick Actions Panel */}
@@ -561,8 +562,8 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 mockTriggering && styles.disabledButton,
               ]}
             >
-              <BlurView intensity={25} tint="light" style={styles.mockTriggerCard}>
-                <Cpu size={20} color={THEME.colors.primary} />
+              <View style={styles.mockTriggerCard}>
+                <Cpu size={20} color={THEME.colors.accent} />
                 <View style={styles.mockTriggerInfo}>
                   <Text style={styles.mockTriggerTitle}>🚨 TRIGGER SIMULATED CRISIS SIGNAL</Text>
                   <Text style={styles.mockTriggerSubtitle}>
@@ -571,19 +572,19 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                       : "Send mock emergency signals in Islamabad to trigger full AI agent sequence."}
                   </Text>
                 </View>
-              </BlurView>
+              </View>
             </TouchableOpacity>
 
             <View style={styles.actionGrid}>
-            <TouchableOpacity 
-              style={styles.actionCardContainer}
-              onPress={() => navigation.navigate("Map")}
-            >
-              <BlurView intensity={30} tint="light" style={styles.actionCard}>
+              <TouchableOpacity 
+                style={styles.actionCardContainer}
+                onPress={() => navigation.navigate("Map")}
+              >
+                <View style={styles.actionCard}>
                   <MapIcon size={20} color={THEME.colors.primary} />
-                  <Text style={styles.actionTitle} numberOfLines={2}>LIVE FLOOD MAP</Text>
-                </BlurView>
-            </TouchableOpacity>
+                  <Text style={styles.actionTitle} numberOfLines={2}>LIVE CRISIS MAP</Text>
+                </View>
+              </TouchableOpacity>
 
               <TouchableOpacity 
                 style={styles.actionCardContainer}
@@ -593,10 +594,10 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                   }
                 }}
               >
-                <BlurView intensity={30} tint="light" style={styles.actionCard}>
+                <View style={styles.actionCard}>
                   <Cpu size={20} color={THEME.colors.primary} />
                   <Text style={styles.actionTitle}>AI LOGSTREAM</Text>
-                </BlurView>
+                </View>
               </TouchableOpacity>
             </View>
           </View>
@@ -614,11 +615,11 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 <IncidentCard key={item.id} item={item} navigation={navigation} />
               ))
             ) : (
-              <BlurView intensity={20} tint="light" style={styles.emptyState}>
+              <View style={styles.emptyState}>
                 <ShieldCheck size={32} color={THEME.colors.primary} strokeWidth={1.5} />
                 <Text style={styles.emptyTitle}>ALL CLEAR</Text>
                 <Text style={styles.emptySubtitle}>No active operational anomalies.</Text>
-              </BlurView>
+              </View>
             )}
           </View>
           
@@ -627,7 +628,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
 
         {/* Global Navigation Bar */}
         <View style={styles.navBarWrapper}>
-          <BlurView intensity={50} tint="light" style={styles.navBar}>
+          <View style={styles.navBar}>
             <TouchableOpacity style={styles.navItem}>
               <LayoutDashboard size={20} color={THEME.colors.primary} strokeWidth={2.5} />
               <Text style={[styles.navLabel, { color: THEME.colors.primary }]}>DASHBOARD</Text>
@@ -644,7 +645,7 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
               <Cpu size={20} color={THEME.colors.text.muted} strokeWidth={2} />
               <Text style={styles.navLabel}>AI CORE</Text>
             </TouchableOpacity>
-          </BlurView>
+          </View>
         </View>
 
       </SafeAreaView>
@@ -661,92 +662,98 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   alertCard: {
-    borderRadius: 16,
-    padding: THEME.spacing.md,
+    borderRadius: THEME.borderRadius.xl,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
-    borderColor: "rgba(239, 68, 68, 0.4)",
-    backgroundColor: "rgba(10, 10, 10, 0.95)",
+    borderColor: "rgba(239, 68, 68, 0.15)",
+    backgroundColor: THEME.colors.surface,
     overflow: "hidden",
+    ...THEME.shadows.premium,
   },
   alertHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: THEME.spacing.xs,
+    marginBottom: THEME.spacing.sm,
   },
   alertIndicator: {
     flexDirection: "row",
     alignItems: "center",
   },
   alertPingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: "#EF4444",
-    marginRight: 6,
+    marginRight: 8,
   },
   alertTag: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
     color: "#EF4444",
     letterSpacing: 1.5,
-    fontWeight: "bold",
+    fontWeight: "800",
   },
   alertCloseBtn: {
-    padding: 2,
+    padding: 4,
+    backgroundColor: THEME.colors.surfaceSoft,
+    borderRadius: 12,
   },
   alertLocation: {
-    fontSize: 13,
+    fontSize: 18,
     fontFamily: THEME.fonts.heading,
-    color: "#F9FAFB",
-    fontWeight: "bold",
-    marginBottom: 2,
+    color: THEME.colors.text.primary,
+    fontWeight: "800",
+    marginBottom: 4,
   },
   alertDescription: {
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: THEME.fonts.body,
-    color: "#9CA3AF",
-    marginBottom: THEME.spacing.xs,
+    color: THEME.colors.text.secondary,
+    marginBottom: THEME.spacing.md,
+    lineHeight: 16,
   },
   alertParamGrid: {
     flexDirection: "row",
-    gap: 8,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 8,
-    padding: THEME.spacing.sm,
-    marginBottom: THEME.spacing.sm,
+    gap: 12,
+    backgroundColor: THEME.colors.surfaceSoft,
+    borderRadius: THEME.borderRadius.md,
+    padding: THEME.spacing.md,
+    marginBottom: THEME.spacing.md,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
+    borderColor: THEME.colors.surfaceBorder,
   },
   alertParam: {
     flex: 1,
   },
   alertParamLabel: {
-    fontSize: 7,
+    fontSize: 8,
     fontFamily: THEME.fonts.mono,
-    color: "#9CA3AF",
+    color: THEME.colors.text.muted,
     textTransform: "uppercase",
+    letterSpacing: 1,
   },
   alertParamValue: {
-    fontSize: 11,
+    fontSize: 13,
     fontFamily: THEME.fonts.mono,
-    fontWeight: "bold",
+    fontWeight: "800",
     color: "#EF4444",
   },
   alertActionBtn: {
     backgroundColor: "#EF4444",
-    borderRadius: 8,
-    paddingVertical: THEME.spacing.sm,
+    borderRadius: THEME.borderRadius.lg,
+    paddingVertical: THEME.spacing.md,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    ...THEME.shadows.glow,
   },
   alertActionBtnText: {
-    fontSize: 10,
-    fontFamily: THEME.fonts.mono,
-    fontWeight: "bold",
+    fontSize: 11,
+    fontFamily: THEME.fonts.heading,
+    fontWeight: "800",
     color: "#FFFFFF",
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   },
   container: {
     flex: 1,
@@ -760,44 +767,48 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.lg,
+    paddingVertical: THEME.spacing.xl,
     backgroundColor: "transparent",
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: THEME.fonts.heading,
     color: THEME.colors.text.primary,
-    letterSpacing: 2,
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
   systemStatus: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: THEME.spacing.xs,
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
   },
   statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: THEME.colors.primary,
-    marginRight: THEME.spacing.sm,
-    shadowColor: THEME.colors.primary,
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 0 },
+    marginRight: 8,
   },
   statusText: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
     color: THEME.colors.primary,
-    letterSpacing: 2,
+    fontWeight: "800",
+    letterSpacing: 1,
   },
   headerIconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: THEME.colors.surface,
     justifyContent: "center",
     alignItems: "center",
+    ...THEME.shadows.card,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
   },
@@ -812,35 +823,39 @@ const styles = StyleSheet.create({
   },
   kpiCard: {
     flex: 1,
-    backgroundColor: THEME.colors.background,
+    backgroundColor: THEME.colors.surface,
     padding: THEME.spacing.lg,
-    borderRadius: THEME.borderRadius.lg,
+    borderRadius: THEME.borderRadius.xl,
+    ...THEME.shadows.card,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
     overflow: "hidden",
   },
   kpiIconWrapper: {
-    width: 28,
-    height: 28,
-    borderRadius: THEME.borderRadius.sm,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     backgroundColor: THEME.colors.primary,
     justifyContent: "center",
     alignItems: "center",
+    ...THEME.shadows.glow,
   },
   kpiInfo: {
-    marginTop: THEME.spacing.md,
+    marginTop: THEME.spacing.lg,
   },
   kpiValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: THEME.fonts.heading,
     color: THEME.colors.text.primary,
+    fontWeight: "900",
   },
   kpiLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
     color: THEME.colors.text.muted,
     letterSpacing: 1,
-    marginTop: 2,
+    marginTop: 4,
+    fontWeight: "700",
   },
   section: {
     paddingHorizontal: THEME.spacing.lg,
@@ -850,14 +865,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: THEME.spacing.md,
+    marginBottom: THEME.spacing.lg,
   },
   sectionHeader: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: THEME.fonts.mono,
-    color: THEME.colors.text.secondary,
+    color: THEME.colors.text.primary,
     letterSpacing: 2,
-    marginBottom: THEME.spacing.md,
+    fontWeight: "900",
   },
   actionGrid: {
     flexDirection: "row",
@@ -865,56 +880,58 @@ const styles = StyleSheet.create({
   },
   actionCardContainer: {
     flex: 1,
-    borderRadius: THEME.borderRadius.lg,
+    borderRadius: THEME.borderRadius.xl,
     overflow: "hidden",
+    ...THEME.shadows.card,
   },
   actionCard: {
     backgroundColor: THEME.colors.surface,
-    paddingVertical: THEME.spacing.md,
+    paddingVertical: THEME.spacing.lg,
     paddingHorizontal: THEME.spacing.md,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
     alignItems: "center",
     flexDirection: "row",
-    gap: 10,
-    minHeight: 64,
+    gap: 12,
+    minHeight: 80,
   },
   actionTitle: {
     flex: 1,
-    fontSize: 9,
+    fontSize: 11,
     fontFamily: THEME.fonts.heading,
     color: THEME.colors.text.primary,
-    letterSpacing: 0.8,
-    lineHeight: 12,
-    flexShrink: 1,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    lineHeight: 14,
   },
   card: {
-    backgroundColor: THEME.colors.background,
-    borderRadius: THEME.borderRadius.lg,
-    padding: THEME.spacing.md,
+    backgroundColor: THEME.colors.surface,
+    borderRadius: THEME.borderRadius.xl,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
-    minHeight: 210,
+    minHeight: 220,
+    ...THEME.shadows.card,
   },
   cardWrapper: {
-    marginBottom: THEME.spacing.md,
+    marginBottom: THEME.spacing.lg,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: THEME.spacing.sm,
+    marginBottom: THEME.spacing.md,
   },
   cardHeaderInfo: {
     flex: 1,
     marginRight: THEME.spacing.md,
   },
   cardLocation: {
-    fontSize: 12,
+    fontSize: 16,
     fontFamily: THEME.fonts.heading,
     color: THEME.colors.text.primary,
-    marginBottom: THEME.spacing.xs,
-    letterSpacing: 1,
+    fontWeight: "900",
+    marginBottom: 4,
   },
   cardTimestamp: {
     flexDirection: "row",
@@ -922,27 +939,28 @@ const styles = StyleSheet.create({
     gap: THEME.spacing.xs,
   },
   cardTimeText: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
     color: THEME.colors.text.muted,
+    fontWeight: "600",
   },
   severityBarContainer: {
-    height: 4,
-    backgroundColor: THEME.colors.surfaceBorder,
-    borderRadius: 2,
-    marginBottom: THEME.spacing.lg,
+    height: 6,
+    backgroundColor: THEME.colors.surfaceSoft,
+    borderRadius: 3,
+    marginBottom: THEME.spacing.xl,
     overflow: "hidden",
   },
   severityBarFill: {
     height: "100%",
-    borderRadius: 2,
+    borderRadius: 3,
   },
   cardStatsGrid: {
     flexDirection: "row",
-    backgroundColor: THEME.colors.surface,
-    padding: THEME.spacing.sm,
-    borderRadius: THEME.borderRadius.sm,
-    marginBottom: THEME.spacing.md,
+    backgroundColor: THEME.colors.surfaceSoft,
+    padding: THEME.spacing.md,
+    borderRadius: THEME.borderRadius.lg,
+    marginBottom: THEME.spacing.lg,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
   },
@@ -951,48 +969,55 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardStatLabel: {
-    fontSize: 7,
+    fontSize: 8,
     fontFamily: THEME.fonts.mono,
     color: THEME.colors.text.muted,
-    marginBottom: THEME.spacing.xs,
-    letterSpacing: 0.5,
+    marginBottom: 4,
+    letterSpacing: 1,
+    fontWeight: "700",
   },
   cardStatValue: {
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: THEME.fonts.mono,
     color: THEME.colors.text.primary,
-    fontWeight: "bold",
+    fontWeight: "900",
   },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingTop: THEME.spacing.sm,
   },
   agentStatus: {
     flexDirection: "row",
     alignItems: "center",
-    gap: THEME.spacing.sm,
+    gap: 8,
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   agentStatusText: {
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
     color: THEME.colors.primary,
+    fontWeight: "800",
     letterSpacing: 1,
   },
   navBarWrapper: {
     position: "absolute",
-    bottom: 30,
+    bottom: 34,
     left: THEME.spacing.xl,
     right: THEME.spacing.xl,
     borderRadius: THEME.borderRadius.full,
     overflow: "hidden",
-    ...THEME.shadows.card,
+    ...THEME.shadows.premium,
   },
   navBar: {
     flexDirection: "row",
     justifyContent: "space-around",
     paddingVertical: THEME.spacing.md,
-    backgroundColor: THEME.colors.background,
+    backgroundColor: THEME.colors.surface,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
   },

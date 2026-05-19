@@ -28,6 +28,8 @@ import {
   Cpu,
   X,
   Target,
+  Sun,
+  Flame,
 } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
@@ -76,18 +78,37 @@ export default function FloodMap({ route, navigation }: any) {
 
   const handleReportPress = () => {
     Alert.alert(
-      "TRANSMIT TELEMETRY",
-      "Select telemetry source to feed into the multi-agent orchestration pipeline:",
+      "REPORT EMERGENCY SIGNAL",
+      "Select the emergency category you want to report:",
       [
-        { text: "Civilian GPS Report", onPress: () => sendTelemetry("user_gps") },
-        { text: "Weather API (Auto-confirm)", onPress: () => sendTelemetry("weather_api") },
-        { text: "Traffic API (Auto-confirm)", onPress: () => sendTelemetry("traffic_api") },
+        {
+          text: "Flood Crisis 🌊",
+          onPress: () => promptTelemetrySource("flood")
+        },
+        {
+          text: "Extreme Heatwave 🔥",
+          onPress: () => promptTelemetrySource("heatwave")
+        },
+        { text: "Cancel", style: "cancel" }
+      ]
+    );
+  };
+
+  const promptTelemetrySource = (disasterType: string) => {
+    const typeLabel = disasterType === "heatwave" ? "Extreme Heatwave" : "Flood Crisis";
+    Alert.alert(
+      "TRANSMIT TELEMETRY",
+      `Select telemetry source to feed into the multi-agent pipeline for ${typeLabel}:`,
+      [
+        { text: "Civilian GPS Report", onPress: () => sendTelemetry("user_gps", disasterType) },
+        { text: "Weather Station Radar", onPress: () => sendTelemetry("weather_station", disasterType) },
+        { text: "Municipal Sensor / IoT", onPress: () => sendTelemetry("sensor", disasterType) },
         { text: "Cancel", style: "cancel" },
       ]
     );
   };
 
-  const sendTelemetry = async (source: string) => {
+  const sendTelemetry = async (source: string, disasterType: string = "flood") => {
     setReporting(true);
     try {
       let coords = {
@@ -107,12 +128,12 @@ export default function FloodMap({ route, navigation }: any) {
         console.log("GPS position fetch timed out or failed, using default coordinates:", locError);
       }
 
-      const res = await api.reportFlood(coords.latitude, coords.longitude, source);
+      const res = await api.reportFlood(coords.latitude, coords.longitude, source, disasterType);
 
       if (res && res.signal_id) {
         Alert.alert(
           "TELEMETRY INJECTED",
-          `A simulated ${source} alert at coordinates [${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}] has been fed into the multi-agent pipeline. Launching triage tracker...`,
+          `A simulated ${disasterType} alert from source '${source}' at coordinates [${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}] has been fed into the multi-agent pipeline. Launching triage tracker...`,
           [
             {
               text: "Launch Triage Tracker",
@@ -184,12 +205,12 @@ export default function FloodMap({ route, navigation }: any) {
           </MapView>
 
           <View style={styles.mapHeaderWrap}>
-            <BlurView intensity={24} tint="light" style={styles.mapHeader}>
+            <View style={styles.mapHeader}>
               <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
                 <ChevronLeft size={20} color={THEME.colors.text.primary} />
               </TouchableOpacity>
               <View style={styles.headerContent}>
-                <Text style={styles.headerTitle}>LIVE FLOOD MAP</Text>
+                <Text style={styles.headerTitle}>LIVE CRISIS MAP</Text>
                 <Text style={styles.headerSubtitle}>Tap a marker to review details.</Text>
                 <View style={styles.statusRow}>
                   <View style={[styles.statusDot, { backgroundColor: THEME.colors.primary }]} />
@@ -197,7 +218,7 @@ export default function FloodMap({ route, navigation }: any) {
                 </View>
               </View>
               {loading && <ActivityIndicator color={THEME.colors.primary} size="small" />}
-            </BlurView>
+            </View>
           </View>
         </View>
 
@@ -209,11 +230,11 @@ export default function FloodMap({ route, navigation }: any) {
             style={[styles.reportButton, reporting && styles.disabledFab]}
           >
             {reporting ? (
-              <ActivityIndicator color={THEME.colors.primary} />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <>
-                <Navigation size={16} color={THEME.colors.primary} />
-                <Text style={styles.reportFabText}>REPORT FLOOD</Text>
+                <Navigation size={16} color="#FFFFFF" />
+                <Text style={styles.reportFabText}>REPORT CRISIS</Text>
               </>
             )}
           </TouchableOpacity>
@@ -233,9 +254,7 @@ export default function FloodMap({ route, navigation }: any) {
                     activeOpacity={0.9}
                     onPress={() => handleIncidentPress(incident)}
                   >
-                    <BlurView
-                      intensity={24}
-                      tint="light"
+                    <View
                       style={[
                         styles.miniCard,
                         selectedIncident?.id === incident.id && styles.activeCard,
@@ -266,7 +285,7 @@ export default function FloodMap({ route, navigation }: any) {
                           <Text style={styles.miniCardActionText}>OPEN DETAILS</Text>
                         </TouchableOpacity>
                       </View>
-                    </BlurView>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -276,8 +295,8 @@ export default function FloodMap({ route, navigation }: any) {
       </SafeAreaView>
 
       <Modal visible={isModalVisible} transparent animationType="none" onRequestClose={() => setIsModalVisible(false)}>
-        <BlurView intensity={20} tint="light" style={styles.modalOverlay}>
-          <BlurView intensity={50} tint="light" style={styles.modalContent}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderInfo}>
                 <Activity size={14} color={THEME.colors.primary} />
@@ -329,13 +348,13 @@ export default function FloodMap({ route, navigation }: any) {
                     });
                   }}
                 >
-                  <Cpu size={18} color={THEME.colors.primary} />
+                  <Cpu size={18} color="#FFFFFF" />
                   <Text style={styles.modalActionText}>INITIALIZE ORCHESTRATOR</Text>
                 </TouchableOpacity>
               </View>
             )}
-          </BlurView>
-        </BlurView>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -367,17 +386,18 @@ const styles = StyleSheet.create({
   mapHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: THEME.colors.background,
-    padding: THEME.spacing.md,
+    backgroundColor: THEME.colors.surface,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
-    borderRadius: THEME.borderRadius.md,
-    gap: THEME.spacing.md,
+    borderRadius: THEME.borderRadius.xxl,
+    gap: THEME.spacing.lg,
+    ...THEME.shadows.premium,
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: THEME.colors.surfaceSoft,
     justifyContent: "center",
     alignItems: "center",
@@ -389,58 +409,66 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: THEME.colors.text.primary,
-    fontSize: 13,
-    fontFamily: THEME.fonts.subheading,
+    fontSize: 16,
+    fontFamily: THEME.fonts.heading,
     letterSpacing: 1,
-    marginBottom: 2,
+    marginBottom: 4,
+    fontWeight: "900",
   },
   headerSubtitle: {
     color: THEME.colors.text.muted,
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: THEME.fonts.body,
-    marginBottom: 6,
+    marginBottom: 8,
+    fontWeight: "500",
   },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "flex-start",
   },
   statusDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   statusText: {
     color: THEME.colors.primary,
     fontSize: 10,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 1,
+    fontWeight: "800",
   },
   contentSection: {
     flex: 0,
     backgroundColor: THEME.colors.background,
     paddingHorizontal: THEME.spacing.md,
-    paddingTop: 2,
-    paddingBottom: 0,
+    paddingTop: 10,
+    paddingBottom: 20,
   },
   reportButton: {
-    minHeight: 44,
-    borderRadius: THEME.borderRadius.sm,
-    backgroundColor: THEME.colors.accentSoft,
+    minHeight: 56,
+    borderRadius: THEME.borderRadius.xl,
+    backgroundColor: THEME.colors.primary,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.18)",
-    marginBottom: 4,
+    gap: 12,
+    paddingHorizontal: 24,
+    ...THEME.shadows.premium,
+    marginBottom: THEME.spacing.lg,
   },
   reportFabText: {
-    color: THEME.colors.primary,
-    fontFamily: THEME.fonts.subheading,
-    fontSize: 10,
-    letterSpacing: 1,
+    color: "#FFFFFF",
+    fontFamily: THEME.fonts.heading,
+    fontWeight: "900",
+    fontSize: 13,
+    letterSpacing: 1.5,
   },
   disabledFab: {
     opacity: 0.6,
@@ -453,30 +481,33 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
   },
   miniCard: {
-    backgroundColor: THEME.colors.background,
-    width: width * 0.70,
-    borderRadius: THEME.borderRadius.md,
-    padding: 10,
+    backgroundColor: THEME.colors.surface,
+    width: width * 0.75,
+    borderRadius: THEME.borderRadius.xxl,
+    padding: THEME.spacing.lg,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
-    marginHorizontal: 6,
+    marginHorizontal: 8,
+    ...THEME.shadows.premium,
   },
   activeCard: {
     borderColor: THEME.colors.primary,
+    borderWidth: 2,
   },
   miniCardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
+    marginBottom: THEME.spacing.md,
   },
   miniCardLocation: {
     color: THEME.colors.text.primary,
-    fontSize: 12,
+    fontSize: 15,
     fontFamily: THEME.fonts.heading,
     flex: 1,
     marginRight: 10,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    fontWeight: "900",
   },
   miniCardFooter: {
     flexDirection: "row",
@@ -486,104 +517,124 @@ const styles = StyleSheet.create({
   miniCardStat: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
+    backgroundColor: THEME.colors.surfaceSoft,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   miniCardStatText: {
-    color: THEME.colors.text.secondary,
-    fontSize: 10,
+    color: THEME.colors.text.primary,
+    fontSize: 11,
     fontFamily: THEME.fonts.mono,
+    fontWeight: "800",
   },
   miniCardAction: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: THEME.colors.accentSoft,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: THEME.borderRadius.sm,
+    gap: 8,
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.18)",
+    borderColor: "rgba(14, 165, 233, 0.15)",
   },
   miniCardActionText: {
     color: THEME.colors.primary,
-    fontSize: 7,
-    fontFamily: THEME.fonts.subheading,
+    fontSize: 9,
+    fontFamily: THEME.fonts.heading,
     letterSpacing: 1,
+    fontWeight: "900",
   },
   markerContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: THEME.colors.background,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: THEME.colors.surface,
     borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
+    ...THEME.shadows.card,
   },
   markerSelected: {
     borderWidth: 3,
-    transform: [{ scale: 1.08 }],
+    borderColor: THEME.colors.primary,
+    transform: [{ scale: 1.15 }],
   },
   calloutContainer: {
-    width: 140,
-    padding: 10,
-    backgroundColor: THEME.colors.background,
-    borderRadius: THEME.borderRadius.sm,
+    width: 160,
+    padding: 12,
+    backgroundColor: THEME.colors.surface,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
+    ...THEME.shadows.card,
   },
   calloutTitle: {
     color: THEME.colors.text.primary,
-    fontSize: 10,
+    fontSize: 12,
     fontFamily: THEME.fonts.heading,
-    marginBottom: 4,
-    letterSpacing: 1,
+    marginBottom: 6,
+    letterSpacing: 0.5,
+    fontWeight: "900",
   },
   calloutAction: {
     color: THEME.colors.primary,
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 1,
+    fontWeight: "800",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    backgroundColor: "rgba(15, 23, 42, 0.5)",
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: THEME.colors.background,
-    borderTopLeftRadius: THEME.borderRadius.lg,
-    borderTopRightRadius: THEME.borderRadius.lg,
+    backgroundColor: THEME.colors.surface,
+    borderTopLeftRadius: THEME.borderRadius.xxl,
+    borderTopRightRadius: THEME.borderRadius.xxl,
     padding: THEME.spacing.xl,
     paddingBottom: 60,
     borderTopWidth: 1,
     borderTopColor: THEME.colors.surfaceBorder,
+    ...THEME.shadows.premium,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: THEME.spacing.lg,
+    marginBottom: THEME.spacing.xl,
   },
   modalHeaderInfo: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   modalLabel: {
     color: THEME.colors.primary,
     fontSize: 10,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 2,
+    fontWeight: "800",
   },
   modalClose: {
-    padding: 4,
+    padding: 6,
+    backgroundColor: THEME.colors.surfaceSoft,
+    borderRadius: 12,
   },
   modalTitle: {
     color: THEME.colors.text.primary,
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: THEME.fonts.heading,
-    letterSpacing: 2,
+    letterSpacing: 0.5,
     marginBottom: THEME.spacing.xl,
+    fontWeight: "900",
   },
   modalBody: {
     paddingTop: THEME.spacing.md,
@@ -591,9 +642,9 @@ const styles = StyleSheet.create({
   modalStatsRow: {
     flexDirection: "row",
     justifyContent: "space-around",
-    backgroundColor: THEME.colors.surface,
-    borderRadius: THEME.borderRadius.sm,
-    padding: THEME.spacing.lg,
+    backgroundColor: THEME.colors.surfaceSoft,
+    borderRadius: 20,
+    padding: THEME.spacing.xl,
     marginBottom: THEME.spacing.xl,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
@@ -603,32 +654,33 @@ const styles = StyleSheet.create({
   },
   modalStatLabel: {
     color: THEME.colors.text.muted,
-    fontSize: 8,
+    fontSize: 9,
     fontFamily: THEME.fonts.mono,
-    marginBottom: 6,
+    marginBottom: 8,
     letterSpacing: 1,
+    fontWeight: "700",
   },
   modalStatValue: {
     color: THEME.colors.text.primary,
-    fontSize: 16,
+    fontSize: 20,
     fontFamily: THEME.fonts.mono,
-    fontWeight: "bold",
+    fontWeight: "900",
   },
   modalPrimaryAction: {
-    backgroundColor: THEME.colors.accentSoft,
-    height: 56,
-    borderRadius: THEME.borderRadius.sm,
+    backgroundColor: THEME.colors.primary,
+    height: 64,
+    borderRadius: THEME.borderRadius.xl,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 12,
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.18)",
+    gap: 16,
+    ...THEME.shadows.premium,
   },
   modalActionText: {
-    color: THEME.colors.primary,
-    fontSize: 12,
+    color: "#FFFFFF",
+    fontSize: 14,
     fontFamily: THEME.fonts.heading,
+    fontWeight: "900",
     letterSpacing: 2,
   },
 });

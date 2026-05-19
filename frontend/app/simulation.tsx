@@ -9,7 +9,6 @@ import { View,
   ActivityIndicator, 
   Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import ExecutionTimeline from "../components/ExecutionTimeline";
 import { api, Action } from "../lib/api";
@@ -102,6 +101,7 @@ export default function SimView({ route, navigation }: any) {
   const completedCount = actions.filter(a => a.status.toUpperCase() === "COMPLETED").length;
   const allCompleted = actions.length > 0 && completedCount === actions.length;
   const isRunning = actions.some(a => ["SENT", "ACTIVE", "ON_SITE", "RUNNING"].includes(a.status.toUpperCase()));
+  const isStarted = actions.some(a => ["ACTIVE", "RUNNING", "COMPLETED", "SENT", "ON_SITE"].includes(a.status.toUpperCase()));
 
 
   return (
@@ -113,7 +113,7 @@ export default function SimView({ route, navigation }: any) {
       <SafeAreaView style={styles.safeArea}>
         {/* Header */}
         <View>
-          <BlurView intensity={20} tint="light" style={styles.header}>
+          <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
               <ChevronLeft size={20} color={THEME.colors.text.primary} />
             </TouchableOpacity>
@@ -126,16 +126,16 @@ export default function SimView({ route, navigation }: any) {
                 {completedCount}/{actions.length || 0} DONE
               </Text>
             </View>
-          </BlurView>
+          </View>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Summary Card */}
           <View style={styles.summaryCardContainer}>
-            <BlurView intensity={25} tint="light" style={styles.summaryCard}>
+            <View style={styles.summaryCard}>
               <View style={styles.summaryHeader}>
                 <View style={styles.iconCircle}>
-                  <Shield size={20} color={THEME.colors.background} />
+                  <Shield size={20} color="#FFFFFF" />
                 </View>
                 <View>
                   <Text style={styles.summaryTitle}>OPERATIONAL PLAN ALPHA</Text>
@@ -148,23 +148,37 @@ export default function SimView({ route, navigation }: any) {
                 and infrastructure is being rerouted based on real-time data projections.
               </Text>
               
-              {actions.length > 0 && !loading && completedCount < actions.length && !isRunning && (
+              {actions.length > 0 && !loading && !isStarted && (
                 <TouchableOpacity 
                   style={[styles.triggerButton, triggering && styles.disabledButton]} 
                   onPress={handleTriggerSim}
                   disabled={triggering}
                 >
                   {triggering ? (
-                    <ActivityIndicator color={THEME.colors.background} size="small" />
+                    <ActivityIndicator color="#FFFFFF" size="small" />
                   ) : (
                     <>
-                      <Rocket size={16} color={THEME.colors.background} />
+                      <Rocket size={16} color="#FFFFFF" />
                       <Text style={styles.triggerButtonText}>ACTIVATE SEQUENCE</Text>
                     </>
                   )}
                 </TouchableOpacity>
               )}
-            </BlurView>
+
+              {actions.length > 0 && !loading && isStarted && !allCompleted && (
+                <View style={styles.activeStatusCard}>
+                  <Activity size={14} color={THEME.colors.primary} />
+                  <Text style={styles.activeStatusText}>RESPONSE SWARM ACTIVE — DISPATCH IN PROGRESS</Text>
+                </View>
+              )}
+
+              {actions.length > 0 && !loading && allCompleted && (
+                <View style={[styles.activeStatusCard, styles.completedStatusCard]}>
+                  <CheckCircle2 size={14} color={THEME.colors.primary} />
+                  <Text style={styles.completedStatusText}>SWARM DISPATCH COMPLETED SUCCESSFUL</Text>
+                </View>
+              )}
+            </View>
           </View>
 
           {/* Timeline Section */}
@@ -196,7 +210,7 @@ export default function SimView({ route, navigation }: any) {
               style={styles.outcomeButton}
               onPress={() => navigation.navigate("Outcome", { incidentId, location })}
             >
-              <CheckCircle2 size={20} color={THEME.colors.background} />
+              <CheckCircle2 size={20} color="#FFFFFF" />
               <Text style={styles.outcomeButtonText}>ANALYZE FINAL IMPACT</Text>
             </TouchableOpacity>
           </View>
@@ -218,16 +232,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.lg,
-    backgroundColor: THEME.colors.background,
+    paddingVertical: THEME.spacing.xl,
+    backgroundColor: THEME.colors.surface,
     gap: THEME.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: THEME.colors.surfaceBorder,
+    ...THEME.shadows.card,
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: THEME.colors.surfaceSoft,
     justifyContent: "center",
     alignItems: "center",
@@ -239,96 +254,105 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     color: THEME.colors.text.muted,
-    fontSize: 9,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 2,
     marginBottom: 4,
+    fontWeight: "700",
   },
   headerTitle: {
     color: THEME.colors.text.primary,
-    fontSize: 16,
+    fontSize: 20,
     fontFamily: THEME.fonts.heading,
+    fontWeight: "900",
   },
   statusBadge: {
-    backgroundColor: THEME.colors.surface,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: THEME.borderRadius.sm,
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: THEME.colors.surfaceBorder,
+    borderColor: "rgba(14, 165, 233, 0.2)",
   },
   statusBadgeText: {
-    color: THEME.colors.text.primary,
-    fontSize: 9,
+    color: THEME.colors.primary,
+    fontSize: 10,
     fontFamily: THEME.fonts.mono,
-    fontWeight: "bold",
+    fontWeight: "900",
     letterSpacing: 1,
   },
   content: {
     flex: 1,
     paddingHorizontal: THEME.spacing.lg,
+    paddingTop: THEME.spacing.lg,
   },
   summaryCardContainer: {
-    borderRadius: THEME.borderRadius.md,
+    borderRadius: THEME.borderRadius.xxl,
     overflow: "hidden",
     marginBottom: THEME.spacing.xl,
+    ...THEME.shadows.premium,
   },
   summaryCard: {
-    backgroundColor: THEME.colors.background,
-    padding: THEME.spacing.lg,
+    backgroundColor: THEME.colors.surface,
+    padding: THEME.spacing.xl,
     borderWidth: 1,
     borderColor: THEME.colors.surfaceBorder,
+    borderRadius: THEME.borderRadius.xxl,
   },
   summaryHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: THEME.spacing.md,
-    marginBottom: THEME.spacing.lg,
+    gap: THEME.spacing.lg,
+    marginBottom: THEME.spacing.xl,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: THEME.borderRadius.sm,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: THEME.colors.primary,
     justifyContent: "center",
     alignItems: "center",
+    ...THEME.shadows.glow,
   },
   summaryTitle: {
     color: THEME.colors.text.primary,
-    fontSize: 12,
+    fontSize: 16,
     fontFamily: THEME.fonts.heading,
     letterSpacing: 1,
+    fontWeight: "900",
   },
   summarySubtitle: {
     color: THEME.colors.text.muted,
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: THEME.fonts.mono,
+    fontWeight: "600",
   },
   summaryText: {
     color: THEME.colors.text.secondary,
-    fontSize: 12,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 22,
     fontFamily: THEME.fonts.body,
     marginBottom: THEME.spacing.xl,
+    fontWeight: "500",
   },
   triggerButton: {
-    backgroundColor: THEME.colors.accentSoft,
-    height: 50,
-    borderRadius: THEME.borderRadius.sm,
+    backgroundColor: THEME.colors.primary,
+    height: 56,
+    borderRadius: THEME.borderRadius.xl,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     gap: 12,
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.18)",
+    ...THEME.shadows.premium,
   },
   disabledButton: {
     opacity: 0.7,
   },
   triggerButtonText: {
-    color: THEME.colors.primary,
-    fontSize: 12,
+    color: "#FFFFFF",
+    fontSize: 14,
     fontFamily: THEME.fonts.heading,
+    fontWeight: "900",
     letterSpacing: 2,
   },
   timelineSection: {
@@ -337,29 +361,32 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginBottom: THEME.spacing.lg,
+    gap: 10,
+    marginBottom: THEME.spacing.xl,
   },
   sectionTitle: {
-    color: THEME.colors.text.muted,
-    fontSize: 10,
+    color: THEME.colors.text.primary,
+    fontSize: 12,
     fontFamily: THEME.fonts.mono,
     letterSpacing: 2,
+    fontWeight: "900",
   },
   emptyState: {
     alignItems: "center",
-    paddingVertical: 50,
-    backgroundColor: THEME.colors.background,
-    borderRadius: THEME.borderRadius.md,
+    paddingVertical: 60,
+    backgroundColor: THEME.colors.surface,
+    borderRadius: THEME.borderRadius.xxl,
     borderWidth: 1,
     borderStyle: "dashed",
     borderColor: THEME.colors.surfaceBorder,
+    ...THEME.shadows.card,
   },
   emptyText: {
     color: THEME.colors.text.muted,
     fontSize: 12,
     fontFamily: THEME.fonts.mono,
-    marginTop: 12,
+    marginTop: 16,
+    fontWeight: "600",
   },
   footer: {
     position: "absolute",
@@ -371,20 +398,50 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   outcomeButton: {
-    backgroundColor: THEME.colors.accentSoft,
-    height: 56,
-    borderRadius: THEME.borderRadius.sm,
+    backgroundColor: THEME.colors.primary,
+    height: 64,
+    borderRadius: THEME.borderRadius.xl,
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 12,
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.18)",
+    gap: 16,
+    ...THEME.shadows.premium,
   },
   outcomeButtonText: {
-    color: THEME.colors.primary,
-    fontSize: 12,
+    color: "#FFFFFF",
+    fontSize: 14,
     fontFamily: THEME.fonts.heading,
+    fontWeight: "900",
     letterSpacing: 2,
+  },
+  activeStatusCard: {
+    backgroundColor: "rgba(14, 165, 233, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(14, 165, 233, 0.2)",
+    borderRadius: THEME.borderRadius.lg,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  activeStatusText: {
+    color: THEME.colors.primary,
+    fontSize: 11,
+    fontFamily: THEME.fonts.heading,
+    letterSpacing: 1,
+    fontWeight: "800",
+  },
+  completedStatusCard: {
+    backgroundColor: "rgba(16, 185, 129, 0.08)",
+    borderColor: "rgba(16, 185, 129, 0.2)",
+  },
+  completedStatusText: {
+    color: "#10B981",
+    fontSize: 11,
+    fontFamily: THEME.fonts.heading,
+    letterSpacing: 1,
+    fontWeight: "800",
   },
 });
