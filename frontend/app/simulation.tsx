@@ -56,11 +56,19 @@ export default function SimView({ route, navigation }: any) {
   useEffect(() => {
     fetchSimulationState();
 
-    const interval = setInterval(fetchSimulationState, 3000);
+    const interval = setInterval(fetchSimulationState, 1500);
     return () => clearInterval(interval);
   }, [incidentId, isSimulatingLocally]);
 
   const handleTriggerSim = async () => {
+    // Check if already started
+    // Updated isStartedAlready logic to only block when an action is actively running
+    const isStartedAlready = actions.some(a => ["ACTIVE", "RUNNING", "SENT", "ON_SITE"].includes(a.status.toUpperCase()));
+    if (isStartedAlready && !triggering) {
+      Alert.alert("SIMULATION ALREADY ACTIVE", "The response sequence is already in progress. Please monitor the timeline.");
+      return;
+    }
+
     setTriggering(true);
     const success = await api.triggerSimulation(incidentId);
     setTriggering(false);
@@ -83,6 +91,7 @@ export default function SimView({ route, navigation }: any) {
           setActions(prev => {
             let next = [...prev];
             if (next[0]) next[0] = { ...next[0], status: "ACTIVE" };
+            api.updateMockActions(incidentId, next);
             return next;
           });
           setMetrics(disasterType === "heatwave"
@@ -97,6 +106,7 @@ export default function SimView({ route, navigation }: any) {
             let next = [...prev];
             if (next[0]) next[0] = { ...next[0], status: "COMPLETED" };
             if (next[1]) next[1] = { ...next[1], status: "ACTIVE" };
+            api.updateMockActions(incidentId, next);
             return next;
           });
           setMetrics(disasterType === "heatwave"
@@ -111,6 +121,7 @@ export default function SimView({ route, navigation }: any) {
             let next = [...prev];
             if (next[1]) next[1] = { ...next[1], status: "COMPLETED" };
             if (next[2]) next[2] = { ...next[2], status: "ACTIVE" };
+            api.updateMockActions(incidentId, next);
             return next;
           });
           setMetrics(disasterType === "heatwave"
@@ -119,18 +130,21 @@ export default function SimView({ route, navigation }: any) {
           );
         }, 7000);
         
-        // Step 4: Set action 3 to completed
+        // Step 4: Set action 3 to completed, then stop local simulation
         setTimeout(() => {
           setActions(prev => {
             let next = [...prev];
             if (next[2]) next[2] = { ...next[2], status: "COMPLETED" };
+            api.updateMockActions(incidentId, next);
             return next;
           });
           setMetrics(disasterType === "heatwave"
             ? {"cooling_coverage": 100, "safety_rate": 98, "grid_relief": 95}
             : {"congestion_index": 20, "evacuation_rate": 98, "road_blockage": 0}
           );
+          // Stop local simulation and let backend polling take over
           setIsSimulatingLocally(false);
+          console.log("📊 [SimView] Local simulation completed, resuming backend polling");
         }, 10000);
       }
     } else {

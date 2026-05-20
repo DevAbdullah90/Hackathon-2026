@@ -87,7 +87,6 @@ async def run_simulation_loop(incident_id: uuid.UUID, action_ids: Optional[List[
             return
 
         # Fetch incident for target coordinates
-        from app.models.incidents import Incident
         incident_query = select(Incident).where(Incident.id == incident_id)
         incident_result = await session.execute(incident_query)
         incident = incident_result.scalar_one_or_none()

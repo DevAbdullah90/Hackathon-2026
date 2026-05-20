@@ -2,7 +2,7 @@
 // Central API service connecting Next.js web_frontend to FastAPI backend.
 
 const LOCAL_API_BASE = "http://localhost:8000/api/v1";
-const PROD_API_BASE = "https://hackathon-2026-production-ff6c.up.railway.app/api/v1";
+const PROD_API_BASE = "https://abdullah9873-backend-rag-chatbot-v2.hf.space/api/v1";
 
 export let API_BASE_URL = LOCAL_API_BASE;
 
@@ -133,10 +133,10 @@ export interface SafeHavenRouteResponse {
 export interface PipelineStatus {
   signal_id: string;
   incident_id: string | null;
-  status: string; // \'PROCESSING\' | \'CONFIRMED\' | \'REJECTED\'
+  status: string; // 'PROCESSING' | 'CONFIRMED' | 'REJECTED'
   stage: string;
   stage_index: number;
-  stage_status: string; // \'RUNNING\' | \'COMPLETED\' | \'FAILED\' | \'SKIPPED\'
+  stage_status: string; // 'RUNNING' | 'COMPLETED' | 'FAILED' | 'SKIPPED'
   message: string;
   updated_at: string;
   agent_states?: Record<string, string>;
