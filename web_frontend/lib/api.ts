@@ -588,7 +588,7 @@ export const api = {
    */
   async triggerSimulation(incidentId: string): Promise<boolean> {
     try {
-      await makeRequest<any>(`/simulation/${incidentId}/trigger`, {
+      await makeRequest<any>(`/simulation/trigger/${incidentId}`, {
         method: "POST"
       });
       return true;
@@ -701,7 +701,7 @@ export const api = {
    */
   async getSimulationState(incidentId: string): Promise<Action[]> {
     try {
-      const data = await makeRequest<any[]>(`/simulation/${incidentId}/state`);
+      const data = await makeRequest<any[]>(`/simulation/state/${incidentId}`);
       if (!data) return [];
       return data.map((item) => ({
         id: String(item.id),

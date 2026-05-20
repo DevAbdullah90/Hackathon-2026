@@ -35,6 +35,11 @@ export default function EventsPanel({ selectedIncident, onSelectIncident, onView
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
 
+  // Simulation metrics state
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [congestionHistory, setCongestionHistory] = useState<number[]>([90]);
+  const [safetyCoverage, setSafetyCoverage] = useState<number>(0);
+
   const fetchIncidents = async () => {
     try {
       const data = await api.getActiveIncidents();
@@ -111,6 +116,231 @@ export default function EventsPanel({ selectedIncident, onSelectIncident, onView
       setNotifications([]);
     }
   }, [selectedIncident?.id]);
+
+  // Synchronize simulation metrics with actions state or incoming WebSocket events
+  useEffect(() => {
+    if (selectedIncident) {
+      const hasActions = actions.length > 0;
+      const allCompleted = hasActions && actions.every(a => a.status === "COMPLETED");
+      const anyActive = hasActions && actions.some(a => ["SENT", "ACTIVE", "ON_SITE", "DISPATCHED", "IN PROGRESS", "IN_PROGRESS"].includes(a.status));
+      
+      if (allCompleted) {
+        setCongestionHistory([90, 75, 50, 35, 20]);
+        setSafetyCoverage(100);
+        setIsSimulating(false);
+      } else if (anyActive) {
+        let cong = 90;
+        let safety = 0;
+        const statuses = actions.map(a => a.status.toUpperCase());
+        
+        if (statuses.includes("ON_SITE") || statuses.includes("ON-SITE") || statuses.includes("ON SITE")) {
+          cong = 35;
+          safety = 85;
+        } else if (statuses.includes("ACTIVE") || statuses.includes("IN PROGRESS") || statuses.includes("IN_PROGRESS")) {
+          cong = 50;
+          safety = 60;
+        } else if (statuses.includes("SENT") || statuses.includes("DISPATCHED")) {
+          cong = 75;
+          safety = 25;
+        }
+        
+        const hist = [90];
+        if (cong <= 75) hist.push(75);
+        if (cong <= 50) hist.push(50);
+        if (cong <= 35) hist.push(35);
+        
+        setCongestionHistory(hist);
+        setSafetyCoverage(safety);
+        setIsSimulating(true);
+      } else {
+        setCongestionHistory([90]);
+        setSafetyCoverage(0);
+        setIsSimulating(false);
+      }
+    }
+  }, [selectedIncident?.id, actions]);
+
+  // Listen to global socket event from page.tsx
+  useEffect(() => {
+    const handleSimulationProgress = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const data = customEvent.detail;
+      
+      if (data && selectedIncident && data.incident_id === selectedIncident.id) {
+        // Refetch actions list to sync UI status badge
+        fetchActions(selectedIncident.id);
+        
+        if (data.metrics) {
+          const cong = data.metrics.congestion_index;
+          const safety = data.metrics.cooling_coverage || data.metrics.safety_rate || data.metrics.evacuation_rate;
+          
+          if (cong !== undefined) {
+            setCongestionHistory((prev) => {
+              if (prev.includes(cong)) return prev;
+              return [...prev, cong];
+            });
+          }
+          if (safety !== undefined) {
+            setSafetyCoverage(safety);
+          }
+        }
+        
+        if (data.status === "COMPLETED") {
+          setIsSimulating(false);
+        } else {
+          setIsSimulating(true);
+        }
+      }
+    };
+    
+    window.addEventListener("refresh_simulation", handleSimulationProgress);
+    return () => window.removeEventListener("refresh_simulation", handleSimulationProgress);
+  }, [selectedIncident?.id]);
+
+  const handleRunSimulation = async () => {
+    if (!selectedIncident) return;
+    setIsSimulating(true);
+    const success = await api.triggerSimulation(selectedIncident.id);
+    if (!success) {
+      setIsSimulating(false);
+      alert("Failed to start simulation. Verify backend is running and actions exist for this incident.");
+    }
+  };
+
+  const drawFloodChart = () => {
+    const width = 300;
+    const height = 120;
+    const paddingX = 35;
+    const paddingY = 20;
+    
+    const points = congestionHistory.map((val, idx) => {
+      const x = paddingX + ((width - 2 * paddingX) * (idx / 4));
+      const y = height - paddingY - ((val / 100) * (height - 2 * paddingY));
+      return { x, y, val };
+    });
+
+    const pathD = points.length > 0 
+      ? points.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")
+      : "";
+
+    const areaD = points.length > 0
+      ? `${pathD} L ${points[points.length - 1].x} ${height - paddingY} L ${points[0].x} ${height - paddingY} Z`
+      : "";
+
+    return (
+      <div className="flex flex-col space-y-2 py-1">
+        <div className="flex justify-between items-center text-[10px] font-bold">
+          <span className="text-gray-400 font-bold uppercase tracking-wider">Congestion Index Flow</span>
+          <span className={`font-mono px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase ${
+            congestionHistory[congestionHistory.length - 1] > 50 
+              ? "bg-red-50 text-red-600 border border-red-200" 
+              : "bg-emerald-50 text-emerald-600 border border-emerald-200"
+          }`}>
+            Current: {congestionHistory[congestionHistory.length - 1]}% ({congestionHistory[congestionHistory.length - 1] > 50 ? "Gridlock" : "Flowing"})
+          </span>
+        </div>
+        
+        <div className="bg-slate-950 rounded-xl p-3 border border-slate-900 shadow-inner flex items-center justify-center">
+          <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+            <defs>
+              <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ef4444" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity="0.0" />
+              </linearGradient>
+              <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#ef4444" />
+                <stop offset="50%" stopColor="#f59e0b" />
+                <stop offset="100%" stopColor="#10b981" />
+              </linearGradient>
+            </defs>
+            
+            <line x1={paddingX} y1={paddingY} x2={width - paddingX} y2={paddingY} stroke="rgba(255,255,255,0.07)" strokeDasharray="3,3" />
+            <line x1={paddingX} y1={(height)/2} x2={width - paddingX} y2={(height)/2} stroke="rgba(255,255,255,0.07)" strokeDasharray="3,3" />
+            <line x1={paddingX} y1={height - paddingY} x2={width - paddingX} y2={height - paddingY} stroke="rgba(255,255,255,0.15)" />
+            
+            <text x={paddingX - 8} y={paddingY + 3} textAnchor="end" className="text-[8px] font-mono fill-gray-500 font-bold">90%</text>
+            <text x={paddingX - 8} y={(height)/2 + 3} textAnchor="end" className="text-[8px] font-mono fill-gray-500 font-bold">55%</text>
+            <text x={paddingX - 8} y={height - paddingY + 3} textAnchor="end" className="text-[8px] font-mono fill-gray-500 font-bold">20%</text>
+
+            {areaD && <path d={areaD} fill="url(#areaGrad)" />}
+
+            {pathD && <path d={pathD} fill="none" stroke="url(#lineGrad)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
+
+            {points.map((p, idx) => (
+              <g key={idx}>
+                <circle 
+                  cx={p.x} 
+                  cy={p.y} 
+                  r="3.5" 
+                  className={idx === points.length - 1 ? "fill-emerald-400 stroke-slate-950 stroke-1.5" : "fill-red-500 stroke-slate-950 stroke-1.5"} 
+                />
+                {idx === points.length - 1 && (
+                  <circle cx={p.x} cy={p.y} r="8" className="fill-none stroke-emerald-400 stroke-1 animate-ping" />
+                )}
+              </g>
+            ))}
+
+            <text x={paddingX} y={height - 4} textAnchor="middle" className="text-[8px] font-mono fill-gray-500 font-bold">0m</text>
+            <text x={paddingX + (width - 2 * paddingX) * 0.33} y={height - 4} textAnchor="middle" className="text-[8px] font-mono fill-gray-500 font-bold">5m</text>
+            <text x={paddingX + (width - 2 * paddingX) * 0.66} y={height - 4} textAnchor="middle" className="text-[8px] font-mono fill-gray-500 font-bold">10m</text>
+            <text x={width - paddingX} y={height - 4} textAnchor="middle" className="text-[8px] font-mono fill-gray-500 font-bold">15m</text>
+          </svg>
+        </div>
+      </div>
+    );
+  };
+
+  const drawHeatwaveMeter = () => {
+    const radius = 35;
+    const strokeWidth = 7;
+    const circ = 2 * Math.PI * radius;
+    const offset = circ - (safetyCoverage / 100) * circ;
+    
+    return (
+      <div className="flex items-center gap-6 py-2">
+        <div className="relative w-24 h-24 flex items-center justify-center flex-shrink-0">
+          <svg className="w-full h-full transform -rotate-90">
+            <circle 
+              cx="48" 
+              cy="48" 
+              r={radius} 
+              className="stroke-gray-100 fill-none" 
+              strokeWidth={strokeWidth} 
+            />
+            <circle 
+              cx="48" 
+              cy="48" 
+              r={radius} 
+              className="stroke-orange-500 fill-none transition-all duration-700 ease-out" 
+              strokeWidth={strokeWidth} 
+              strokeDasharray={circ} 
+              strokeDashoffset={offset} 
+              strokeLinecap="round" 
+            />
+          </svg>
+          <div className="absolute flex flex-col items-center justify-center">
+            <span className="text-lg font-black text-gray-800 leading-none">{safetyCoverage}%</span>
+            <span className="text-[8px] font-extrabold text-gray-400 uppercase tracking-wider mt-0.5">Coverage</span>
+          </div>
+        </div>
+        <div className="flex-1 space-y-1.5">
+          <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider">
+            <span className="text-gray-400">Target</span>
+            <span className="text-orange-600 font-bold">Hydration Camps</span>
+          </div>
+          <div className="text-xs text-gray-600 font-semibold leading-relaxed">
+            {safetyCoverage === 0 ? (
+              "Hydration camps planned. Dispatch camps to begin monitoring evacuation coverage."
+            ) : safetyCoverage < 100 ? (
+              `Camps are establishing on-site. Current public safety reach is ${safetyCoverage}%.`
+            ) : (
+              "All planned cooling & hydration camps are fully operational on-site (100% Coverage)."
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const getEmergencyLevel = (score: number) => {
     const rounded = Math.min(Math.max(Math.round(score / 2), 1), 5);
@@ -271,6 +501,39 @@ export default function EventsPanel({ selectedIncident, onSelectIncident, onView
                     <span>ETA Peak: {selectedIncident.peak_impact_eta}</span>
                     <span>Confidence: {(selectedIncident.confidence * 100).toFixed(0)}%</span>
                   </div>
+                </div>
+
+                {/* Simulated Impact Graph & Simulation Control Card */}
+                <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-xs space-y-4">
+                  {/* Header & Trigger Button */}
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      📊 Real-Time Response Impact
+                    </span>
+                    <button
+                      onClick={handleRunSimulation}
+                      disabled={isSimulating}
+                      className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1.5 border rounded-lg shadow-2xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isHeatwave
+                          ? "bg-orange-500 border-orange-600 hover:bg-orange-600 text-white"
+                          : "bg-emerald-500 border-emerald-600 hover:bg-emerald-600 text-white"
+                      }`}
+                    >
+                      {isSimulating ? (
+                        <>
+                          <span className="animate-spin w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full block" />
+                          <span>Simulating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>⚡ Run Impact Simulation</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Impact Chart Display */}
+                  {isHeatwave ? drawHeatwaveMeter() : drawFloodChart()}
                 </div>
               </div>
 
