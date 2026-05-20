@@ -133,9 +133,9 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
   const [injectorCity, setInjectorCity] = useState("Karachi");
   const [injectorSource, setInjectorSource] = useState("twitter");
   const [injectorType, setInjectorType] = useState("flash_flood");
-  const [injectorLat, setInjectorLat] = useState("24.9088");
-  const [injectorLng, setInjectorLng] = useState("67.1282");
-  const [injectorComment, setInjectorComment] = useState("Judges Custom Flood Scenario: Jauhar Chowrangi under 1.5m water, local drainage blocked.");
+  const [injectorLat, setInjectorLat] = useState("24.9180");
+  const [injectorLng, setInjectorLng] = useState("67.0970");
+  const [injectorComment, setInjectorComment] = useState("Judges Custom Flood Scenario: Gulshan-e-Iqbal roads heavily inundated, traffic suspended.");
 
   // Auto-fill coordinates and comments on city or type selection
   useEffect(() => {
@@ -144,22 +144,22 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
     if (injectorCity === "Karachi") {
       if (isHeat) {
         setInjectorLat("24.8607");
-        setInjectorLng("67.0011");
-        setInjectorComment("Record temperatures at 47°C in Saddar. Citizens fainting near Empress Market due to extreme humidity. Multiple load-shedding zones reported.");
+        setInjectorLng("67.0244");
+        setInjectorComment("Record temperatures at 47°C in Saddar. Multiple heat stroke cases reported in highly congested transit points. Grid power failure.");
       } else {
-        setInjectorLat("24.9088");
-        setInjectorLng("67.1282");
-        setInjectorComment("Judges Custom Flood Scenario: Jauhar Chowrangi under 1.5m water, local drainage blocked.");
+        setInjectorLat("24.9180");
+        setInjectorLng("67.0970");
+        setInjectorComment("Judges Custom Flood Scenario: Gulshan-e-Iqbal roads heavily inundated, traffic suspended.");
       }
     } else if (injectorCity === "Islamabad") {
       if (isHeat) {
-        setInjectorLat("33.6844");
-        setInjectorLng("73.0479");
-        setInjectorComment("Heat dome over Islamabad. Temperature at 45°C. Water shortages reported in sector G-10.");
+        setInjectorLat("33.6394");
+        setInjectorLng("73.0249");
+        setInjectorComment("Heat dome over Islamabad. Temperature at 45°C in I-10. Densely populated areas facing water supply shortages.");
       } else {
-        setInjectorLat("33.6844");
-        setInjectorLng("73.0479");
-        setInjectorComment("Judges Custom Flood Scenario: G-10 service road heavily flooded due to storm water drain failure.");
+        setInjectorLat("33.6610");
+        setInjectorLng("73.0485");
+        setInjectorComment("Judges Custom Flood Scenario: Sector H-9 main streets submerged, local storm drainage blocked.");
       }
     } else if (injectorCity === "Austin") {
       if (isHeat) {
@@ -173,9 +173,9 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
       }
     } else if (injectorCity === "Lahore") {
       if (isHeat) {
-        setInjectorLat("31.5590");
-        setInjectorLng("74.3260");
-        setInjectorComment("Heat index exceeding 52°C in Anarkali. Street vendors collapsing. Hospitals reporting surge in heat stroke admissions. Power grid failures in inner city.");
+        setInjectorLat("31.5880");
+        setInjectorLng("74.3150");
+        setInjectorComment("Heat index exceeding 52°C near Shahi Qila. Street vendors collapsing. Local hospital emergency rooms flooded with heatstroke cases.");
       } else {
         setInjectorLat("31.5204");
         setInjectorLng("74.3587");
@@ -553,23 +553,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
           </div>
         </div>
 
-        {/* Center: Command indicators */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-gray-50/50 shadow-2xs">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Target Domain</span>
-            <div className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              <span className="text-xs font-bold text-gray-800">Karachi, Pakistan</span>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 bg-gray-50/50 shadow-2xs">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Triage Framework</span>
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-bold text-gray-800">FastAPI + Gemini-Flash</span>
-            </div>
-          </div>
-        </div>
 
         {/* Right side: Simulated Trigger Emergency Button */}
         <div className="flex items-center gap-3 justify-end">

@@ -26,33 +26,33 @@ export default function CTECCPanel() {
   }, []);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden h-full flex flex-col justify-between">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden h-fit flex flex-col">
       {/* Top Accent Gradient Bar */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-600 to-teal-600" />
       <div>
         {/* Card Header */}
-        <div className="px-4 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Cpu className="w-4 h-4 text-emerald-600 animate-pulse" />
-            <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">AI Specialist Workforce</h3>
+            <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">AI Specialist Workforce</h3>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-gray-400 font-semibold select-none">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-              <span>Multi-Agent Core</span>
+            <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-semibold select-none">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>Active Swarm</span>
             </div>
           </div>
         </div>
 
         {/* Workforce Grid */}
-        <div className="p-4 grid grid-cols-2 gap-3">
+        <div className="p-3 grid grid-cols-1 gap-2">
           {loading ? (
-            <div className="col-span-2 text-xs text-gray-400 py-12 text-center animate-pulse font-semibold">
+            <div className="text-xs text-gray-400 py-6 text-center animate-pulse font-semibold">
               Querying agent states...
             </div>
           ) : agents.length === 0 ? (
-            <div className="col-span-2 text-xs text-gray-400 py-12 text-center font-medium">
+            <div className="text-xs text-gray-400 py-6 text-center font-medium">
               No agents registered. Check FastAPI console logs.
             </div>
           ) : (
@@ -61,36 +61,39 @@ export default function CTECCPanel() {
               return (
                 <div 
                   key={idx} 
-                  className={`p-3 rounded-xl border transition-all duration-300 flex flex-col justify-between min-h-[84px] shadow-2xs ${
+                  className={`px-3 py-2 rounded-xl border transition-all duration-300 flex items-center justify-between shadow-2xs ${
                     isProcessing 
-                      ? "bg-emerald-50/50 border-emerald-300 shadow-emerald-50/50 scale-[1.02]" 
-                      : "bg-gray-50/60 border-gray-100 hover:border-gray-200"
+                      ? "bg-emerald-50/50 border-emerald-300 shadow-emerald-50/50 scale-[1.01]" 
+                      : "bg-slate-50/60 border-slate-100 hover:border-slate-200"
                   }`}
                 >
-                  {/* Agent Header */}
-                  <div className="flex justify-between items-start gap-1">
-                    <span className="text-[11px] font-bold text-gray-800 leading-tight">
-                      {agentItem.agent}
-                    </span>
-                    {isProcessing && <Zap className="w-3.5 h-3.5 text-emerald-500 animate-bounce flex-shrink-0" />}
+                  {/* Agent Info */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {isProcessing ? (
+                      <Zap className="w-3.5 h-3.5 text-emerald-500 animate-pulse flex-shrink-0" />
+                    ) : (
+                      <Activity className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    )}
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11px] font-extrabold text-slate-700 truncate leading-tight">
+                        {agentItem.agent}
+                      </span>
+                      {agentItem.active_incident && (
+                        <span className="text-[8px] font-mono text-slate-400 mt-0.5 leading-none">
+                          Sec: {agentItem.active_incident.substring(0, 8)}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Agent Status Badge */}
-                  <div className="flex items-center justify-between border-t border-gray-200/40 pt-2 mt-2">
-                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 border rounded-md tracking-wider ${
-                      isProcessing 
-                        ? "bg-emerald-100 text-emerald-700 border-emerald-300 animate-pulse" 
-                        : "bg-gray-100 text-gray-400 border-gray-200"
-                    }`}>
-                      {agentItem.status}
-                    </span>
-
-                    {agentItem.active_incident && (
-                      <span className="text-[9px] font-bold text-gray-400 bg-white border border-gray-200 px-1 py-0.5 rounded">
-                        Sec: {agentItem.active_incident.substring(0, 7)}
-                      </span>
-                    )}
-                  </div>
+                  <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 border rounded-md tracking-wider flex-shrink-0 ${
+                    isProcessing 
+                      ? "bg-emerald-100 text-emerald-700 border-emerald-300 animate-pulse" 
+                      : "bg-slate-100 text-slate-400 border-slate-200"
+                  }`}>
+                    {agentItem.status}
+                  </span>
                 </div>
               );
             })

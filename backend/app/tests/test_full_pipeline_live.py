@@ -221,6 +221,11 @@ async def test_full_pipeline_karachi():
         print("\n  [Step 3] Running Detection Agent...")
         res = await Runner.run(detection_agent, json.dumps(processed_signals))
         detection_output = json.loads(res.final_output)
+        if isinstance(detection_output, list):
+            if len(detection_output) > 0:
+                detection_output = detection_output[0]
+            else:
+                detection_output = {}
         print(f"    Confirmed: {detection_output.get('confirmed')}")
         print(f"    Confidence: {detection_output.get('confidence')}")
         print(f"    Location: {detection_output.get('incident_location')}")
@@ -419,6 +424,11 @@ async def test_full_pipeline_lahore_edge_case():
         # Feed the processed signals to the detection agent
         res = await Runner.run(detection_agent, json.dumps(processed_signals))
         detection_output = json.loads(res.final_output)
+        if isinstance(detection_output, list):
+            if len(detection_output) > 0:
+                detection_output = detection_output[0]
+            else:
+                detection_output = {}
         
         # This is a tricky cluster: 1 flood (no coords), 1 inferred flood, 1 non_flood.
         # It's likely unconfirmed or low confidence.

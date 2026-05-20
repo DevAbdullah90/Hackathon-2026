@@ -159,6 +159,11 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
         update_pipeline_progress(sig_id_str, "PROCESSING", "detection_agent", 2, "RUNNING", "Deduplicating and running clustering algorithm...")
         res_detection = await Runner.run(detection_agent, json.dumps([processed_signal]))
         detection_output = json.loads(res_detection.final_output)
+        if isinstance(detection_output, list):
+            if len(detection_output) > 0:
+                detection_output = detection_output[0]
+            else:
+                detection_output = {}
         logger.info(f"🔍 [Detection Agent] Verdict confirmed: {detection_output.get('confirmed')}")
         update_pipeline_progress(sig_id_str, "PROCESSING", "detection_agent", 2, "COMPLETED", "Verdict clustering run completed.")
 
@@ -188,7 +193,8 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
                 "incident_center_lat": detection_output.get("incident_center_lat") or signal_payload.get("lat") or 0.0,
                 "incident_center_lng": detection_output.get("incident_center_lng") or signal_payload.get("lng") or 0.0,
                 "detection_confidence": confidence,
-                "conflicting_signals": [],
+                "conflicting_signals": [processed_signal],
+                "type": processed_signal.get("type") or "flood",
                 "detection_id": detection_output.get("detection_id") or str(uuid.uuid4())
             }
             res_verification = await Runner.run(verification_agent, json.dumps(verification_input))
@@ -470,12 +476,12 @@ async def trigger_mock_signal(
     
     mock_scenarios = [
         # ── Flood Scenarios ──
-        {"location": "Block 18 Jauhar, Gulistan-e-Jauhar, Karachi", "lat": 24.9088, "lng": 67.1282, "type": "flood", "comment": "Severe street inundation on Block 18 Main Road near Jauhar Chowrangi. Water entering ground floors!"},
-        {"location": "G-10 Markaz, Islamabad", "lat": 33.6675, "lng": 73.0303, "type": "flood", "comment": "Heavy waterlogging reported near G-10 Markaz service road. Vehicles stranded in knee-deep water."},
+        {"location": "Gulshan-e-Iqbal, Karachi", "lat": 24.9180, "lng": 67.0970, "type": "flood", "comment": "Severe street inundation in Gulshan-e-Iqbal. Main commercial avenues flooded, urban runoff entering basement shops!"},
+        {"location": "Sector H-9, Islamabad", "lat": 33.6610, "lng": 73.0485, "type": "flood", "comment": "Heavy waterlogging reported near Sector H-9. Main transit routes submerged, traffic completely suspended."},
         # ── Heatwave Scenarios ──
-        {"location": "Saddar Market, Karachi", "lat": 24.8607, "lng": 67.0011, "type": "heatwave", "comment": "Record temperatures at 47°C in Saddar. Citizens fainting near Empress Market due to extreme humidity. Multiple load-shedding zones reported."},
-        {"location": "Anarkali Bazaar, Lahore", "lat": 31.5590, "lng": 74.3260, "type": "heatwave", "comment": "Heat index exceeding 52°C in Anarkali. Street vendors collapsing. Hospitals reporting surge in heat stroke admissions. Power grid failures in inner city."},
-        {"location": "Burns Garden, Karachi", "lat": 24.8556, "lng": 67.0280, "type": "heatwave", "comment": "Temperature 46°C with 75% humidity near Burns Garden. Multiple elderly casualties reported. No shade infrastructure available in the area."},
+        {"location": "Saddar, Karachi", "lat": 24.8607, "lng": 67.0244, "type": "heatwave", "comment": "Record temperatures at 47°C in Saddar. Multiple heat stroke cases reported in highly congested transit points. Grid power failure."},
+        {"location": "Shahi Qila, Lahore", "lat": 31.5880, "lng": 74.3150, "type": "heatwave", "comment": "Heat index exceeding 52°C near Shahi Qila. Street vendors collapsing. Local hospital emergency rooms flooded with heatstroke cases."},
+        {"location": "Clifton Beach, Karachi", "lat": 24.7869, "lng": 67.0315, "type": "heatwave", "comment": "Extreme heat conditions of 46°C with 75% humidity near Clifton. High citizen congestion at the beach, heat exhaustion reported."},
     ]
     
     sources = ["weather_api", "traffic_api"]
