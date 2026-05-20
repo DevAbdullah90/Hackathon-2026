@@ -1,0 +1,161 @@
+### Full SQLModel Example with UUIDs
+
+Source: https://sqlmodel.tiangolo.com/advanced/uuid
+
+A complete example demonstrating the creation of a database, a hero with a UUID primary key, and selecting the hero.
+
+```python
+import uuid
+
+from sqlmodel import Field, Session, SQLModel, create_engine, select
+
+
+class Hero(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(index=True)
+    secret_name: str
+    age: int | None = Field(default=None, index=True)
+
+
+sqlite_file_name = "database.db"
+sqlite_url = f"sqlite:///{sqlite_file_name}"
+
+engine = create_engine(sqlite_url, echo=True)
+
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+
+def create_hero():
+    with Session(engine) as session:
+        hero = Hero(name="Deadpond", secret_name="Dive Wilson")
+        print("The hero before saving in the DB")
+        print(hero)
+        print("The hero ID was already set")
+        print(hero.id)
+        session.add(hero)
+        session.commit()
+        session.refresh(hero)
+        print("After saving in the DB")
+        print(hero)
+
+
+def select_hero():
+    with Session(engine) as session:
+        hero_2 = Hero(name="Spider-Boy", secret_name="Pedro Parqueador")
+        session.add(hero_2)
+        session.commit()
+        session.refresh(hero_2)
+        hero_id = hero_2.id
+        print("Created hero:")
+        print(hero_2)
+        print("Created hero ID:")
+        print(hero_id)
+
+        statement = select(Hero).where(Hero.id == hero_id)
+        selected_hero = session.exec(statement).one()
+        print("Selected hero:")
+        print(selected_hero)
+        print("Selected hero ID:")
+        print(selected_hero.id)
+
+
+def main() -> None:
+    create_db_and_tables()
+    create_hero()
+    select_hero()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+--------------------------------
+
+### Define Hero Model with UUID Primary Key
+
+Source: https://sqlmodel.tiangolo.com/advanced/uuid
+
+Defines a Hero model inheriting from SQLModel, using `uuid.uuid4` as the default factory for the `id` field, making it a primary key. Ensure Python 3.10+ is used.
+
+```python
+import uuid
+
+from sqlmodel import Field, Session, SQLModel, create_engine
+
+
+class Hero(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(index=True)
+    secret_name: str
+    age: int | None = Field(default=None, index=True)
+```
+
+--------------------------------
+
+### Define a SQLModel Table
+
+Source: https://sqlmodel.tiangolo.com/?q=
+
+Create a SQLModel class that maps to a SQL table. Use `Field` for column definitions and `table=True` to indicate it's a table.
+
+```python
+from sqlmodel import Field, SQLModel
+
+
+class Hero(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    secret_name: str
+    age: int | None = None
+```
+
+--------------------------------
+
+### Define a Hero Table Model with SQLModel
+
+Source: https://sqlmodel.tiangolo.com/tutorial/create-db-and-table
+
+Define a class that inherits from SQLModel with table=True to represent a database table. Use standard Python type annotations for fields and Field for column-specific configurations like primary keys.
+
+```python
+from sqlmodel import Field, SQLModel, create_engine
+
+
+class Hero(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    secret_name: str
+    age: int | None = None
+```
+
+--------------------------------
+
+### Define SQLModel Hero with Auto-generated ID
+
+Source: https://sqlmodel.tiangolo.com/tutorial/automatic-id-none-refresh
+
+Defines a Hero model with an auto-incrementing integer ID. The `id` field is optional and set as the primary key, allowing SQLModel to manage its generation.
+
+```python
+from sqlmodel import Field, Session, SQLModel, create_engine
+
+
+class Hero(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    secret_name: str
+    age: int | None = None
+
+
+sqlite_file_name = "database.db"
+sqlite_url = f"sqlite:///{sqlite_file_name}"
+
+engine = create_engine(sqlite_url, echo=True)
+
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+```
