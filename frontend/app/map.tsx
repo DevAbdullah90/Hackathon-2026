@@ -49,10 +49,15 @@ export default function FloodMap({ route, navigation }: any) {
 
   const selectedIncidentId = route.params?.selectedIncidentId;
   const selectedIncidentRef = useRef<Incident | null>(null);
+  const activeRouteRef = useRef<any | null>(null);
 
   useEffect(() => {
     selectedIncidentRef.current = selectedIncident;
   }, [selectedIncident]);
+
+  useEffect(() => {
+    activeRouteRef.current = activeRoute;
+  }, [activeRoute]);
 
   const checkDetourActive = async (incidentId: string) => {
     try {
@@ -119,9 +124,12 @@ export default function FloodMap({ route, navigation }: any) {
         });
         lat = position.coords.latitude;
         lng = position.coords.longitude;
-      } else if (selectedIncident) {
-        lat = selectedIncident.lat;
-        lng = selectedIncident.lng;
+      } else {
+        const currentSel = selectedIncidentRef.current;
+        if (currentSel) {
+          lat = currentSel.lat;
+          lng = currentSel.lng;
+        }
       }
 
       const routeData = await api.getEvacuationRoute(lat, lng);
@@ -171,6 +179,10 @@ export default function FloodMap({ route, navigation }: any) {
             const currentSel = selectedIncidentRef.current;
             if (currentSel && data.incident_id === currentSel.id) {
               checkDetourActive(currentSel.id);
+              if (activeRouteRef.current) {
+                console.log("🚦 [FloodMap] Simulation progress event detected. Auto-recalculating active route...");
+                handleNavigateToShelter();
+              }
             }
           }
         } catch (err) {
