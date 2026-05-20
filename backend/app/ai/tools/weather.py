@@ -1,7 +1,7 @@
 """
 backend/app/ai/tools/weather.py
 ───────────────────────────────
-Weather alerts tool for the CIRO severity_agent.
+Weather alerts tool for the CIRO by AQUA severity_agent.
 
 Returns comprehensive weather data covering both flood and heatwave scenarios
 so agents can reason about the appropriate risk factors for any disaster type.

@@ -40,9 +40,13 @@ export default function OutcomeScreen({ route, navigation }: any) {
   const { incidentId, location } = route.params || { incidentId: "INC-DEMO", location: "Active Crisis" };
   const [incident, setIncident] = useState<Incident | null>(null);
   const [reasoningLogs, setReasoningLogs] = useState<ReasoningLog[]>([]);
-  const [bar1, setBar1] = useState(0);
-  const [bar2, setBar2] = useState(0);
-  const [bar3, setBar3] = useState(0);
+  const [animatedBefore1, setAnimatedBefore1] = useState(0);
+  const [animatedBefore2, setAnimatedBefore2] = useState(0);
+  const [animatedBefore3, setAnimatedBefore3] = useState(0);
+  
+  const [animatedAfter1, setAnimatedAfter1] = useState(0);
+  const [animatedAfter2, setAnimatedAfter2] = useState(0);
+  const [animatedAfter3, setAnimatedAfter3] = useState(0);
 
   useEffect(() => {
     const fetchIncident = async () => {
@@ -51,12 +55,29 @@ export default function OutcomeScreen({ route, navigation }: any) {
         setIncident(data);
         const logs = await api.getReasoningLogs(incidentId);
         setReasoningLogs(logs);
+        
+        const isHeat = data?.disaster_type === "heatwave";
+        setTimeout(() => {
+          setAnimatedBefore1(isHeat ? 90 : 90);
+          setAnimatedBefore2(isHeat ? 10 : 5);
+          setAnimatedBefore3(isHeat ? 0 : 100);
+          
+          setAnimatedAfter1(isHeat ? 15 : 20);
+          setAnimatedAfter2(isHeat ? 98 : 98);
+          setAnimatedAfter3(isHeat ? 100 : 0);
+        }, 200);
       } catch (err) {
         console.warn("Failed to fetch incident details or logs:", err);
+        // Fallback animation
+        setTimeout(() => {
+          setAnimatedBefore1(90);
+          setAnimatedBefore2(10);
+          setAnimatedBefore3(50);
+          setAnimatedAfter1(20);
+          setAnimatedAfter2(95);
+          setAnimatedAfter3(80);
+        }, 200);
       }
-      setBar1(85);
-      setBar2(95);
-      setBar3(60);
     };
     fetchIncident();
   }, [incidentId]);
@@ -192,29 +213,69 @@ export default function OutcomeScreen({ route, navigation }: any) {
           <View style={styles.chartCardContainer}>
             <View style={styles.chartCard}>
               <View style={styles.chartHeader}>
-                <BarChart2 size={16} color={THEME.colors.text.muted} />
-                <Text style={styles.chartTitle}>IMPACT REDUCTION ANALYSIS</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                  <BarChart2 size={16} color={THEME.colors.text.muted} />
+                  <Text style={styles.chartTitle}>IMPACT REDUCTION ANALYSIS</Text>
+                </View>
+                <View style={styles.legendContainer}>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: "#EF4444" }]} />
+                    <Text style={styles.legendText}>BEFORE</Text>
+                  </View>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: "#10B981" }]} />
+                    <Text style={styles.legendText}>AFTER</Text>
+                  </View>
+                </View>
               </View>
               <View style={styles.chartBody}>
-                <View style={styles.barGroup}>
-                  <View style={[styles.barFill, { height: `${bar1}%` }]} />
+                {/* Group 1: STRESS / CONGESTION */}
+                <View style={styles.barGroupContainer}>
+                  <View style={styles.barsRow}>
+                    <View style={styles.barColumn}>
+                      <View style={[styles.barFillBefore, { height: `${animatedBefore1}%` }]} />
+                      <Text style={styles.barValueText}>{incident?.disaster_type === "heatwave" ? 90 : 90}%</Text>
+                    </View>
+                    <View style={styles.barColumn}>
+                      <View style={[styles.barFillAfter, { height: `${animatedAfter1}%` }]} />
+                      <Text style={styles.barValueText}>{incident?.disaster_type === "heatwave" ? 15 : 20}%</Text>
+                    </View>
+                  </View>
                   <Text style={styles.barLabel}>
-                    {incident?.disaster_type === "heatwave" ? "STRESS" : "TRAFFIC"}
+                    {incident?.disaster_type === "heatwave" ? "STRESS" : "CONGEST"}
                   </Text>
                 </View>
-                <View style={styles.barGroup}>
-                  <View style={[
-                    styles.barFill, 
-                    { 
-                      backgroundColor: incident?.disaster_type === "heatwave" ? "#F59E0B" : THEME.colors.primary, 
-                      height: `${bar2}%` 
-                    }
-                  ]} />
+
+                {/* Group 2: SAFETY */}
+                <View style={styles.barGroupContainer}>
+                  <View style={styles.barsRow}>
+                    <View style={styles.barColumn}>
+                      <View style={[styles.barFillBefore, { height: `${animatedBefore2}%` }]} />
+                      <Text style={styles.barValueText}>{incident?.disaster_type === "heatwave" ? 10 : 5}%</Text>
+                    </View>
+                    <View style={styles.barColumn}>
+                      <View style={[styles.barFillAfter, { height: `${animatedAfter2}%` }]} />
+                      <Text style={styles.barValueText}>{incident?.disaster_type === "heatwave" ? 98 : 98}%</Text>
+                    </View>
+                  </View>
                   <Text style={styles.barLabel}>SAFETY</Text>
                 </View>
-                <View style={styles.barGroup}>
-                  <View style={[styles.barFill, { height: `${bar3}%` }]} />
-                  <Text style={styles.barLabel}>RESPONSE</Text>
+
+                {/* Group 3: RESPONSE / ROAD BLOCK */}
+                <View style={styles.barGroupContainer}>
+                  <View style={styles.barsRow}>
+                    <View style={styles.barColumn}>
+                      <View style={[styles.barFillBefore, { height: `${animatedBefore3}%` }]} />
+                      <Text style={styles.barValueText}>{incident?.disaster_type === "heatwave" ? 0 : 100}%</Text>
+                    </View>
+                    <View style={styles.barColumn}>
+                      <View style={[styles.barFillAfter, { height: `${animatedAfter3}%` }]} />
+                      <Text style={styles.barValueText}>{incident?.disaster_type === "heatwave" ? 100 : 0}%</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.barLabel}>
+                    {incident?.disaster_type === "heatwave" ? "RESPONSE" : "BLOCKAGE"}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -601,16 +662,40 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 20,
   },
-  barGroup: {
+  barGroupContainer: {
     alignItems: "center",
-    height: "100%",
     justifyContent: "flex-end",
-    width: 50,
+    height: "100%",
+    width: 70,
   },
-  barFill: {
-    width: 32,
-    backgroundColor: THEME.colors.text.secondary,
-    borderRadius: 8,
+  barsRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 6,
+    height: 100,
+  },
+  barColumn: {
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: "100%",
+    width: 24,
+  },
+  barFillBefore: {
+    width: 12,
+    backgroundColor: "#EF4444",
+    borderRadius: 4,
+  },
+  barFillAfter: {
+    width: 12,
+    backgroundColor: "#10B981",
+    borderRadius: 4,
+  },
+  barValueText: {
+    color: THEME.colors.text.muted,
+    fontSize: 8,
+    fontFamily: THEME.fonts.mono,
+    marginTop: 4,
+    fontWeight: "700",
   },
   barLabel: {
     color: THEME.colors.text.muted,
@@ -619,6 +704,26 @@ const styles = StyleSheet.create({
     marginTop: 12,
     position: "absolute",
     bottom: -24,
+    fontWeight: "700",
+  },
+  legendContainer: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendText: {
+    fontSize: 8,
+    fontFamily: THEME.fonts.mono,
+    color: THEME.colors.text.muted,
     fontWeight: "700",
   },
   statsGrid: {

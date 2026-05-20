@@ -1,4 +1,4 @@
-# CIRO — Identified Gaps, Root Causes & Solutions
+# CIRO by AQUA — Identified Gaps, Root Causes & Solutions
 
 > **Document Purpose:** This file records all architectural and API gaps identified
 > during the dashboard API design session (Task-010). It explains why the frontend

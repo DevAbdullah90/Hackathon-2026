@@ -7,8 +7,8 @@ from sqlalchemy import text
 load_dotenv()
 
 DATABASE_URL = os.getenv('DATABASE_URL')
-if DATABASE_URL and DATABASE_URL.startswith('postgresql://'):
-    DATABASE_URL = DATABASE_URL.replace('postgresql://', 'postgresql+asyncpg://', 1)
+if DATABASE_URL and DATABASE_URL.startswith('postgcirol://'):
+    DATABASE_URL = DATABASE_URL.replace('postgcirol://', 'postgcirol+asyncpg://', 1)
 
 engine = create_async_engine(DATABASE_URL)
 

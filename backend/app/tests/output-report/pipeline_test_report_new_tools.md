@@ -1,4 +1,4 @@
-# CIRO Intelligence Pipeline — Live End-to-End Test Report (New Tools & Agents)
+# CIRO by AQUA Intelligence Pipeline — Live End-to-End Test Report (New Tools & Agents)
 
 **Scenario**: SCENARIO_KARACHI (Monsoon Crisis, Old Clifton)
 **Date**: 2026-05-16

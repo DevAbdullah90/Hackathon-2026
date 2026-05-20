@@ -605,7 +605,7 @@ venv\Lib\site-packages\sqlalchemy\engine\base.py:1967: in _exec_single_context
     self.dialect.do_execute(
 venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
     cursor.execute(statement, parameters)
-venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:585: in execute
+venv\Lib\site-packages\sqlalchemy\dialects\postgcirol\asyncpg.py:585: in execute
     self._adapt_connection.await_(
 venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:132: in await_only
     return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
@@ -613,13 +613,13 @@ venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:132: in await_only
 venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:196: in greenlet_spawn
     value = await result
             ^^^^^^^^^^^^
-venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:520: in _prepare_and_execute
+venv\Lib\site-packages\sqlalchemy\dialects\postgcirol\asyncpg.py:520: in _prepare_and_execute
     await adapt_connection._start_transaction()
-venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:850: in _start_transaction
+venv\Lib\site-packages\sqlalchemy\dialects\postgcirol\asyncpg.py:850: in _start_transaction
     self._handle_exception(error)
-venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:799: in _handle_exception
+venv\Lib\site-packages\sqlalchemy\dialects\postgcirol\asyncpg.py:799: in _handle_exception
     raise error
-venv\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:848: in _start_transaction
+venv\Lib\site-packages\sqlalchemy\dialects\postgcirol\asyncpg.py:848: in _start_transaction
     await self._transaction.start()
 venv\Lib\site-packages\asyncpg\transaction.py:146: in start
     await self._connection.execute(query)

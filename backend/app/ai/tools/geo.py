@@ -1,7 +1,7 @@
 """
 backend/app/ai/tools/geo.py
 ───────────────────────────
-Google Geocoding API tool with OpenStreetMap fallback for the CIRO signal_agent.
+Google Geocoding API tool with OpenStreetMap fallback for the CIRO by AQUA signal_agent.
 
 Converts raw GPS coordinates into a human-readable address string
 so agents can reason about location names instead of lat/lng pairs.
@@ -66,7 +66,7 @@ async def reverse_geocode(lat: float, lng: float) -> str:
             "lon": str(lng),
         }
         headers = {
-            "User-Agent": "CIRO-Crisis-Orchestrator/1.0 (contact@ciro.org)"
+            "User-Agent": "CIRO-Crisis-Orchestrator/1.0 (contact@ciro-by-aqua.org)"
         }
         async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.get(_OSM_URL, params=osm_params, headers=headers)

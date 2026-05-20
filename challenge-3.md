@@ -1,4 +1,4 @@
-# Challenge 3: Crisis Intelligence & Response Orchestrator (CIRO)
+# Challenge 3: Crisis Intelligence & Response Orchestrator (CIRO by AQUA)
 
 ## Challenge Overview
 Metropolitans, globally and in Pakistan, frequently faces localized crises such as:

@@ -38,7 +38,12 @@ export default function Sidebar({ activePage, onNavigate, onClose }: SidebarProp
             <Activity className="w-5 h-5 text-white animate-pulse" />
           </div>
           <div>
-              <h1 className="text-lg font-black text-gray-900 leading-none tracking-wider">ResQ by AQUA</h1>
+            <h1 className="text-lg font-black text-gray-900 leading-none tracking-wider">CIRO by AQUA</h1>
+            <span className="text-[9px] text-gray-400 font-extrabold tracking-widest uppercase mt-1 block">
+              Crisis Orchestrator
+            </span>
+          </div>
+        </div>
 
         {/* Navigation Items */}
         <nav className="mt-6 px-4 space-y-1">

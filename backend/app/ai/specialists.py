@@ -1,7 +1,7 @@
 """
 app/ai/specialists.py
 ---------------------
-Definitions of all CIRO specialist agents.
+Definitions of all CIRO by AQUA specialist agents.
 """
 
 from agents import Agent

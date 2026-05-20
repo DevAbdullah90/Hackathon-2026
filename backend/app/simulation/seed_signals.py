@@ -1,7 +1,7 @@
 """
 app/simulation/seed_signals.py
 ──────────────────────────────
-Simulation Controller: Fires mock signals into the CIRO pipeline to trigger scenarios.
+Simulation Controller: Fires mock signals into the CIRO by AQUA pipeline to trigger scenarios.
 Usage: python -m app.simulation.seed_signals
 """
 
@@ -139,7 +139,7 @@ async def run_scenario(name: str, signals: list):
     print(f"🏁 SCENARIO {name} COMPLETED.\n")
 
 async def main():
-    print("🌊 CIRO Simulation Controller")
+    print("🌊 CIRO by AQUA Simulation Controller")
     print("1. Scenario 1: Local Flooding (Islamabad G-10)")
     print("2. Scenario 2: Monsoon Crisis (Karachi Clifton)")
     print("3. Scenario 3: Edge Cases (Lahore Gulberg)")

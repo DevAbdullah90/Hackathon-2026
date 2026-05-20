@@ -34,7 +34,7 @@ def run_migrations_online():
 
 ## alembic.ini URL
 ```ini
-sqlalchemy.url = postgresql+psycopg://user:pass@host/db
+sqlalchemy.url = postgcirol+psycopg://user:pass@host/db
 ```
 
 ## Common Errors
