@@ -1,5 +1,5 @@
 # 🌊 Urban Flood Response Orchestrator
-### Crisis Intelligence & Response Orchestrator (CIRO)
+### Crisis Intelligence & Response Orchestrator (CIRO by AQUA)
 **Built for the Google Antigravity Hackathon — Challenge 3**
 
 ---
@@ -670,7 +670,7 @@ Step 5: Actions taken:
 
 ## 📊 Baseline Comparison
 
-| Metric | Without AI (Manual) | With CIRO (Agentic) |
+| Metric | Without AI (Manual) | With CIRO by AQUA (Agentic) |
 |---|---|---|
 | Time to detect crisis | 15–30 minutes (human operator) | ~45 seconds (automated pipeline) |
 | Signal sources fused | 1 (phone call) | 4+ simultaneously |
@@ -723,7 +723,7 @@ Step 5: Actions taken:
 
 ---
 
-*Built with Google Antigravity | CIRO Challenge 3 | 2026*
+*Built with Google Antigravity | CIRO by AQUA | 2026*
 
 ---
 
@@ -843,7 +843,7 @@ Step 5: Actions taken:
 
 ---
 
-*Built with Google Antigravity | CIRO Challenge 3 | 2026*
+*Built with Google Antigravity | CIRO by AQUA | 2026*
 
 
 ---
@@ -962,4 +962,4 @@ Step 5: Actions taken:
 
 ---
 
-*Built with Google Antigravity | CIRO Challenge 3 | 2026*
+*Built with Google Antigravity | CIRO by AQUA | 2026*

@@ -1,6 +1,6 @@
-# CIRO Intelligence Pipeline: Live Execution Report
+# CIRO by AQUA Intelligence Pipeline: Live Execution Report
 
-This report documents the successful end-to-end live execution of the CIRO multi-agent system, validating the agent instructions, API tools, and final JSON outputs.
+This report documents the successful end-to-end live execution of the CIRO by AQUA multi-agent system, validating the agent instructions, API tools, and final JSON outputs.
 
 ## 1. System Configuration
 The pipeline was successfully transitioned from mocked testing to **live execution** using:

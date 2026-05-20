@@ -12,7 +12,7 @@ from app.models.reasoning_logs import ChainOfThought, ReasoningLog
 from app.models.signals import Signal
 
 async def inspect():
-    url = "postgresql+asyncpg://neondb_owner:npg_x1BEKRoIhrl4@ep-floral-tooth-aqnp7pkq-pooler.c-8.us-east-1.aws.neon.tech/neondb?"
+    url = "postgcirol+asyncpg://neondb_owner:npg_x1BEKRoIhrl4@ep-floral-tooth-aqnp7pkq-pooler.c-8.us-east-1.aws.neon.tech/neondb?"
     engine = create_async_engine(url, echo=False)
     
     from sqlalchemy.ext.asyncio import AsyncSession

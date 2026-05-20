@@ -1,7 +1,7 @@
 import { CONFIG } from "../constants/config";
 
 let activeApiBaseUrl = CONFIG.API_BASE_URL;
-const PROD_API_BASE = "https://hackathon-2026-production-ff6c.up.railway.app/api/v1";
+const PROD_API_BASE = "https://abdullah9873-backend-rag-chatbot-v2.hf.space";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. DATA MODELS & TYPES
@@ -469,10 +469,10 @@ async function makeRequest<T>(
     return (await response.json()) as T;
   } catch (error: any) {
     const isTimeout = error.message === "Timeout";
-    const isNetworkError = 
-      error instanceof TypeError || 
-      error.message?.includes("Network request failed") || 
-      error.message?.includes("Aborted") || 
+    const isNetworkError =
+      error instanceof TypeError ||
+      error.message?.includes("Network request failed") ||
+      error.message?.includes("Aborted") ||
       error.name === "AbortError";
 
     console.warn(`⚠️ [API FAILURE] ${requestOptions.method || "GET"} ${path}: ${error.message}`);
@@ -626,6 +626,10 @@ export const api = {
       console.log(`🛡️ [API FALLBACK] getSimulationState(${id}) failed -> Serving offline execution list.`);
       return MOCK_ACTIONS[id] || this.getMockSimulationState(id);
     }
+  },
+
+  updateMockActions(incidentId: string, actions: Action[]) {
+    MOCK_ACTIONS[incidentId] = actions;
   },
 
   /**

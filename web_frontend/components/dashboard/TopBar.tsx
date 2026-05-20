@@ -503,7 +503,12 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
               <Activity className="w-4 h-4 text-white animate-pulse" />
             </div>
             <div className="flex flex-col">
-                <h1 className="text-sm font-black text-gray-900 leading-none tracking-wider">ResQ by AQUA</h1>
+              <h1 className="text-sm font-black text-gray-900 leading-none tracking-wider">CIRO by AQUA</h1>
+              <span className="text-[8px] text-gray-400 font-extrabold tracking-widest uppercase mt-0.5 block">
+                Orchestrator
+              </span>
+            </div>
+          </div>
 
           <div className="flex flex-col gap-1">
             {/* Title & Status */}
@@ -901,7 +906,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
                   </div>
                   <div>
                     <h3 className="text-lg font-extrabold text-gray-900 tracking-tight leading-none">
-                      ResQ by AQUA Swarm Triage Completed Successfully
+                      CIRO by AQUA Swarm Triage Completed Successfully
                     </h3>
                     <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 block">
                       Disaster Response Actions Dispatched
@@ -1099,7 +1104,10 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
                             {metrics.cooling_coverage ?? 0}%
                           </span>
                         </div>
-                        <span className="text-[8px] text-gray-500 font-semibold">Triage Goal: 100%</span>
+                        <div className="flex flex-col items-center text-[8px] text-gray-500 font-bold space-y-0.5">
+                          <span>Before: 0%</span>
+                          <span>Target: 100%</span>
+                        </div>
                       </div>
 
                       {/* Gauge 2: Safety Rate */}
@@ -1119,7 +1127,10 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
                             {metrics.safety_rate ?? 10}%
                           </span>
                         </div>
-                        <span className="text-[8px] text-gray-500 font-semibold">Survival Probability</span>
+                        <div className="flex flex-col items-center text-[8px] text-gray-500 font-bold space-y-0.5">
+                          <span>Before: 10%</span>
+                          <span>Target: 95%</span>
+                        </div>
                       </div>
 
                       {/* Gauge 3: Grid Relief */}
@@ -1139,7 +1150,10 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
                             {metrics.grid_relief ?? 0}%
                           </span>
                         </div>
-                        <span className="text-[8px] text-gray-500 font-semibold">Demand Restabilized</span>
+                        <div className="flex flex-col items-center text-[8px] text-gray-500 font-bold space-y-0.5">
+                          <span>Before: 0%</span>
+                          <span>Target: 95%</span>
+                        </div>
                       </div>
                     </div>
                   ) : (

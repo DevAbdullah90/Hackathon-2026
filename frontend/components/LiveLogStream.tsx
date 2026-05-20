@@ -24,18 +24,12 @@ const getAgentAbbreviation = (name: string): string => {
 
 const getAgentColor = (abbr: string): string => {
   switch (abbr) {
-    case "TRG":
-      return "#D97706";
-    case "DET":
-      return "#2563EB";
-    case "NTF":
-      return "#059669";
-    case "SIM":
-      return "#7C3AED";
-    case "SYS":
-      return "#DB2777";
-    default:
-      return THEME.colors.text.secondary;
+    case "TRG": return "#D97706";
+    case "DET": return "#2563EB";
+    case "NTF": return "#059669";
+    case "SIM": return "#7C3AED";
+    case "SYS": return "#DB2777";
+    default: return THEME.colors.text.secondary;
   }
 };
 
@@ -63,18 +57,16 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
 
     const loadHistory = async () => {
       if (incidentId.startsWith("triage_")) {
-        console.log(
-          `🔌 [LiveLogStream] Triage session active. Skipping history fetch.`,
-        );
+        console.log(`🔌 [LiveLogStream] Triage session active. Skipping history fetch.`);
         if (active) {
           setLogs([
             {
               id: "sys-init",
-              message: `Establishing secure connection to ResQ by AQUA Specialist Network. Signal processing initiated...`,
+              message: `Establishing secure connection to CIRO by AQUA Specialist Network. Signal processing initiated...`,
               timestamp: new Date().toISOString(),
               level: "info",
               agent: "SYS",
-            },
+            }
           ]);
         }
         return;
@@ -99,8 +91,7 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
           setLogs([
             {
               id: "sys-init",
-              message:
-                "ResQ by AQUA session started. Listening for live telemetry.",
+              message: "CIRO by AQUA session started. Listening for live telemetry.",
               timestamp: new Date().toISOString(),
               level: "info",
               agent: "SYS",
@@ -131,9 +122,7 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
             agent: getAgentAbbreviation(raw.agent_name || "sys"),
           };
 
-          setLogs((prev) =>
-            prev.some((x) => x.id === newEntry.id) ? prev : [...prev, newEntry],
-          );
+          setLogs((prev) => (prev.some((x) => x.id === newEntry.id) ? prev : [...prev, newEntry]));
         } catch (err) {
           console.warn("Failed to parse websocket frame", err);
         }
@@ -161,9 +150,7 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
     <View style={styles.container}>
       <ScrollView
         ref={scrollViewRef}
-        onContentSizeChange={() =>
-          scrollViewRef.current?.scrollToEnd({ animated: false })
-        }
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
         showsVerticalScrollIndicator={false}
       >
         {logs.map((item) => {
@@ -174,24 +161,11 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
             <View key={item.id} style={styles.logRow}>
               <View style={styles.timeContainer}>
                 <Text style={styles.logTime}>
-                  {new Date(
-                    item.timestamp.endsWith("Z") || item.timestamp.includes("+")
-                      ? item.timestamp
-                      : `${item.timestamp}Z`,
-                  ).toLocaleTimeString([], {
-                    hour12: false,
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                  })}
+                  {new Date(item.timestamp.endsWith("Z") || item.timestamp.includes("+") ? item.timestamp : `${item.timestamp}Z`).toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                 </Text>
               </View>
-              <Text
-                style={[styles.logAgent, { color: agentColor }]}
-              >{`[${item.agent}]`}</Text>
-              <Text style={[styles.logMessage, { color: messageColor }]}>
-                {item.message}
-              </Text>
+              <Text style={[styles.logAgent, { color: agentColor }]}>{`[${item.agent}]`}</Text>
+              <Text style={[styles.logMessage, { color: messageColor }]}>{item.message}</Text>
             </View>
           );
         })}

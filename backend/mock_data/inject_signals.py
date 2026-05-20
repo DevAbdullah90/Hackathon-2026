@@ -1,7 +1,7 @@
 """
 backend/mock_data/inject_signals.py
 -----------------------------------
-A script to inject mock GPS and weather signals to trigger the full CIRO pipeline.
+A script to inject mock GPS and weather signals to trigger the full CIRO by AQUA pipeline.
 """
 
 import asyncio
@@ -65,7 +65,7 @@ SIGNALS = [
 ]
 
 async def main():
-    print("Injecting Mock Signals into CIRO...")
+    print("Injecting Mock Signals into CIRO by AQUA...")
     async with httpx.AsyncClient() as client:
         for index, sig in enumerate(SIGNALS):
             try:

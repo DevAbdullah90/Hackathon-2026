@@ -1,7 +1,7 @@
 """
 app/api/api_v1/endpoints/dashboard.py
 ─────────────────────────────────────
-Endpoints for the CIRO Web Dashboard to provide a global view of the multi-agent pipeline.
+Endpoints for the CIRO by AQUA Web Dashboard to provide a global view of the multi-agent pipeline.
 """
 
 from datetime import datetime, timedelta
