@@ -1,7 +1,7 @@
 """
 backend/app/ai/tools/news.py
 ────────────────────────────
-SerpApi news-search tool for the CIRO detection_agent and verification_agent.
+SerpApi news-search tool for the CIRO by AQUA detection_agent and verification_agent.
 
 Searches Google via SerpApi and returns the top organic results so agents can
 cross-reference citizen flood signals against published news sources.

@@ -26,4 +26,4 @@ api_router.include_router(safe_havens.router, prefix="/safe-havens", tags=["Safe
 # Temporary placeholder — confirms API v1 is alive
 @api_router.get("/ping", tags=["Health"])
 async def ping():
-    return {"message": "CIRO API v1 is alive"}
+    return {"message": "CIRO by AQUA API v1 is alive"}

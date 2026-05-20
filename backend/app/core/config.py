@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     # Project Info
     # ------------------------------------------------------------------
-    PROJECT_NAME: str = "CIRO — Urban Flood Response Orchestrator"
-    APP_NAME: str = "CIRO_Backend"
+    PROJECT_NAME: str = "CIRO by AQUA — Urban Flood Response Orchestrator"
+    APP_NAME: str = "CIRO_by_AQUA_Backend"
     DEBUG: bool = True
     API_V1_STR: str = "/api/v1"
 

@@ -14,7 +14,7 @@ interface ReasoningStep {
 const MOCK_STEPS: ReasoningStep[] = [
   { id: '1', type: 'analysis', message: 'Analyzing precipitation data from Karachi Meteorological Department...', timestamp: '02:15:00', status: 'completed' },
   { id: '2', type: 'analysis', message: 'Identifying high-risk catchment areas in Gulshan-e-Iqbal...', timestamp: '02:15:15', status: 'completed' },
-  { id: '3', type: 'simulation', message: 'Running flood propagation model (CIRO-Sim v4.2)...', timestamp: '02:15:45', status: 'completed' },
+  { id: '3', type: 'simulation', message: 'Running flood propagation model (CIRO-Sim v4.2 by AQUA)...', timestamp: '02:15:45', status: 'completed' },
   { id: '4', type: 'simulation', message: 'Predicting peak water levels for University Road intersection...', timestamp: '02:16:10', status: 'ongoing' },
   { id: '5', type: 'decision', message: 'Calculating optimal rescue route for North Nazimabad units...', timestamp: '02:16:30', status: 'pending' },
 ];

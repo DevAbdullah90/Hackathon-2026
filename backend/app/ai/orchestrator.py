@@ -1,7 +1,7 @@
 """
 app/ai/orchestrator.py
 ──────────────────────
-The central Brain of CIRO. 
+The central Brain of CIRO by AQUA. 
 Contains the Triage Agent (Orchestrator) which manages the multi-agent pipeline.
 """
 

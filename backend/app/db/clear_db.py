@@ -7,7 +7,7 @@ from sqlalchemy import text
 sys.path.append(r"c:\Users\hp\OneDrive\Desktop\Hackathon AISeekho\backend")
 
 async def clear():
-    url = "postgresql+asyncpg://neondb_owner:npg_x1BEKRoIhrl4@ep-floral-tooth-aqnp7pkq-pooler.c-8.us-east-1.aws.neon.tech/neondb?"
+    url = "postgcirol+asyncpg://neondb_owner:npg_x1BEKRoIhrl4@ep-floral-tooth-aqnp7pkq-pooler.c-8.us-east-1.aws.neon.tech/neondb?"
     engine = create_async_engine(url, echo=False)
     
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

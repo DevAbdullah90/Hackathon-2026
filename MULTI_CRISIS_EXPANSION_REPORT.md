@@ -1,4 +1,4 @@
-# CIRO Multi-Crisis Expansion Report
+# CIRO by AQUA Multi-Crisis Expansion Report
 
 > **Session Date:** May 19, 2026  
 > **Author:** Uneeza (Backend Intelligence Lead)  
@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-This report documents the expansion of the CIRO (Crisis Intelligence & Response Orchestrator) backend from a **single-crisis flood-only** system to a **multi-crisis platform** supporting both **Flood** and **Heatwave** disaster types. All changes have been validated through a comprehensive end-to-end live test suite against the production PostgreSQL database.
+This report documents the expansion of the CIRO by AQUA (Crisis Intelligence & Response Orchestrator) backend from a **single-crisis flood-only** system to a **multi-crisis platform** supporting both **Flood** and **Heatwave** disaster types. All changes have been validated through a comprehensive end-to-end live test suite against the production PostgreSQL database.
 
 ---
 
@@ -302,4 +302,4 @@ $env:PYTHONIOENCODING='utf-8'; uv run pytest app/tests/test_full_pipeline_live.p
 
 ---
 
-> **Conclusion:** The CIRO backend is now a fully functional multi-crisis orchestration engine. The pipeline correctly identifies, triages, and responds to both flood and heatwave emergencies with crisis-specific logic at every agent step. All 9 E2E tests pass with zero failures.
+> **Conclusion:** The CIRO by AQUA backend is now a fully functional multi-crisis orchestration engine. The pipeline correctly identifies, triages, and responds to both flood and heatwave emergencies with crisis-specific logic at every agent step. All 9 E2E tests pass with zero failures.

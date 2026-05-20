@@ -62,7 +62,7 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
           setLogs([
             {
               id: "sys-init",
-              message: `Establishing secure connection to CIRO Specialist Network. Signal processing initiated...`,
+              message: `Establishing secure connection to CIRO by AQUA Specialist Network. Signal processing initiated...`,
               timestamp: new Date().toISOString(),
               level: "info",
               agent: "SYS",
@@ -91,7 +91,7 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
           setLogs([
             {
               id: "sys-init",
-              message: "CIRO session started. Listening for live telemetry.",
+              message: "CIRO by AQUA session started. Listening for live telemetry.",
               timestamp: new Date().toISOString(),
               level: "info",
               agent: "SYS",

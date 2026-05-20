@@ -1,7 +1,7 @@
 """
 app/tests/test_full_pipeline_live.py
 --------------------------------------
-CIRO Full Backend E2E Live Test
+CIRO by AQUA Full Backend E2E Live Test
 ================================
 Tests the COMPLETE multi-agent workflow with REAL API keys:
   Signal Agent -> Detection Agent -> Severity Agent ->
@@ -200,7 +200,7 @@ async def test_full_pipeline_karachi():
 
     assert len(signal_payloads) == len(SCENARIO_KARACHI)
 
-    with trace("CIRO Full E2E Test -- Karachi", group_id="ciro_e2e_live"):
+    with trace("CIRO by AQUA Full E2E Test -- Karachi", group_id="ciro_e2e_live"):
 
         # -- 4.2 Signal Agent ---------------------------------------------
         print("\n  [Step 2] Running Signal Agent for each signal...")
@@ -400,7 +400,7 @@ async def test_full_pipeline_lahore_edge_case():
             signal_payloads.append(payload)
             print(f"    [OK] Inserted: {sig_data['source']} (ID: {signal.id})")
 
-    with trace("CIRO Full E2E Test — Lahore Edge Case", group_id="ciro_e2e_live_lahore"):
+    with trace("CIRO by AQUA Full E2E Test — Lahore Edge Case", group_id="ciro_e2e_live_lahore"):
         print("\n  [Step 2] Running Signal Agent for each signal...")
         processed_signals = []
         for sig in signal_payloads:

@@ -1,5 +1,5 @@
 """
-CIRO — Crisis Intelligence & Response Orchestrator
+CIRO by AQUA — Crisis Intelligence & Response Orchestrator
 FastAPI Entry Point
 
 Built for the Google Antigravity Hackathon — Challenge 3
@@ -48,7 +48,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.on_event("startup")
 async def on_startup():
     """Execute startup tasks: DB initialization, etc."""
-    print("Initializing CIRO Database...")
+    print("Initializing CIRO by AQUA Database...")
     await init_db()
     print("Database ready.")
 

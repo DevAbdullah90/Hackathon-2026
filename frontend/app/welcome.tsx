@@ -22,7 +22,7 @@ export default function WelcomeScreen({ navigation }: any) {
             <View style={styles.logoWave} />
           </View>
         </View>
-        <Text style={styles.appName}>CIRO</Text>
+        <Text style={styles.appName}>CIRO by AQUA</Text>
       </View>
       </SafeAreaView>
     </Pressable>

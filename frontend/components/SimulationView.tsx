@@ -24,7 +24,7 @@ const SimulationView = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Ionicons name="pulse" size={24} color="#10B981" />
-          <Text style={styles.headerTitle}>CIRO-Sim Center</Text>
+          <Text style={styles.headerTitle}>CIRO by AQUA Sim Center</Text>
         </View>
         <View style={styles.liveBadge}>
           <Text style={styles.liveText}>LIVE</Text>

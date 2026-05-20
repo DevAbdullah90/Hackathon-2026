@@ -485,13 +485,13 @@ export default function EventsPanel({ selectedIncident, onSelectIncident, onView
                     </span>
                     {isHeatwave ? (
                       <>
-                        CIRO verified an active extreme heatwave warning in {selectedIncident.location} at coordinate [{selectedIncident.lat.toFixed(4)}, {selectedIncident.lng.toFixed(4)}]. 
+                        CIRO by AQUA verified an active extreme heatwave warning in {selectedIncident.location} at coordinate [{selectedIncident.lat.toFixed(4)}, {selectedIncident.lng.toFixed(4)}]. 
                         The severity index is evaluated to {selectedIncident.severity_score}/10, placing approximately {selectedIncident.estimated_population.toLocaleString()} citizens at critical risk of thermal shock and grid outages. 
                         Hydration deployment and cooling systems have been scheduled.
                       </>
                     ) : (
                       <>
-                        CIRO verified an active flood warning in {selectedIncident.location} at coordinate [{selectedIncident.lat.toFixed(4)}, {selectedIncident.lng.toFixed(4)}]. 
+                        CIRO by AQUA verified an active flood warning in {selectedIncident.location} at coordinate [{selectedIncident.lat.toFixed(4)}, {selectedIncident.lng.toFixed(4)}]. 
                         The severity index is evaluated to {selectedIncident.severity_score}/10, exposing approximately {selectedIncident.estimated_population.toLocaleString()} citizens at high risk. 
                         Tactical resource allocation and emergency evacuation procedures have been successfully finalized.
                       </>

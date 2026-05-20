@@ -230,7 +230,7 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
       {/* TOP TACTICAL NAVIGATION BAR */}
       <View style={styles.webHeader}>
         <View style={styles.webBrandGroup}>
-          <Text style={styles.webBrandTitle}>CIRO COMMAND CENTER</Text>
+          <Text style={styles.webBrandTitle}>CIRO by AQUA COMMAND CENTER</Text>
           <View style={styles.webStatusBadge}>
             <View style={styles.webStatusDot} />
             <Text style={styles.webStatusText}>SYSTEM ONLINE</Text>
