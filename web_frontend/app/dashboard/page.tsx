@@ -339,14 +339,18 @@ export default function DashboardPage() {
               <MetricsGrid selectedIncident={selectedIncident} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pb-4 fade-in" style={{ animationDelay: "200ms" }}>
-              <EventsPanel 
-                selectedIncident={selectedIncident} 
-                onSelectIncident={setSelectedIncident} 
-                onViewReport={setViewIncidentReportId}
-              />
-              <CTECCPanel />
-              <SafeHavensPanel />
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 pb-4 fade-in" style={{ animationDelay: "200ms" }}>
+              <div className="lg:col-span-3">
+                <EventsPanel 
+                  selectedIncident={selectedIncident} 
+                  onSelectIncident={setSelectedIncident} 
+                  onViewReport={setViewIncidentReportId}
+                />
+              </div>
+              <div className="lg:col-span-1 flex flex-col gap-4">
+                <CTECCPanel />
+                <SafeHavensPanel />
+              </div>
             </div>
           </div>
 

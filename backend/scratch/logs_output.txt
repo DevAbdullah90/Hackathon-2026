@@ -1,0 +1,272 @@
+--- REASONING LOGS ---
+[2026-05-20 00:59:51.520991] Agent: verification_agent | Level: INFO
+Text: ### ✅ Verification Agent — 00:59 UTC
+**Incident**: Pre-confirmation
+**Status**: ALERT RETRACTED
+
+The Verification Agent determined that the conflicting signal regarding the heatwave lacked credibility and contradicted verified sources. Consequently, the incident has been retracted from the alert system, and monitoring of the situation is recommended for potential future reports on heatwave conditions.
+
+**Key Output:**
+- Verification Score: 0.0
+- Evidence: Conflicting signal has low credibility score and source is unknown
+- Recommended Action: Monitor the situation
+
+---
+
+----------------------------------------
+[2026-05-20 00:59:37.604251] Agent: detection_agent | Level: INFO
+Text: ### 🔍 Incident Detector — 00:59 UTC
+**Incident**: Pre-confirmation
+**Status**: MONITORING
+
+The Incident Detector identified potential activity in Napier Quarter, Karachi, but did not confirm it as an incident due to very low confidence. The analysis revealed a signal that contradicted verified heatwave signals, thus marking it as unconfirmed and necessitating further monitoring.
+
+**Key Output**:
+- Confidence Score: 0.0
+- Conflict detected: Signal from unknown source contradicts verified heatwave signals.
+- Next action: Monitoring the situation.
+
+---
+
+----------------------------------------
+[2026-05-20 00:59:17.819412] Agent: signal_agent | Level: INFO
+Text: ### 📡 Signal Processor — 00:59 UTC
+**Incident**: Pre-confirmation
+**Status**: CONFLICT FLAGGED
+
+The Signal Processor reported a heatwave incident in Napier Quarter, Karachi. However, the source of this signal is unknown and contradicts prior verified signals regarding heatwaves. This discrepancy raised a conflict flag, prompting further investigation into the reliability of the information.
+
+**Key Output**:
+- Credibility Score: 0.3
+- Conflict note: Unknown source contradicts verified signals
+- Next action: Further verification required
+---
+
+----------------------------------------
+[2026-05-20 00:57:46.160067] Agent: verification_agent | Level: INFO
+Text: ### ✅ Verification Agent — 00:52 UTC
+**Incident**: Pre-confirmation  
+**Status**: ALERT RETRACTED  
+
+The Verification Agent assessed the heatwave incident and determined that the alert should be retracted. The verification score was low, indicating that the evidence did not meet the necessary threshold for confirmation, primarily due to a lack of credible news sources.  
+
+**Key Output**:  
+- Score: 0.1  
+- Evidence: Citizen report of heat / load-shedding and normal traffic flow.  
+- Next action: Inform local authorities and update public advisories regarding heat safety.
+---
+
+----------------------------------------
+[2026-05-20 00:57:46.148906] Agent: verification_agent | Level: INFO
+Text: ### ✅ Verification Agent — 00:52 UTC
+**Incident**: Pre-confirmation  
+**Status**: ALERT RETRACTED  
+
+The Verification Agent assessed the heatwave incident and determined that the alert should be retracted. The verification score was low, indicating that the evidence did not meet the necessary threshold for confirmation, primarily due to a lack of credible news sources.  
+
+**Key Output**:  
+- Score: 0.1  
+- Evidence: Citizen report of heat / load-shedding and normal traffic flow.  
+- Next action: Inform local authorities and update public advisories regarding heat safety.
+---
+
+----------------------------------------
+[2026-05-20 00:52:33.178267] Agent: detection_agent | Level: INFO
+Text: ### 🔍 Incident Detector — 00:52 UTC
+**Incident**: Pre-confirmation  
+**Status**: MONITORING  
+
+The Incident Detector processed a signal from Napier Quarter, Karachi, with a low confidence score. The signal indicated a conflict, which has led to a determination of low credibility, and no corroboration was found through news or traffic sources. 
+
+**Key Output**:  
+- Confidence: 0.0  
+- Supporting evidence: Signal from unknown source with conflict flag indicated low credibility.  
+- Next step: Monitoring for further developments.
+
+---
+
+----------------------------------------
+[2026-05-20 00:52:22.400965] Agent: signal_agent | Level: INFO
+Text: ### 📡 Signal Processor — 00:52 UTC
+**Incident**: Pre-confirmation  
+**Status**: CONFLICT FLAGGED  
+
+The Signal Processor identified a potential heatwave in Napier Quarter, Karachi. However, the source of this signal is unrecognized and lacks high credibility, which raises concerns about its reliability. Record temperatures reaching forty-seven degrees Celsius have been reported in Saddar, with citizens fainting due to extreme humidity near Empress Market and multiple load-shedding zones in effect.
+
+**Key Output**:  
+- Credibility Score: 0.3  
+- Source: Unknown  
+- Action: Conflict flagged due to low credibility.
+
+----------------------------------------
+[2026-05-20 00:48:06.707666] Agent: verification_agent | Level: INFO
+Text: ### ✅ Verification Agent — 00:47 UTC
+**Incident**: Pre-confirmation
+**Status**: ALERT RETRACTED
+
+The Verification Agent has retracted the earlier alert regarding a potential flooding emergency in Karachi. The evidence reviewed indicates a prevailing heatwave rather than flooding, based on recent heatwave alerts, local news reports about heat-related health impacts, and traffic data showing normal conditions.
+
+**Key Output**:
+- Verification Score: 0.0
+- Evidence of heatwave conditions
+- Recommended action: Inform local authorities and update public advisories regarding heat safety.
+
+---
+
+----------------------------------------
+[2026-05-20 00:48:02.676005] Agent: verification_agent | Level: INFO
+Text: ### ✅ Verification Agent — 00:47 UTC
+**Incident**: Pre-confirmation
+**Status**: ALERT RETRACTED
+
+The Verification Agent has retracted the earlier alert regarding a potential flooding emergency in Karachi. The evidence reviewed indicates a prevailing heatwave rather than flooding, based on recent heatwave alerts, local news reports about heat-related health impacts, and traffic data showing normal conditions.
+
+**Key Output**:
+- Verification Score: 0.0
+- Evidence of heatwave conditions
+- Recommended action: Inform local authorities and update public advisories regarding heat safety.
+
+---
+
+----------------------------------------
+[2026-05-20 00:47:37.770888] Agent: detection_agent | Level: INFO
+Text: ### 🔍 Incident Detector — 00:47 UTC
+**Incident**: Pre-confirmation
+**Status**: MONITORING
+
+The Incident Detector monitored a situation in Napier Quarter, Karachi, where a single report indicated high temperatures and related health issues among citizens. Although the confidence level was at zero, the agent categorized the incident as unverified and recommended further verification due to the lack of corroborating evidence.  
+
+**Key Output:**
+- Signal Count: 1
+- Supporting Evidence: High temperature and citizen health issues
+- Next action: Verification needed
+
+---
+
+----------------------------------------
+[2026-05-20 00:47:25.771623] Agent: signal_agent | Level: INFO
+Text: ### 📡 Signal Processor — 00:47 UTC
+**Incident**: Pre-confirmation  
+**Status**: SIGNAL PROCESSED  
+
+The Signal Processor identified a potential heatwave in Napier Quarter, Karachi. With a credibility score of zero point three, the report noted record temperatures reaching forty-seven degrees Celsius, causing citizens to faint near Empress Market due to extreme humidity. Multiple areas are experiencing load-shedding as a result of the high demand for electricity.
+
+**Key Output**:  
+- Credibility Score: 0.3  
+- Reported temperature: 47°C  
+- Location: Napier Quarter, Karachi
+---
+
+----------------------------------------
+[2026-05-20 00:11:20.391805] Agent: detection_agent | Level: INFO
+Text: ### 🔍 Incident Detector — 00:11 UTC
+**Incident**: Pre-confirmation  
+**Status**: MONITORING  
+
+The Incident Detector assessed a potential situation on Mall Road in Mayo Gardens, Lahore, but did not confirm an incident due to very low confidence in the signals detected. However, conflict was flagged as street vendors were reported collapsing and hospitals indicated a rise in heat-related illnesses, leading to ongoing monitoring of the area.
+
+**Key Output**:  
+- 1 signal detected  
+- Heat index exceeding 52°C in Anarkali
+- Monitoring status to gather further data
+
+---
+
+----------------------------------------
+[2026-05-20 00:11:00.177178] Agent: signal_agent | Level: INFO
+Text: ### 📡 Signal Processor — 00:10 UTC
+**Incident**: Pre-confirmation
+**Status**: CONFLICT FLAGGED
+
+The Signal Processor flagged a potential conflict regarding a heatwave report from the traffic API at Mall Rd, Mayo Gardens, Lahore. The credibility of the report was questioned as it contradicts established traffic norms. Notable mentions include a heat index exceeding 52 degrees Celsius in Anarkali, leading to health emergencies and power grid failures in the inner city.
+
+**Key Output**:
+- Credibility Score: FLAGGED_CONFLICT
+- Conflict Note: Received a heatwave report contradicting established norms
+- Next action: Verify credibility of the report
+
+---
+
+----------------------------------------
+[2026-05-19 23:28:20.718104] Agent: planning_agent | Level: INFO
+Text: ### 📋 Response Planner — 23:28 UTC
+**Incident**: d643d503-50cb-4a9d-a9f8-b8d77a8075d5  
+**Status**: RESPONSE PLAN GENERATED  
+
+A comprehensive heatwave response plan has been initiated in Naukot, Karachi. The plan includes alerts to citizens regarding potential heat stroke, the deployment of two hydration camps, routing of two water tankers to neighborhoods, activation of three shade canopies for cooling, and dispatch of two paramedic units to address heat-related health issues.  
+
+**Key Output**:  
+- 5 actions created  
+- Heat stroke warning with severe weather expected  
+- Comprehensive heatwave response initiated  
+
+---
+
+----------------------------------------
+[2026-05-19 23:27:14.155532] Agent: severity_agent | Level: INFO
+Text: ### ⚠️ Risk Analyzer — 23:27 UTC
+**Incident**: 8c0b7faf-7318-4bdf-88e9-8d6224ea2fd4  
+**Status**: ELEVATED — SEVERITY 5.6/10  
+
+The Risk Analyzer assessed a heatwave in Naukot, Karachi, with a severity score of 5.6 indicating elevated risk levels. Current conditions include a temperature of 32.5°C and high humidity at 85%, which contribute to health hazards, particularly for the elderly population. Peak impact is expected within one to three hours, particularly during the hottest part of the day as conditions worsen.  
+
+**Key Output**:
+- Severity Score: 5.6
+- Significant Risk Factor: High humidity and no shade infrastructure within 500 meters
+- Peak Impact ETA: 1-3 hours  
+
+---
+
+----------------------------------------
+
+--- CHAIN OF THOUGHT LOGS ---
+[2026-05-20 00:59:51.522880] Agent: verification_agent
+Steps: 1. The Verification Agent evaluated a conflicting signal related to a heatwave incident.
+2. It assessed the credibility of the conflicting signal, scoring it low at 0.3.
+3. The agent noted that the source of the conflicting signal was unknown and contradicted verified signals.
+4. Based on these findings, it decided to retract the incident alert.
+5. The agent recommended monitoring the situation for potential future heatwave reports.
+
+----------------------------------------
+[2026-05-20 00:57:46.155191] Agent: verification_agent
+Steps: The verification score did not meet the confirmation threshold due to a lack of credible news evidence, despite two pieces of evidence being analyzed, which included a citizen report and traffic flow observations.
+
+----------------------------------------
+[2026-05-20 00:48:02.668442] Agent: verification_agent
+Steps: The Verification Agent analyzed evidence related to the incident. It reviewed heatwave alerts and local news reports on high temperatures and health impacts, balanced against traffic data indicating normal conditions. Based on this information, it determined that the earlier alert regarding flooding was not supported by current evidence, resulting in a verification score of 0.0. Consequently, the agent recommended retracting the alert and informing local authorities about the heatwave situation.
+
+----------------------------------------
+[2026-05-19 20:50:55.171566] Agent: verification_agent
+Steps: 1. Reviewed evidence regarding heavy rainfall reports in Karachi.
+2. Scored the incident based on confirmation parameters, resulting in a 0.3 score.
+3. Confirmed incident type as urban flooding in Civil Lines, Karachi based on the gathered evidence.
+4. Recommended action to alert emergency response teams for necessary flood management efforts.
+
+----------------------------------------
+[2026-05-19 20:50:49.830861] Agent: verification_agent
+Steps: 1. Reviewed evidence regarding heavy rainfall reports in Karachi.
+2. Scored the incident based on confirmation parameters, resulting in a 0.3 score.
+3. Confirmed incident type as urban flooding in Civil Lines, Karachi based on the gathered evidence.
+4. Recommended action to alert emergency response teams for necessary flood management efforts.
+
+----------------------------------------
+[2026-05-19 20:50:20.797092] Agent: signal_agent
+Steps: Detected signal related to a heatwave with temperature and humidity data from traffic API. Analyzed for conflicts based on context. Found inconsistency as heatwave reports typically wouldn't originate from a traffic context. Flagged this issue and noted it for further verification.
+
+----------------------------------------
+[2026-05-19 20:48:17.762963] Agent: severity_agent
+Steps: Heatwave conditions confirmed in Civil Lines, Karachi. Weather API indicates an ambient temperature of 46.2°C (+3) and a heat index of 54.1°C (+2). An active power outage is reported in the affected area (+2), and it is noted that schools or markets are open during peak heat hours (+2). The overall detection confidence exceeds 0.90 (+1). Raw points total 12 out of a possible 16. Normalized severity score calculated to be 7.5/10. Immediate intervention is necessary due to the high risks involved.
+
+----------------------------------------
+[2026-05-19 20:45:10.805630] Agent: detection_agent
+Steps: Detected potential incident location but no signals found. Confidence score was zero, leading to unconfirmation. Conflict detected in the data, prompting a monitoring decision instead.
+
+----------------------------------------
+[2026-05-19 20:26:21.346521] Agent: signal_agent
+Steps: 1. User reported a flood incident via GPS with water entering shops in G-10 Markaz. 2. The Signal Processor received and processed this report. 3. Acknowledged the necessity of further action and monitoring.
+
+----------------------------------------
+[2026-05-19 20:21:40.206941] Agent: severity_agent
+Steps: The Risk Analyzer confirmed an incident in Old Clifton, Karachi, where the ambient temperature reached 46.2°C and the heat index was 54.1°C. Multiple risk factors were identified, including power outages, high ambient temperature, and no wind, contributing to a total of 14 raw points. These factors led to a calculated severity score of 8.8, indicating a critical situation affecting an estimated radius of 1.2 km. Immediate interventions are necessary to address the overwhelming heat impact.
+
+----------------------------------------

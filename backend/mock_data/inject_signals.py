@@ -9,15 +9,15 @@ import httpx
 
 API_URL = "http://127.0.0.1:8000/api/v1/signals/"
 
-# We simulate a cluster of signals around Block 18 Jauhar, Gulistan-e-Jauhar, Karachi
+# We simulate a cluster of signals around Gulshan-e-Iqbal, Karachi
 SIGNALS = [
     {
         "source": "weather_api",
         "type": "flood_risk",
-        "lat": 24.9088,
-        "lng": 67.1282,
+        "lat": 24.9180,
+        "lng": 67.0970,
         "raw_payload": {
-            "location": "Block 18 Jauhar, Gulistan-e-Jauhar, Karachi",
+            "location": "Gulshan-e-Iqbal, Karachi",
             "alert": "Heavy Rainfall",
             "intensity_mm_per_hr": 35.0,
             "duration_hrs": 3.0
@@ -26,40 +26,40 @@ SIGNALS = [
     {
         "source": "user_gps",
         "type": "flood",
-        "lat": 24.9088,
-        "lng": 67.1282,
+        "lat": 24.9180,
+        "lng": 67.0970,
         "raw_payload": {
-            "lat": 24.9088,
-            "lng": 67.1282,
+            "lat": 24.9180,
+            "lng": 67.0970,
             "type": "flood",
             "source": "user_gps",
-            "message": "Water entering my house!"
+            "message": "Water entering local shopping area basement shops!"
         }
     },
     {
         "source": "user_gps",
         "type": "flood",
-        "lat": 24.9095,
-        "lng": 67.1285,
+        "lat": 24.9185,
+        "lng": 67.0975,
         "raw_payload": {
-            "lat": 24.9095,
-            "lng": 67.1285,
+            "lat": 24.9185,
+            "lng": 67.0975,
             "type": "flood",
             "source": "user_gps",
-            "message": "Main road blocked by water."
+            "message": "Main commercial boulevard completely blocked by water."
         }
     },
     {
         "source": "user_gps",
         "type": "flood",
-        "lat": 24.9082,
-        "lng": 67.1278,
+        "lat": 24.9175,
+        "lng": 67.0965,
         "raw_payload": {
-            "lat": 24.9082,
-            "lng": 67.1278,
+            "lat": 24.9175,
+            "lng": 67.0965,
             "type": "flood",
             "source": "user_gps",
-            "message": "Cars stuck in deep water."
+            "message": "Public buses stuck in deep water near Gulshan."
         }
     }
 ]
