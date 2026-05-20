@@ -15,7 +15,14 @@ import {
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import { THEME } from "../lib/theme";
 import SeverityBadge from "../components/SeverityBadge";
-import { api, Incident, DashboardStats, AgentWorkforceMember, GlobalTimelineLog, VehicleLocation } from "../lib/api";
+import {
+  api,
+  Incident,
+  DashboardStats,
+  AgentWorkforceMember,
+  GlobalTimelineLog,
+  VehicleLocation,
+} from "../lib/api";
 import * as Location from "expo-location";
 import {
   LayoutDashboard,
@@ -42,7 +49,11 @@ interface IncidentCardProps {
   vehicles?: VehicleLocation[];
 }
 
-const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation, vehicles }) => {
+const IncidentCard: React.FC<IncidentCardProps> = ({
+  item,
+  navigation,
+  vehicles,
+}) => {
   const severityPercentage = (item.severity_score / 10) * 100;
   const isCritical = item.severity_score >= 7.5;
   const incidentVehicles = vehicles || [];
@@ -51,7 +62,12 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation, vehicles 
     <View style={styles.cardWrapper}>
       <TouchableOpacity
         activeOpacity={0.9}
-        onPress={() => navigation.navigate("Reasoning", { incidentId: item.id, location: item.location })}
+        onPress={() =>
+          navigation.navigate("Reasoning", {
+            incidentId: item.id,
+            location: item.location,
+          })
+        }
       >
         <View style={styles.card}>
           <View style={styles.cardHeader}>
@@ -61,10 +77,14 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation, vehicles 
                 <Clock size={10} color={THEME.colors.text.muted} />
                 <Text style={styles.cardTimeText}>
                   {new Date(
-                    item.created_at.endsWith("Z") || item.created_at.includes("+")
+                    item.created_at.endsWith("Z") ||
+                      item.created_at.includes("+")
                       ? item.created_at
-                      : item.created_at + "Z"
-                  ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      : item.created_at + "Z",
+                  ).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </Text>
               </View>
             </View>
@@ -77,7 +97,9 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation, vehicles 
                 styles.severityBarFill,
                 {
                   width: `${severityPercentage}%`,
-                  backgroundColor: isCritical ? THEME.colors.status.critical : THEME.colors.primary,
+                  backgroundColor: isCritical
+                    ? THEME.colors.status.critical
+                    : THEME.colors.primary,
                 },
               ]}
             />
@@ -86,13 +108,39 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation, vehicles 
           {/* Real-time Telemetry Dispatch Progress */}
           {incidentVehicles.length > 0 && (
             <View style={styles.telemetryContainer}>
-              <Text style={styles.telemetryTitle}>🛸 RESPONDER SWARM TELEMETRY</Text>
+              <Text style={styles.telemetryTitle}>
+                🛸 RESPONDER SWARM TELEMETRY
+              </Text>
               {incidentVehicles.map((v) => {
-                const totalDist = getHaversineDistance(v.start_lat, v.start_lng, v.target_lat, v.target_lng);
-                const remainingDist = getHaversineDistance(v.current_lat, v.current_lng, v.target_lat, v.target_lng);
-                const fraction = totalDist > 0 ? Math.max(0, Math.min(1.0 - (remainingDist / totalDist), 1.0)) : 1.0;
-                const etaMins = Math.max(0, Math.ceil((1.0 - fraction) * (v.duration_seconds / 60)));
-                const emoji = v.vehicle_type === "rescue_boat" ? "🚤" : v.vehicle_type === "ambulance" ? "🚑" : "🛠️";
+                const totalDist = getHaversineDistance(
+                  v.start_lat,
+                  v.start_lng,
+                  v.target_lat,
+                  v.target_lng,
+                );
+                const remainingDist = getHaversineDistance(
+                  v.current_lat,
+                  v.current_lng,
+                  v.target_lat,
+                  v.target_lng,
+                );
+                const fraction =
+                  totalDist > 0
+                    ? Math.max(
+                        0,
+                        Math.min(1.0 - remainingDist / totalDist, 1.0),
+                      )
+                    : 1.0;
+                const etaMins = Math.max(
+                  0,
+                  Math.ceil((1.0 - fraction) * (v.duration_seconds / 60)),
+                );
+                const emoji =
+                  v.vehicle_type === "rescue_boat"
+                    ? "🚤"
+                    : v.vehicle_type === "ambulance"
+                      ? "🚑"
+                      : "🛠️";
                 const isArrived = v.status === "arrived" || fraction >= 1.0;
 
                 return (
@@ -129,23 +177,37 @@ const IncidentCard: React.FC<IncidentCardProps> = ({ item, navigation, vehicles 
           <View style={styles.cardStatsGrid}>
             <View style={styles.cardStat}>
               <Text style={styles.cardStatLabel}>CONFIDENCE</Text>
-              <Text style={styles.cardStatValue}>{(item.confidence * 100).toFixed(0)}%</Text>
+              <Text style={styles.cardStatValue}>
+                {(item.confidence * 100).toFixed(0)}%
+              </Text>
             </View>
             <View style={styles.cardStat}>
               <Text style={styles.cardStatLabel}>CONFIRMS</Text>
-              <Text style={[styles.cardStatValue, { color: THEME.colors.status.success }]}>
+              <Text
+                style={[
+                  styles.cardStatValue,
+                  { color: THEME.colors.status.success },
+                ]}
+              >
                 👍 {item.confirmations_count || 0}
               </Text>
             </View>
             <View style={styles.cardStat}>
               <Text style={styles.cardStatLabel}>REFUTES</Text>
-              <Text style={[styles.cardStatValue, { color: THEME.colors.status.critical }]}>
+              <Text
+                style={[
+                  styles.cardStatValue,
+                  { color: THEME.colors.status.critical },
+                ]}
+              >
                 👎 {item.refutations_count || 0}
               </Text>
             </View>
             <View style={styles.cardStat}>
               <Text style={styles.cardStatLabel}>POPULATION</Text>
-              <Text style={styles.cardStatValue}>{item.estimated_population}</Text>
+              <Text style={styles.cardStatValue}>
+                {item.estimated_population}
+              </Text>
             </View>
           </View>
 
@@ -230,7 +292,7 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
       {/* TOP TACTICAL NAVIGATION BAR */}
       <View style={styles.webHeader}>
         <View style={styles.webBrandGroup}>
-          <Text style={styles.webBrandTitle}>CIRO COMMAND CENTER</Text>
+          <Text style={styles.webBrandTitle}>ResQ by AQUA COMMAND CENTER</Text>
           <View style={styles.webStatusBadge}>
             <View style={styles.webStatusDot} />
             <Text style={styles.webStatusText}>SYSTEM ONLINE</Text>
@@ -240,13 +302,18 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
         {/* DEMO TOOLBAR: SINGLE-CLICK TELEMETRY TRIGGER */}
         <TouchableOpacity
           activeOpacity={0.8}
-          style={[styles.webTriggerBtn, mockTriggering && styles.disabledButton]}
+          style={[
+            styles.webTriggerBtn,
+            mockTriggering && styles.disabledButton,
+          ]}
           onPress={handleTriggerMockSignal}
           disabled={mockTriggering}
         >
           <Cpu size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
           <Text style={styles.webTriggerBtnText}>
-            {mockTriggering ? "INGESTING TELEMETRY..." : "🚨 TRIGGER MOCK SIGNAL"}
+            {mockTriggering
+              ? "INGESTING TELEMETRY..."
+              : "🚨 TRIGGER MOCK SIGNAL"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -258,7 +325,9 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
           <Text style={styles.webKpiLbl}>SIGNALS INGESTED</Text>
         </View>
         <View style={styles.webKpiCard}>
-          <Text style={[styles.webKpiVal, { color: THEME.colors.status.critical }]}>
+          <Text
+            style={[styles.webKpiVal, { color: THEME.colors.status.critical }]}
+          >
             {stats.active_crisis_sectors}
           </Text>
           <Text style={styles.webKpiLbl}>ACTIVE CRISIS SECTORS</Text>
@@ -279,13 +348,15 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
 
       {/* CORE THREE-COLUMN TACTICAL LAYOUT */}
       <View style={styles.webBodyGrid}>
-        
         {/* COLUMN 1: PRIORITY INCIDENTS FEED (30% WIDTH) */}
         <View style={styles.webCol30}>
           <View style={styles.webPanelHeader}>
             <Text style={styles.webPanelTitle}>PRIORITY HAZARD SECTORS</Text>
           </View>
-          <ScrollView style={styles.webPanelScroll} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.webPanelScroll}
+            showsVerticalScrollIndicator={false}
+          >
             {incidents.length > 0 ? (
               incidents.map((incident) => {
                 return (
@@ -301,7 +372,9 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
                     }
                   >
                     <View style={styles.webIncidentHeader}>
-                      <Text style={styles.webIncidentLoc}>{incident.location}</Text>
+                      <Text style={styles.webIncidentLoc}>
+                        {incident.location}
+                      </Text>
                       <SeverityBadge score={incident.severity_score} />
                     </View>
                     <View style={styles.webIncidentMetrics}>
@@ -319,7 +392,9 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
                       </View>
                     </View>
                     <View style={styles.webIncidentFooter}>
-                      <Text style={styles.webInspectBtnText}>OPEN AI CORE FOR DETAILED COT →</Text>
+                      <Text style={styles.webInspectBtnText}>
+                        OPEN AI CORE FOR DETAILED COT →
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 );
@@ -338,13 +413,21 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
         {/* COLUMN 2: LIVE AGENT WORKFORCE (40% WIDTH) */}
         <View style={styles.webCol40}>
           <View style={styles.webPanelHeader}>
-            <Text style={styles.webPanelTitle}>ACTIVE SPECIALIST AGENT WORKFORCE</Text>
+            <Text style={styles.webPanelTitle}>
+              ACTIVE SPECIALIST AGENT WORKFORCE
+            </Text>
           </View>
           <View style={styles.webAgentsGrid}>
             {agents.map((agentItem, idx) => {
               const isProcessing = agentItem.status === "PROCESSING";
               return (
-                <View key={idx} style={[styles.webAgentCard, isProcessing && styles.webAgentActiveCard]}>
+                <View
+                  key={idx}
+                  style={[
+                    styles.webAgentCard,
+                    isProcessing && styles.webAgentActiveCard,
+                  ]}
+                >
                   <View style={styles.webAgentHeader}>
                     <Text style={styles.webAgentName}>{agentItem.agent}</Text>
                     <View
@@ -371,7 +454,9 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
                         style={[
                           styles.webAgentStatusText,
                           {
-                            color: isProcessing ? THEME.colors.primary : "#10B981",
+                            color: isProcessing
+                              ? THEME.colors.primary
+                              : "#10B981",
                           },
                         ]}
                       >
@@ -395,14 +480,20 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
           <View style={styles.webPanelHeader}>
             <Text style={styles.webPanelTitle}>GLOBAL TELEMETRY LOG FEED</Text>
           </View>
-          <ScrollView style={styles.webPanelScroll} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.webPanelScroll}
+            showsVerticalScrollIndicator={false}
+          >
             {timeline.length > 0 ? (
               timeline.map((log) => {
-                const logTime = new Date(log.created_at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                });
+                const logTime = new Date(log.created_at).toLocaleTimeString(
+                  [],
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  },
+                );
                 return (
                   <View key={log.id} style={styles.webTimelineCard}>
                     <View style={styles.webTimelineHeader}>
@@ -425,7 +516,9 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
                             })
                           }
                         >
-                          <Text style={styles.webTimelineLink}>VIEW INCIDENT →</Text>
+                          <Text style={styles.webTimelineLink}>
+                            VIEW INCIDENT →
+                          </Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -435,24 +528,33 @@ const WebDashboard: React.FC<{ navigation: any }> = ({ navigation }) => {
             ) : (
               <View style={styles.webEmptyState}>
                 <Text style={styles.webEmptyTitle}>TIMELINE OFFLINE</Text>
-                <Text style={styles.webEmptySubtitle}>Waiting for incoming telemetry stream...</Text>
+                <Text style={styles.webEmptySubtitle}>
+                  Waiting for incoming telemetry stream...
+                </Text>
               </View>
             )}
           </ScrollView>
         </View>
-
       </View>
     </View>
   );
 };
 
-function getHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+function getHaversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
   const R = 6371; // Radius of the earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -473,7 +575,9 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
   const seenIncidentIdsRef = useRef<Set<string>>(new Set());
 
   // Proximity validation overlay state
-  const [proximityIncident, setProximityIncident] = useState<Incident | null>(null);
+  const [proximityIncident, setProximityIncident] = useState<Incident | null>(
+    null,
+  );
   const hasPromptedProximityRef = useRef<Set<string>>(new Set());
 
   const fetchVehicles = async () => {
@@ -501,8 +605,16 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
 
       // Find the first active incident within 1.5 km that hasn't been prompted yet
       const nearbyIncident = activeIncidents.find((incident) => {
-        const distance = getHaversineDistance(userLat, userLng, incident.lat, incident.lng);
-        return distance <= 1.5 && !hasPromptedProximityRef.current.has(String(incident.id));
+        const distance = getHaversineDistance(
+          userLat,
+          userLng,
+          incident.lat,
+          incident.lng,
+        );
+        return (
+          distance <= 1.5 &&
+          !hasPromptedProximityRef.current.has(String(incident.id))
+        );
       });
 
       if (nearbyIncident) {
@@ -517,19 +629,21 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
   const fetchIncidents = async () => {
     try {
       const data = await api.getActiveIncidents();
-      
+
       // Seed seen list initially to avoid historic spamming
       if (seenIncidentIdsRef.current.size === 0 && data.length > 0) {
-        data.forEach(i => seenIncidentIdsRef.current.add(String(i.id)));
+        data.forEach((i) => seenIncidentIdsRef.current.add(String(i.id)));
       } else if (seenIncidentIdsRef.current.size > 0 && data.length > 0) {
         // Detect newly ingested active incidents
-        const newIncident = data.find(i => !seenIncidentIdsRef.current.has(String(i.id)));
+        const newIncident = data.find(
+          (i) => !seenIncidentIdsRef.current.has(String(i.id)),
+        );
         if (newIncident) {
           setActiveAlert(newIncident);
           seenIncidentIdsRef.current.add(String(newIncident.id));
         }
       }
-      
+
       setIncidents(data);
       await checkProximityAndPrompt(data);
     } catch (e) {
@@ -569,7 +683,10 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.background} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={THEME.colors.background}
+      />
       <View style={StyleSheet.absoluteFill}>
         <AtmosphericBackground />
       </View>
@@ -583,24 +700,32 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 <View style={styles.alertPingDot} />
                 <Text style={styles.alertTag}>🚨 EMERGENCY HAZARD INBOUND</Text>
               </View>
-              <TouchableOpacity onPress={() => setActiveAlert(null)} style={styles.alertCloseBtn}>
+              <TouchableOpacity
+                onPress={() => setActiveAlert(null)}
+                style={styles.alertCloseBtn}
+              >
                 <X size={16} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
 
             <Text style={styles.alertLocation}>{activeAlert.location}</Text>
             <Text style={styles.alertDescription}>
-              High priority flood risk reported. AI Response Swarm triaging bypass routes.
+              High priority flood risk reported. AI Response Swarm triaging
+              bypass routes.
             </Text>
 
             <View style={styles.alertParamGrid}>
               <View style={styles.alertParam}>
                 <Text style={styles.alertParamLabel}>SEVERITY LEVEL</Text>
-                <Text style={styles.alertParamValue}>{activeAlert.severity_score.toFixed(1)} / 10</Text>
+                <Text style={styles.alertParamValue}>
+                  {activeAlert.severity_score.toFixed(1)} / 10
+                </Text>
               </View>
               <View style={styles.alertParam}>
                 <Text style={styles.alertParamLabel}>EST. RESIDENTS</Text>
-                <Text style={styles.alertParamValue}>{activeAlert.estimated_population.toLocaleString()}</Text>
+                <Text style={styles.alertParamValue}>
+                  {activeAlert.estimated_population.toLocaleString()}
+                </Text>
               </View>
             </View>
 
@@ -610,12 +735,21 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 const id = activeAlert.id;
                 const loc = activeAlert.location;
                 setActiveAlert(null);
-                navigation.navigate("Reasoning", { incidentId: id, location: loc });
+                navigation.navigate("Reasoning", {
+                  incidentId: id,
+                  location: loc,
+                });
               }}
               style={styles.alertActionBtn}
             >
-              <Navigation size={14} color="#FFFFFF" style={{ marginRight: 6 }} />
-              <Text style={styles.alertActionBtnText}>LOCATE HAZARD & ENGAGE</Text>
+              <Navigation
+                size={14}
+                color="#FFFFFF"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.alertActionBtnText}>
+                LOCATE HAZARD & ENGAGE
+              </Text>
             </TouchableOpacity>
           </BlurView>
         </View>
@@ -627,21 +761,40 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
           <BlurView intensity={95} tint="dark" style={styles.proximityCard}>
             <View style={styles.alertHeader}>
               <View style={styles.alertIndicator}>
-                <View style={[styles.alertPingDot, { backgroundColor: THEME.colors.primary }]} />
-                <Text style={[styles.alertTag, { color: THEME.colors.primary }]}>📡 PROXIMITY CONFIRMATION</Text>
+                <View
+                  style={[
+                    styles.alertPingDot,
+                    { backgroundColor: THEME.colors.primary },
+                  ]}
+                />
+                <Text
+                  style={[styles.alertTag, { color: THEME.colors.primary }]}
+                >
+                  📡 PROXIMITY CONFIRMATION
+                </Text>
               </View>
-              <TouchableOpacity onPress={() => setProximityIncident(null)} style={styles.alertCloseBtn}>
+              <TouchableOpacity
+                onPress={() => setProximityIncident(null)}
+                style={styles.alertCloseBtn}
+              >
                 <X size={16} color="#9CA3AF" />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.alertLocation}>{proximityIncident.location}</Text>
+            <Text style={styles.alertLocation}>
+              {proximityIncident.location}
+            </Text>
             <Text style={styles.alertDescription}>
-              You are detected within 1.5 km of this active operational sector. Please help verify ground conditions:
+              You are detected within 1.5 km of this active operational sector.
+              Please help verify ground conditions:
             </Text>
 
             <Text style={styles.proximityQuestion}>
-              Are you currently experiencing {proximityIncident.disaster_type === "heatwave" ? "extreme heat/thermal duress" : "active flooding/water inundation"} at this location?
+              Are you currently experiencing{" "}
+              {proximityIncident.disaster_type === "heatwave"
+                ? "extreme heat/thermal duress"
+                : "active flooding/water inundation"}{" "}
+              at this location?
             </Text>
 
             <View style={styles.proximityBtnGroup}>
@@ -658,7 +811,9 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
                 }}
                 style={[styles.proximityVoteBtn, styles.proximityConfirmBtn]}
               >
-                <Text style={styles.proximityVoteBtnText}>👍 YES, CONFIRMED</Text>
+                <Text style={styles.proximityVoteBtnText}>
+                  👍 YES, CONFIRMED
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -682,14 +837,15 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
       )}
 
       <SafeAreaView style={styles.safeArea}>
-        
         {/* Executive Header */}
         <View style={styles.header}>
           <View>
             <Text style={styles.headerTitle}>COMMAND CENTER</Text>
             <View style={styles.systemStatus}>
               <View style={styles.statusDot} />
-              <Text style={styles.statusText}>CIRO-ORCHESTRATOR ONLINE</Text>
+              <Text style={styles.statusText}>
+                ResQ by AQUA-ORCHESTRATOR ONLINE
+              </Text>
             </View>
           </View>
           <TouchableOpacity style={styles.headerIconButton}>
@@ -697,11 +853,15 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={THEME.colors.primary} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={THEME.colors.primary}
+            />
           }
         >
           {/* High-End KPI Dashboard */}
@@ -716,11 +876,24 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
               </View>
             </View>
             <View style={styles.kpiCard}>
-              <View style={[styles.kpiIconWrapper, { backgroundColor: THEME.colors.accent }]}>
+              <View
+                style={[
+                  styles.kpiIconWrapper,
+                  { backgroundColor: THEME.colors.accent },
+                ]}
+              >
                 <Users size={16} color="#FFFFFF" />
               </View>
               <View style={styles.kpiInfo}>
-                <Text style={styles.kpiValue}>{(incidents.reduce((acc, i) => acc + i.estimated_population, 0) / 1000).toFixed(1)}k</Text>
+                <Text style={styles.kpiValue}>
+                  {(
+                    incidents.reduce(
+                      (acc, i) => acc + i.estimated_population,
+                      0,
+                    ) / 1000
+                  ).toFixed(1)}
+                  k
+                </Text>
                 <Text style={styles.kpiLabel}>POPULATION AFFECTED</Text>
               </View>
             </View>
@@ -743,7 +916,9 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
               <View style={styles.mockTriggerCard}>
                 <Cpu size={20} color={THEME.colors.accent} />
                 <View style={styles.mockTriggerInfo}>
-                  <Text style={styles.mockTriggerTitle}>🚨 TRIGGER SIMULATED CRISIS SIGNAL</Text>
+                  <Text style={styles.mockTriggerTitle}>
+                    🚨 TRIGGER SIMULATED CRISIS SIGNAL
+                  </Text>
                   <Text style={styles.mockTriggerSubtitle}>
                     {mockTriggering
                       ? "Ingesting telemetry sector..."
@@ -783,32 +958,44 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
               ]}
             >
               <View style={styles.mockTriggerCard}>
-                <Navigation size={20} color={THEME.colors.primary} style={{ transform: [{ rotate: "45deg" }] }} />
+                <Navigation
+                  size={20}
+                  color={THEME.colors.primary}
+                  style={{ transform: [{ rotate: "45deg" }] }}
+                />
                 <View style={styles.mockTriggerInfo}>
-                  <Text style={styles.mockTriggerTitle}>📡 SIMULATE PROXIMITY VERIFICATION</Text>
+                  <Text style={styles.mockTriggerTitle}>
+                    📡 SIMULATE PROXIMITY VERIFICATION
+                  </Text>
                   <Text style={styles.mockTriggerSubtitle}>
-                    Force-trigger a crowdsourced proximity validation overlay for the nearest hazard zone.
+                    Force-trigger a crowdsourced proximity validation overlay
+                    for the nearest hazard zone.
                   </Text>
                 </View>
               </View>
             </TouchableOpacity>
 
             <View style={styles.actionGrid}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.actionCardContainer}
                 onPress={() => navigation.navigate("Map")}
               >
                 <View style={styles.actionCard}>
                   <MapIcon size={20} color={THEME.colors.primary} />
-                  <Text style={styles.actionTitle} numberOfLines={2}>LIVE CRISIS MAP</Text>
+                  <Text style={styles.actionTitle} numberOfLines={2}>
+                    LIVE CRISIS MAP
+                  </Text>
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.actionCardContainer}
                 onPress={() => {
                   if (incidents.length > 0) {
-                    navigation.navigate("Reasoning", { incidentId: incidents[0].id, location: incidents[0].location });
+                    navigation.navigate("Reasoning", {
+                      incidentId: incidents[0].id,
+                      location: incidents[0].location,
+                    });
                   }
                 }}
               >
@@ -827,28 +1014,40 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
             </View>
 
             {loading ? (
-              <ActivityIndicator color={THEME.colors.primary} size="large" style={styles.loader} />
+              <ActivityIndicator
+                color={THEME.colors.primary}
+                size="large"
+                style={styles.loader}
+              />
             ) : incidents.length > 0 ? (
               incidents.map((item) => {
-                const incidentVehicles = vehicles.filter(v => v.incident_id === item.id);
+                const incidentVehicles = vehicles.filter(
+                  (v) => v.incident_id === item.id,
+                );
                 return (
-                  <IncidentCard 
-                    key={item.id} 
-                    item={item} 
-                    navigation={navigation} 
-                    vehicles={incidentVehicles} 
+                  <IncidentCard
+                    key={item.id}
+                    item={item}
+                    navigation={navigation}
+                    vehicles={incidentVehicles}
                   />
                 );
               })
             ) : (
               <View style={styles.emptyState}>
-                <ShieldCheck size={32} color={THEME.colors.primary} strokeWidth={1.5} />
+                <ShieldCheck
+                  size={32}
+                  color={THEME.colors.primary}
+                  strokeWidth={1.5}
+                />
                 <Text style={styles.emptyTitle}>ALL CLEAR</Text>
-                <Text style={styles.emptySubtitle}>No active operational anomalies.</Text>
+                <Text style={styles.emptySubtitle}>
+                  No active operational anomalies.
+                </Text>
               </View>
             )}
           </View>
-          
+
           <View style={{ height: 100 }} />
         </ScrollView>
 
@@ -856,24 +1055,42 @@ const Dashboard: React.FC<DashboardProps> = ({ navigation }) => {
         <View style={styles.navBarWrapper}>
           <View style={styles.navBar}>
             <TouchableOpacity style={styles.navItem}>
-              <LayoutDashboard size={20} color={THEME.colors.primary} strokeWidth={2.5} />
-              <Text style={[styles.navLabel, { color: THEME.colors.primary }]}>DASHBOARD</Text>
+              <LayoutDashboard
+                size={20}
+                color={THEME.colors.primary}
+                strokeWidth={2.5}
+              />
+              <Text style={[styles.navLabel, { color: THEME.colors.primary }]}>
+                DASHBOARD
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate("Map")}>
-              <MapIcon size={20} color={THEME.colors.text.muted} strokeWidth={2} />
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => navigation.navigate("Map")}
+            >
+              <MapIcon
+                size={20}
+                color={THEME.colors.text.muted}
+                strokeWidth={2}
+              />
               <Text style={styles.navLabel}>MAP</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.navItem} onPress={() => {
-              if (incidents.length > 0) {
-                navigation.navigate("Reasoning", { incidentId: incidents[0].id, location: incidents[0].location });
-              }
-            }}>
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => {
+                if (incidents.length > 0) {
+                  navigation.navigate("Reasoning", {
+                    incidentId: incidents[0].id,
+                    location: incidents[0].location,
+                  });
+                }
+              }}
+            >
               <Cpu size={20} color={THEME.colors.text.muted} strokeWidth={2} />
               <Text style={styles.navLabel}>AI CORE</Text>
             </TouchableOpacity>
           </View>
         </View>
-
       </SafeAreaView>
     </View>
   );

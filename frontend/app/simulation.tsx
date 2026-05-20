@@ -1,30 +1,34 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-   
-  StatusBar, 
-  ScrollView, 
-  ActivityIndicator, 
-  Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  ScrollView,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AtmosphericBackground from "../components/AtmosphericBackground";
 import ExecutionTimeline from "../components/ExecutionTimeline";
 import { api, Action } from "../lib/api";
 import { THEME } from "../lib/theme";
 import { CONFIG } from "../constants/config";
-import { 
-  ChevronLeft, 
-  Activity, 
-  Shield, 
-  Rocket, 
+import {
+  ChevronLeft,
+  Activity,
+  Shield,
+  Rocket,
   Zap,
-  CheckCircle2
+  CheckCircle2,
 } from "lucide-react-native";
 
 export default function SimView({ route, navigation }: any) {
-  const { incidentId, location } = route.params || { incidentId: "INC-DEMO", location: "Active Crisis" };
+  const { incidentId, location } = route.params || {
+    incidentId: "INC-DEMO",
+    location: "Active Crisis",
+  };
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState(false);
@@ -63,88 +67,115 @@ export default function SimView({ route, navigation }: any) {
   const handleTriggerSim = async () => {
     // Check if already started
     // Updated isStartedAlready logic to only block when an action is actively running
-    const isStartedAlready = actions.some(a => ["ACTIVE", "RUNNING", "SENT", "ON_SITE"].includes(a.status.toUpperCase()));
+    const isStartedAlready = actions.some((a) =>
+      ["ACTIVE", "RUNNING", "SENT", "ON_SITE"].includes(a.status.toUpperCase()),
+    );
     if (isStartedAlready && !triggering) {
-      Alert.alert("SIMULATION ALREADY ACTIVE", "The response sequence is already in progress. Please monitor the timeline.");
+      Alert.alert(
+        "SIMULATION ALREADY ACTIVE",
+        "The response sequence is already in progress. Please monitor the timeline.",
+      );
       return;
     }
 
     setTriggering(true);
     const success = await api.triggerSimulation(incidentId);
     setTriggering(false);
-    
+
     if (success) {
-      Alert.alert("SIMULATION ENGAGED", "Orchestrator has begun execution of the response plan.");
-      
+      Alert.alert(
+        "SIMULATION ENGAGED",
+        "Orchestrator has begun execution of the response plan.",
+      );
+
       // If we are serving fallback/mock actions, play a gorgeous local step-by-step simulation!
       if (actions.length > 0 && actions[0].id.startsWith("a")) {
         setIsSimulatingLocally(true);
-        
+
         // PENDING state metrics initially
-        setMetrics(disasterType === "heatwave"
-          ? {"cooling_coverage": 0, "safety_rate": 10, "grid_relief": 0}
-          : {"congestion_index": 90, "evacuation_rate": 5, "road_blockage": 100}
+        setMetrics(
+          disasterType === "heatwave"
+            ? { cooling_coverage: 0, safety_rate: 10, grid_relief: 0 }
+            : { congestion_index: 90, evacuation_rate: 5, road_blockage: 100 },
         );
 
         // Step 1: Set action 1 to running
         setTimeout(() => {
-          setActions(prev => {
+          setActions((prev) => {
             let next = [...prev];
             if (next[0]) next[0] = { ...next[0], status: "ACTIVE" };
             api.updateMockActions(incidentId, next);
             return next;
           });
-          setMetrics(disasterType === "heatwave"
-            ? {"cooling_coverage": 25, "safety_rate": 35, "grid_relief": 20}
-            : {"congestion_index": 75, "evacuation_rate": 25, "road_blockage": 80}
+          setMetrics(
+            disasterType === "heatwave"
+              ? { cooling_coverage: 25, safety_rate: 35, grid_relief: 20 }
+              : {
+                  congestion_index: 75,
+                  evacuation_rate: 25,
+                  road_blockage: 80,
+                },
           );
         }, 1000);
-        
+
         // Step 2: Set action 1 to completed, action 2 to running
         setTimeout(() => {
-          setActions(prev => {
+          setActions((prev) => {
             let next = [...prev];
             if (next[0]) next[0] = { ...next[0], status: "COMPLETED" };
             if (next[1]) next[1] = { ...next[1], status: "ACTIVE" };
             api.updateMockActions(incidentId, next);
             return next;
           });
-          setMetrics(disasterType === "heatwave"
-            ? {"cooling_coverage": 60, "safety_rate": 65, "grid_relief": 50}
-            : {"congestion_index": 50, "evacuation_rate": 60, "road_blockage": 40}
+          setMetrics(
+            disasterType === "heatwave"
+              ? { cooling_coverage: 60, safety_rate: 65, grid_relief: 50 }
+              : {
+                  congestion_index: 50,
+                  evacuation_rate: 60,
+                  road_blockage: 40,
+                },
           );
         }, 4000);
-        
+
         // Step 3: Set action 2 to completed, action 3 to running
         setTimeout(() => {
-          setActions(prev => {
+          setActions((prev) => {
             let next = [...prev];
             if (next[1]) next[1] = { ...next[1], status: "COMPLETED" };
             if (next[2]) next[2] = { ...next[2], status: "ACTIVE" };
             api.updateMockActions(incidentId, next);
             return next;
           });
-          setMetrics(disasterType === "heatwave"
-            ? {"cooling_coverage": 85, "safety_rate": 85, "grid_relief": 75}
-            : {"congestion_index": 35, "evacuation_rate": 80, "road_blockage": 15}
+          setMetrics(
+            disasterType === "heatwave"
+              ? { cooling_coverage: 85, safety_rate: 85, grid_relief: 75 }
+              : {
+                  congestion_index: 35,
+                  evacuation_rate: 80,
+                  road_blockage: 15,
+                },
           );
         }, 7000);
-        
+
         // Step 4: Set action 3 to completed, then stop local simulation
         setTimeout(() => {
-          setActions(prev => {
+          setActions((prev) => {
             let next = [...prev];
             if (next[2]) next[2] = { ...next[2], status: "COMPLETED" };
             api.updateMockActions(incidentId, next);
             return next;
           });
-          setMetrics(disasterType === "heatwave"
-            ? {"cooling_coverage": 100, "safety_rate": 98, "grid_relief": 95}
-            : {"congestion_index": 20, "evacuation_rate": 98, "road_blockage": 0}
+          setMetrics(
+            disasterType === "heatwave"
+              ? { cooling_coverage: 100, safety_rate: 98, grid_relief: 95 }
+              : { congestion_index: 20, evacuation_rate: 98, road_blockage: 0 },
           );
           // Stop local simulation and let backend polling take over
           setIsSimulatingLocally(false);
-          console.log("📊 [SimView] Local simulation completed, resuming backend polling");
+          console.log(
+            "📊 [SimView] Local simulation completed, resuming backend polling",
+          );
         }, 10000);
       }
     } else {
@@ -152,10 +183,18 @@ export default function SimView({ route, navigation }: any) {
     }
   };
 
-  const completedCount = actions.filter(a => a.status.toUpperCase() === "COMPLETED").length;
+  const completedCount = actions.filter(
+    (a) => a.status.toUpperCase() === "COMPLETED",
+  ).length;
   const allCompleted = actions.length > 0 && completedCount === actions.length;
-  const isRunning = actions.some(a => ["SENT", "ACTIVE", "ON_SITE", "RUNNING"].includes(a.status.toUpperCase()));
-  const isStarted = actions.some(a => ["ACTIVE", "RUNNING", "COMPLETED", "SENT", "ON_SITE"].includes(a.status.toUpperCase()));
+  const isRunning = actions.some((a) =>
+    ["SENT", "ACTIVE", "ON_SITE", "RUNNING"].includes(a.status.toUpperCase()),
+  );
+  const isStarted = actions.some((a) =>
+    ["ACTIVE", "RUNNING", "COMPLETED", "SENT", "ON_SITE"].includes(
+      a.status.toUpperCase(),
+    ),
+  );
 
   // Auto-approximate metrics if screen loaded with pre-existing progress
   useEffect(() => {
@@ -163,24 +202,67 @@ export default function SimView({ route, navigation }: any) {
       if (disasterType === "heatwave") {
         setMetrics({ cooling_coverage: 100, safety_rate: 98, grid_relief: 95 });
       } else {
-        setMetrics({ congestion_index: 20, evacuation_rate: 98, road_blockage: 0 });
+        setMetrics({
+          congestion_index: 20,
+          evacuation_rate: 98,
+          road_blockage: 0,
+        });
       }
     } else if (isStarted && !metrics) {
-      const runningAction = actions.find(a => ["ACTIVE", "SENT", "ON_SITE"].includes(a.status.toUpperCase()));
-      const status = runningAction ? runningAction.status.toUpperCase() : "PENDING";
-      const defaultMetrics = disasterType === "heatwave" ? {
-        "PENDING": {"cooling_coverage": 0, "safety_rate": 10, "grid_relief": 0},
-        "SENT": {"cooling_coverage": 25, "safety_rate": 35, "grid_relief": 20},
-        "ACTIVE": {"cooling_coverage": 60, "safety_rate": 65, "grid_relief": 50},
-        "ON_SITE": {"cooling_coverage": 85, "safety_rate": 85, "grid_relief": 75},
-        "COMPLETED": {"cooling_coverage": 100, "safety_rate": 98, "grid_relief": 95},
-      } : {
-        "PENDING": {"congestion_index": 90, "evacuation_rate": 5, "road_blockage": 100},
-        "SENT": {"congestion_index": 75, "evacuation_rate": 25, "road_blockage": 80},
-        "ACTIVE": {"congestion_index": 50, "evacuation_rate": 60, "road_blockage": 40},
-        "ON_SITE": {"congestion_index": 35, "evacuation_rate": 80, "road_blockage": 15},
-        "COMPLETED": {"congestion_index": 20, "evacuation_rate": 98, "road_blockage": 0},
-      };
+      const runningAction = actions.find((a) =>
+        ["ACTIVE", "SENT", "ON_SITE"].includes(a.status.toUpperCase()),
+      );
+      const status = runningAction
+        ? runningAction.status.toUpperCase()
+        : "PENDING";
+      const defaultMetrics =
+        disasterType === "heatwave"
+          ? {
+              PENDING: { cooling_coverage: 0, safety_rate: 10, grid_relief: 0 },
+              SENT: { cooling_coverage: 25, safety_rate: 35, grid_relief: 20 },
+              ACTIVE: {
+                cooling_coverage: 60,
+                safety_rate: 65,
+                grid_relief: 50,
+              },
+              ON_SITE: {
+                cooling_coverage: 85,
+                safety_rate: 85,
+                grid_relief: 75,
+              },
+              COMPLETED: {
+                cooling_coverage: 100,
+                safety_rate: 98,
+                grid_relief: 95,
+              },
+            }
+          : {
+              PENDING: {
+                congestion_index: 90,
+                evacuation_rate: 5,
+                road_blockage: 100,
+              },
+              SENT: {
+                congestion_index: 75,
+                evacuation_rate: 25,
+                road_blockage: 80,
+              },
+              ACTIVE: {
+                congestion_index: 50,
+                evacuation_rate: 60,
+                road_blockage: 40,
+              },
+              ON_SITE: {
+                congestion_index: 35,
+                evacuation_rate: 80,
+                road_blockage: 15,
+              },
+              COMPLETED: {
+                congestion_index: 20,
+                evacuation_rate: 98,
+                road_blockage: 0,
+              },
+            };
       setMetrics((defaultMetrics as any)[status]);
     }
   }, [allCompleted, isStarted, disasterType, actions]);
@@ -189,7 +271,7 @@ export default function SimView({ route, navigation }: any) {
   useEffect(() => {
     const wsUrl = `${CONFIG.WS_BASE_URL.replace("http", "ws").replace("https", "wss")}/api/v1/ws/${incidentId}`;
     console.log(`🔌 [SimView] Connecting to incident WebSocket: ${wsUrl}`);
-    
+
     let socket: WebSocket | null = null;
     let reconnectTimeout: any = null;
     let isMounted = true;
@@ -218,7 +300,9 @@ export default function SimView({ route, navigation }: any) {
       };
 
       socket.onclose = () => {
-        console.log(`🔌 [SimView] WebSocket disconnected, reconnecting in 5s...`);
+        console.log(
+          `🔌 [SimView] WebSocket disconnected, reconnecting in 5s...`,
+        );
         reconnectTimeout = setTimeout(() => {
           connect();
         }, 5000);
@@ -242,10 +326,12 @@ export default function SimView({ route, navigation }: any) {
     };
   }, [incidentId]);
 
-
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.background} />
+      <StatusBar
+        barStyle="dark-content"
+        backgroundColor={THEME.colors.background}
+      />
       <View style={StyleSheet.absoluteFill}>
         <AtmosphericBackground />
       </View>
@@ -253,7 +339,10 @@ export default function SimView({ route, navigation }: any) {
         {/* Header */}
         <View>
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
               <ChevronLeft size={20} color={THEME.colors.text.primary} />
             </TouchableOpacity>
             <View style={styles.headerTitleContainer}>
@@ -277,19 +366,27 @@ export default function SimView({ route, navigation }: any) {
                   <Shield size={20} color="#FFFFFF" />
                 </View>
                 <View>
-                  <Text style={styles.summaryTitle}>OPERATIONAL PLAN ALPHA</Text>
-                  <Text style={styles.summarySubtitle}>Multi-agent synchronized response</Text>
+                  <Text style={styles.summaryTitle}>
+                    OPERATIONAL PLAN ALPHA
+                  </Text>
+                  <Text style={styles.summarySubtitle}>
+                    Multi-agent synchronized response
+                  </Text>
                 </View>
               </View>
-              
+
               <Text style={styles.summaryText}>
-                CIRO is executing a high-precision response strategy. Assets are being deployed 
-                and infrastructure is being rerouted based on real-time data projections.
+                ResQ by AQUA is executing a high-precision response strategy.
+                Assets are being deployed and infrastructure is being rerouted
+                based on real-time data projections.
               </Text>
-              
+
               {actions.length > 0 && !loading && !isStarted && (
-                <TouchableOpacity 
-                  style={[styles.triggerButton, triggering && styles.disabledButton]} 
+                <TouchableOpacity
+                  style={[
+                    styles.triggerButton,
+                    triggering && styles.disabledButton,
+                  ]}
                   onPress={handleTriggerSim}
                   disabled={triggering}
                 >
@@ -298,7 +395,9 @@ export default function SimView({ route, navigation }: any) {
                   ) : (
                     <>
                       <Rocket size={16} color="#FFFFFF" />
-                      <Text style={styles.triggerButtonText}>ACTIVATE SEQUENCE</Text>
+                      <Text style={styles.triggerButtonText}>
+                        ACTIVATE SEQUENCE
+                      </Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -307,14 +406,20 @@ export default function SimView({ route, navigation }: any) {
               {actions.length > 0 && !loading && isStarted && !allCompleted && (
                 <View style={styles.activeStatusCard}>
                   <Activity size={14} color={THEME.colors.primary} />
-                  <Text style={styles.activeStatusText}>RESPONSE SWARM ACTIVE — DISPATCH IN PROGRESS</Text>
+                  <Text style={styles.activeStatusText}>
+                    RESPONSE SWARM ACTIVE — DISPATCH IN PROGRESS
+                  </Text>
                 </View>
               )}
 
               {actions.length > 0 && !loading && allCompleted && (
-                <View style={[styles.activeStatusCard, styles.completedStatusCard]}>
+                <View
+                  style={[styles.activeStatusCard, styles.completedStatusCard]}
+                >
                   <CheckCircle2 size={14} color={THEME.colors.primary} />
-                  <Text style={styles.completedStatusText}>SWARM DISPATCH COMPLETED SUCCESSFUL</Text>
+                  <Text style={styles.completedStatusText}>
+                    SWARM DISPATCH COMPLETED SUCCESSFUL
+                  </Text>
                 </View>
               )}
             </View>
@@ -326,19 +431,31 @@ export default function SimView({ route, navigation }: any) {
               <View style={styles.metricsCard}>
                 <View style={styles.metricsHeader}>
                   <Activity size={16} color={THEME.colors.primary} />
-                  <Text style={styles.metricsTitle}>LIVE SWARM IMPACT METRICS</Text>
+                  <Text style={styles.metricsTitle}>
+                    LIVE SWARM IMPACT METRICS
+                  </Text>
                 </View>
-                
+
                 {disasterType === "heatwave" ? (
                   <View style={styles.metricsList}>
                     {/* Cooling Coverage */}
                     <View style={styles.metricItem}>
                       <View style={styles.metricLabelRow}>
                         <Text style={styles.metricLabel}>COOLING COVERAGE</Text>
-                        <Text style={styles.metricValue}>{metrics.cooling_coverage ?? 0}%</Text>
+                        <Text style={styles.metricValue}>
+                          {metrics.cooling_coverage ?? 0}%
+                        </Text>
                       </View>
                       <View style={styles.progressBarBg}>
-                        <View style={[styles.progressBarFill, { width: `${metrics.cooling_coverage ?? 0}%`, backgroundColor: "#14B8A6" }]} />
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: `${metrics.cooling_coverage ?? 0}%`,
+                              backgroundColor: "#14B8A6",
+                            },
+                          ]}
+                        />
                       </View>
                     </View>
 
@@ -346,10 +463,20 @@ export default function SimView({ route, navigation }: any) {
                     <View style={styles.metricItem}>
                       <View style={styles.metricLabelRow}>
                         <Text style={styles.metricLabel}>SAFETY RATE</Text>
-                        <Text style={styles.metricValue}>{metrics.safety_rate ?? 10}%</Text>
+                        <Text style={styles.metricValue}>
+                          {metrics.safety_rate ?? 10}%
+                        </Text>
                       </View>
                       <View style={styles.progressBarBg}>
-                        <View style={[styles.progressBarFill, { width: `${metrics.safety_rate ?? 10}%`, backgroundColor: "#10B981" }]} />
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: `${metrics.safety_rate ?? 10}%`,
+                              backgroundColor: "#10B981",
+                            },
+                          ]}
+                        />
                       </View>
                     </View>
 
@@ -357,10 +484,20 @@ export default function SimView({ route, navigation }: any) {
                     <View style={styles.metricItem}>
                       <View style={styles.metricLabelRow}>
                         <Text style={styles.metricLabel}>GRID RELIEF</Text>
-                        <Text style={styles.metricValue}>{metrics.grid_relief ?? 0}%</Text>
+                        <Text style={styles.metricValue}>
+                          {metrics.grid_relief ?? 0}%
+                        </Text>
                       </View>
                       <View style={styles.progressBarBg}>
-                        <View style={[styles.progressBarFill, { width: `${metrics.grid_relief ?? 0}%`, backgroundColor: "#F59E0B" }]} />
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: `${metrics.grid_relief ?? 0}%`,
+                              backgroundColor: "#F59E0B",
+                            },
+                          ]}
+                        />
                       </View>
                     </View>
                   </View>
@@ -370,10 +507,23 @@ export default function SimView({ route, navigation }: any) {
                     <View style={styles.metricItem}>
                       <View style={styles.metricLabelRow}>
                         <Text style={styles.metricLabel}>CONGESTION INDEX</Text>
-                        <Text style={styles.metricValue}>{metrics.congestion_index ?? 90}%</Text>
+                        <Text style={styles.metricValue}>
+                          {metrics.congestion_index ?? 90}%
+                        </Text>
                       </View>
                       <View style={styles.progressBarBg}>
-                        <View style={[styles.progressBarFill, { width: `${metrics.congestion_index ?? 90}%`, backgroundColor: (metrics.congestion_index ?? 90) > 50 ? "#EF4444" : "#10B981" }]} />
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: `${metrics.congestion_index ?? 90}%`,
+                              backgroundColor:
+                                (metrics.congestion_index ?? 90) > 50
+                                  ? "#EF4444"
+                                  : "#10B981",
+                            },
+                          ]}
+                        />
                       </View>
                     </View>
 
@@ -381,10 +531,20 @@ export default function SimView({ route, navigation }: any) {
                     <View style={styles.metricItem}>
                       <View style={styles.metricLabelRow}>
                         <Text style={styles.metricLabel}>EVACUATION RATE</Text>
-                        <Text style={styles.metricValue}>{metrics.evacuation_rate ?? 5}%</Text>
+                        <Text style={styles.metricValue}>
+                          {metrics.evacuation_rate ?? 5}%
+                        </Text>
                       </View>
                       <View style={styles.progressBarBg}>
-                        <View style={[styles.progressBarFill, { width: `${metrics.evacuation_rate ?? 5}%`, backgroundColor: "#10B981" }]} />
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: `${metrics.evacuation_rate ?? 5}%`,
+                              backgroundColor: "#10B981",
+                            },
+                          ]}
+                        />
                       </View>
                     </View>
 
@@ -392,10 +552,23 @@ export default function SimView({ route, navigation }: any) {
                     <View style={styles.metricItem}>
                       <View style={styles.metricLabelRow}>
                         <Text style={styles.metricLabel}>ROAD BLOCKAGE</Text>
-                        <Text style={styles.metricValue}>{metrics.road_blockage ?? 100}%</Text>
+                        <Text style={styles.metricValue}>
+                          {metrics.road_blockage ?? 100}%
+                        </Text>
                       </View>
                       <View style={styles.progressBarBg}>
-                        <View style={[styles.progressBarFill, { width: `${metrics.road_blockage ?? 100}%`, backgroundColor: (metrics.road_blockage ?? 100) > 30 ? "#F59E0B" : "#10B981" }]} />
+                        <View
+                          style={[
+                            styles.progressBarFill,
+                            {
+                              width: `${metrics.road_blockage ?? 100}%`,
+                              backgroundColor:
+                                (metrics.road_blockage ?? 100) > 30
+                                  ? "#F59E0B"
+                                  : "#10B981",
+                            },
+                          ]}
+                        />
                       </View>
                     </View>
                   </View>
@@ -410,15 +583,24 @@ export default function SimView({ route, navigation }: any) {
               <Activity size={16} color={THEME.colors.text.muted} />
               <Text style={styles.sectionTitle}>EXECUTION TIMELINE</Text>
             </View>
-            
+
             {loading ? (
-              <ActivityIndicator color={THEME.colors.text.primary} style={{ marginTop: 40 }} />
+              <ActivityIndicator
+                color={THEME.colors.text.primary}
+                style={{ marginTop: 40 }}
+              />
             ) : actions.length > 0 ? (
               <ExecutionTimeline actions={actions} />
             ) : (
               <View style={styles.emptyState}>
-                <Zap size={24} color={THEME.colors.text.muted} strokeWidth={1.5} />
-                <Text style={styles.emptyText}>Waiting for orchestration sequence...</Text>
+                <Zap
+                  size={24}
+                  color={THEME.colors.text.muted}
+                  strokeWidth={1.5}
+                />
+                <Text style={styles.emptyText}>
+                  Waiting for orchestration sequence...
+                </Text>
               </View>
             )}
           </View>
@@ -429,9 +611,11 @@ export default function SimView({ route, navigation }: any) {
         {/* Success Footer */}
         {allCompleted && (
           <View style={styles.footer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.outcomeButton}
-              onPress={() => navigation.navigate("Outcome", { incidentId, location })}
+              onPress={() =>
+                navigation.navigate("Outcome", { incidentId, location })
+              }
             >
               <CheckCircle2 size={20} color="#FFFFFF" />
               <Text style={styles.outcomeButtonText}>ANALYZE FINAL IMPACT</Text>

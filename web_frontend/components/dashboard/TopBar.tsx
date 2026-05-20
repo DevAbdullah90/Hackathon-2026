@@ -503,12 +503,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
               <Activity className="w-4 h-4 text-white animate-pulse" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-sm font-black text-gray-900 leading-none tracking-wider">CIRO</h1>
-              <span className="text-[8px] text-gray-400 font-extrabold tracking-widest uppercase mt-0.5 block">
-                Orchestrator
-              </span>
-            </div>
-          </div>
+                <h1 className="text-sm font-black text-gray-900 leading-none tracking-wider">ResQ by AQUA</h1>
 
           <div className="flex flex-col gap-1">
             {/* Title & Status */}
@@ -906,7 +901,7 @@ export default function TopBar({ onMenuToggle, onPipelineComplete, viewIncidentR
                   </div>
                   <div>
                     <h3 className="text-lg font-extrabold text-gray-900 tracking-tight leading-none">
-                      CIRO Swarm Triage Completed Successfully
+                      ResQ by AQUA Swarm Triage Completed Successfully
                     </h3>
                     <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 block">
                       Disaster Response Actions Dispatched
