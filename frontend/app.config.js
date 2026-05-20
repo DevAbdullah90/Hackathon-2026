@@ -1,36 +1,34 @@
 module.exports = {
   expo: {
-    name: "frontend",
-    slug: "frontend",
+    name: "ResQ by AQUA",
+    slug: "resq-by-aqua",
     version: "1.0.0",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
     newArchEnabled: false,
     updates: {
-      enabled: false
+      enabled: false,
     },
     splash: {
       image: "./assets/splash-icon.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#ffffff",
     },
     ios: {
-      supportsTablet: true
+      supportsTablet: true,
     },
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        backgroundColor: "#ffffff",
       },
       edgeToEdgeEnabled: true,
-      predictiveBackGestureEnabled: false
+      predictiveBackGestureEnabled: false,
     },
     web: {
-      favicon: "./assets/favicon.png"
+      favicon: "./assets/favicon.png",
     },
-    plugins: [
-      "expo-router"
-    ]
-  }
+    plugins: ["expo-router"],
+  },
 };

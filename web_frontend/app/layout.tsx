@@ -10,8 +10,9 @@ const geistMono = {
 };
 
 export const metadata: Metadata = {
-  title: "CIRO Command | Multi-Agent Flood Response Orchestrator",
-  description: "Advanced Multi-Agent Triage, Verification, and Autonomous Resource Allocation Dashboard.",
+  title: "ResQ by AQUA Command | Multi-Agent Flood Response Orchestrator",
+  description:
+    "Advanced Multi-Agent Triage, Verification, and Autonomous Resource Allocation Dashboard.",
 };
 
 export default function RootLayout({

@@ -11,19 +11,19 @@ export default function WelcomeScreen({ navigation }: any) {
         <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.surfaceSoft} />
 
         <View style={styles.brandBlock}>
-        <View style={styles.logoFrame}>
-          <View style={styles.logoHalo} />
-          <View style={styles.logoCore}>
-            <View style={styles.logoBlobTop} />
-            <View style={styles.logoBlobSide} />
-            <View style={styles.logoCenter}>
-              <Droplets size={32} color="#FFFFFF" strokeWidth={2.2} />
+          <View style={styles.logoFrame}>
+            <View style={styles.logoHalo} />
+            <View style={styles.logoCore}>
+              <View style={styles.logoBlobTop} />
+              <View style={styles.logoBlobSide} />
+              <View style={styles.logoCenter}>
+                <Droplets size={32} color="#FFFFFF" strokeWidth={2.2} />
+              </View>
+              <View style={styles.logoWave} />
             </View>
-            <View style={styles.logoWave} />
           </View>
+          <Text style={styles.appName}>ResQ by AQUA</Text>
         </View>
-        <Text style={styles.appName}>CIRO</Text>
-      </View>
       </SafeAreaView>
     </Pressable>
   );
