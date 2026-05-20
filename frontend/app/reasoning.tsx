@@ -49,13 +49,7 @@ export default function ReasoningCenter({ route, navigation }: any) {
       setLoadingActions(true);
       const data = await api.getSimulationState(incidentId);
       setActions(data);
-      const completedCount = data.filter(a => a.status.toUpperCase() === "COMPLETED").length;
-      const allCompleted = data.length > 0 && completedCount === data.length;
-      if (allCompleted) {
-        navigation.replace("Outcome", { incidentId, location });
-      } else {
-        navigation.replace("Simulation", { incidentId, location });
-      }
+      // NOTE: Removed auto-navigation here - let user control navigation via button
     } catch (err) {
       console.warn("Failed to fetch simulation actions:", err);
     } finally {
@@ -70,6 +64,8 @@ export default function ReasoningCenter({ route, navigation }: any) {
     // Add navigation focus listener to re-fetch actions when returning to this screen
     const unsubscribe = navigation.addListener("focus", () => {
       fetchActions();
+      setLoadingCot(true); // Also refresh CoT when returning
+      fetchCot();
     });
 
     return unsubscribe;
@@ -341,6 +337,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(14, 165, 233, 0.2)",
+  },
+  missionIdText: {
+    color: THEME.colors.primary,
+    fontSize: 10,
+    fontFamily: THEME.fonts.mono,
+    fontWeight: "800",
   },
   missionIdText: {
     color: THEME.colors.primary,

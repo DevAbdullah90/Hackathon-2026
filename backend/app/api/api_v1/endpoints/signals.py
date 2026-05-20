@@ -26,6 +26,7 @@ from app.models.signals import Signal
 from app.models.schemas import SignalCreate, SignalRead, CustomSignalPayload
 from app.db.session import get_session
 from app.ai.orchestrator import triage_agent
+from app.ai.utils import extract_json_from_output
 import logging
 
 router = APIRouter()
@@ -127,7 +128,7 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
         # Step 1: Signal Agent
         update_pipeline_progress(sig_id_str, "PROCESSING", "signal_agent", 1, "RUNNING", "Signal Processor analyzing raw telemetry feeds...")
         res_signal = await Runner.run(signal_agent, json.dumps(signal_payload))
-        processed_signal = json.loads(res_signal.final_output)
+        processed_signal = extract_json_from_output(res_signal.final_output)
         logger.info(f"📡 [Signal Agent] Processed location: {processed_signal.get('location')}")
         update_pipeline_progress(sig_id_str, "PROCESSING", "signal_agent", 1, "COMPLETED", "Signal parsed and categorized.")
 
@@ -158,7 +159,7 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
         # Step 2: Detection Agent (Clustering / Verdict)
         update_pipeline_progress(sig_id_str, "PROCESSING", "detection_agent", 2, "RUNNING", "Deduplicating and running clustering algorithm...")
         res_detection = await Runner.run(detection_agent, json.dumps([processed_signal]))
-        detection_output = json.loads(res_detection.final_output)
+        detection_output = extract_json_from_output(res_detection.final_output)
         if isinstance(detection_output, list):
             if len(detection_output) > 0:
                 detection_output = detection_output[0]
@@ -198,7 +199,7 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
                 "detection_id": detection_output.get("detection_id") or str(uuid.uuid4())
             }
             res_verification = await Runner.run(verification_agent, json.dumps(verification_input))
-            verification_output = json.loads(res_verification.final_output)
+            verification_output = extract_json_from_output(res_verification.final_output)
             logger.info(f"✅ [Verification Agent] Verdict: {verification_output.get('verdict')}")
             update_pipeline_progress(sig_id_str, "PROCESSING", "verification_agent", 3, "COMPLETED", "Verification sequence completed.")
 
@@ -226,7 +227,7 @@ async def _run_triage_pipeline(signal_payload: dict) -> None:
             # Step 3: Severity Agent (Assess Risks)
             update_pipeline_progress(sig_id_str, "PROCESSING", "severity_agent", 4, "RUNNING", "Assessing structural threat levels and affected radius...")
             res_severity = await Runner.run(severity_agent, json.dumps(detection_output))
-            severity_output = json.loads(res_severity.final_output)
+            severity_output = extract_json_from_output(res_severity.final_output)
             logger.info(f"⚠️ [Severity Agent] Score: {severity_output.get('severity_score')} / 10")
 
             # Create Incident in database!
@@ -480,7 +481,7 @@ async def trigger_mock_signal(
         {"location": "Sector H-9, Islamabad", "lat": 33.6610, "lng": 73.0485, "type": "flood", "comment": "Heavy waterlogging reported near Sector H-9. Main transit routes submerged, traffic completely suspended."},
         # ── Heatwave Scenarios ──
         {"location": "Saddar, Karachi", "lat": 24.8607, "lng": 67.0244, "type": "heatwave", "comment": "Record temperatures at 47°C in Saddar. Multiple heat stroke cases reported in highly congested transit points. Grid power failure."},
-        {"location": "Shahi Qila, Lahore", "lat": 31.5880, "lng": 74.3150, "type": "heatwave", "comment": "Heat index exceeding 52°C near Shahi Qila. Street vendors collapsing. Local hospital emergency rooms flooded with heatstroke cases."},
+        {"location": "Mall Road, Lahore", "lat": 31.5497, "lng": 74.3436, "type": "heatwave", "comment": "Heat index exceeding 50°C near Mall Road. Shopping district crowded with heat exhaustion cases. Emergency medical teams deployed."},
         {"location": "Clifton Beach, Karachi", "lat": 24.7869, "lng": 67.0315, "type": "heatwave", "comment": "Extreme heat conditions of 46°C with 75% humidity near Clifton. High citizen congestion at the beach, heat exhaustion reported."},
     ]
     
@@ -676,4 +677,3 @@ async def read_signals(
     result = await session.execute(query)
     signals = result.scalars().all()
     return signals
-
