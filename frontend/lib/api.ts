@@ -1,7 +1,7 @@
 import { CONFIG } from "../constants/config";
 
 let activeApiBaseUrl = CONFIG.API_BASE_URL;
-const PROD_API_BASE = "https://abdullah9873-backend-rag-chatbot-v2.hf.space";
+const PROD_API_BASE = "https://hackathon-2026-production-ff6c.up.railway.app";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. DATA MODELS & TYPES

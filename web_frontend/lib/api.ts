@@ -2,9 +2,12 @@
 // Central API service connecting Next.js web_frontend to FastAPI backend.
 
 const LOCAL_API_BASE = "http://localhost:8000/api/v1";
-const PROD_API_BASE = "https://abdullah9873-backend-rag-chatbot-v2.hf.space/api/v1";
+const PROD_API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://hackathon-2026-production-ff6c.up.railway.app/api/v1";
 
-export let API_BASE_URL = LOCAL_API_BASE;
+const isLocalhost = typeof window !== "undefined" && 
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+export let API_BASE_URL = isLocalhost ? LOCAL_API_BASE : PROD_API_BASE;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. DATA MODELS & TYPES
