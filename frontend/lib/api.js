@@ -1,100 +1,34 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        if (typeof b !== "function" && b !== null)
-            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
-    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.api = exports.NetworkError = exports.ApiError = void 0;
-var config_1 = require("../constants/config");
+const config_1 = require("../constants/config");
+let activeApiBaseUrl = config_1.CONFIG.API_BASE_URL;
+const PROD_API_BASE = "https://hackathon-2026-production-ff6c.up.railway.app";
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. ERROR STRUCTURES & HANDLERS
 // ─────────────────────────────────────────────────────────────────────────────
-var ApiError = /** @class */ (function (_super) {
-    __extends(ApiError, _super);
-    function ApiError(status, statusText, body) {
-        var _this = _super.call(this, "[API HTTP ".concat(status, "] ").concat(statusText)) || this;
-        _this.name = "ApiError";
-        _this.status = status;
-        _this.statusText = statusText;
-        _this.body = body;
-        return _this;
+class ApiError extends Error {
+    constructor(status, statusText, body) {
+        super(`[API HTTP ${status}] ${statusText}`);
+        this.name = "ApiError";
+        this.status = status;
+        this.statusText = statusText;
+        this.body = body;
     }
-    return ApiError;
-}(Error));
+}
 exports.ApiError = ApiError;
-var NetworkError = /** @class */ (function (_super) {
-    __extends(NetworkError, _super);
-    function NetworkError(message) {
-        var _this = _super.call(this, "[API NETWORK FAILURE] ".concat(message)) || this;
-        _this.name = "NetworkError";
-        return _this;
+class NetworkError extends Error {
+    constructor(message) {
+        super(`[API NETWORK FAILURE] ${message}`);
+        this.name = "NetworkError";
     }
-    return NetworkError;
-}(Error));
+}
 exports.NetworkError = NetworkError;
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. CURATED DEMO FALLBACK DATA (Demo Resilience)
 // ─────────────────────────────────────────────────────────────────────────────
-var now = function () { return new Date().toISOString(); };
-var MOCK_INCIDENTS = [
+const now = () => new Date().toISOString();
+const MOCK_INCIDENTS = [
     {
         id: "inc-g10",
         location: "G-10, Islamabad",
@@ -108,6 +42,7 @@ var MOCK_INCIDENTS = [
         status: "ACTIVE",
         risk_factors: ["heavy_rain", "drainage_blockage", "road_ponding"],
         created_at: "2026-05-17T09:20:00.000Z",
+        disaster_type: "flood",
     },
     {
         id: "inc-g13",
@@ -122,9 +57,25 @@ var MOCK_INCIDENTS = [
         status: "ACTIVE",
         risk_factors: ["moderate_flooding", "traffic_delay"],
         created_at: "2026-05-17T09:28:00.000Z",
+        disaster_type: "flood",
     },
+    {
+        id: "inc-saddar",
+        location: "Saddar Market Area, Karachi",
+        lat: 24.8607,
+        lng: 67.0011,
+        severity_score: 9.2,
+        confidence: 0.98,
+        affected_radius_km: 2.5,
+        estimated_population: 18500,
+        peak_impact_eta: "Immediate",
+        status: "ACTIVE",
+        risk_factors: ["extreme_heat", "high_wet_bulb", "power_outages"],
+        created_at: "2026-05-18T10:00:00.000Z",
+        disaster_type: "heatwave",
+    }
 ];
-var MOCK_REASONING_LOGS = {
+const MOCK_REASONING_LOGS = {
     "inc-g10": [
         {
             id: "log-1",
@@ -169,8 +120,26 @@ var MOCK_REASONING_LOGS = {
             created_at: now(),
         },
     ],
+    "inc-saddar": [
+        {
+            id: "log-saddar-1",
+            incident_id: "inc-saddar",
+            agent_name: "detection_agent",
+            log_text: "Satellite thermal data confirms wet-bulb index critical zone. Local sub-stations shut down due to transformer overheating.",
+            log_level: "WARNING",
+            created_at: now(),
+        },
+        {
+            id: "log-saddar-2",
+            incident_id: "inc-saddar",
+            agent_name: "notification_agent",
+            log_text: "Amber emergency grid warnings broadcast. Heat relief services staging hydration points.",
+            log_level: "INFO",
+            created_at: now(),
+        },
+    ]
 };
-var MOCK_COT_LOGS = {
+const MOCK_COT_LOGS = {
     "inc-g10": [
         {
             id: "cot-1",
@@ -203,8 +172,24 @@ var MOCK_COT_LOGS = {
             created_at: now(),
         },
     ],
+    "inc-saddar": [
+        {
+            id: "cot-saddar-1",
+            incident_id: "inc-saddar",
+            agent_name: "signal_agent",
+            cot_steps: "1. Scan region coordinates for thermal extremes.\n2. Correlate weather telemetry showing temperatures exceeding 46°C with wet-bulb sensor readings.\n3. Identify power grid overload signals.",
+            created_at: now(),
+        },
+        {
+            id: "cot-saddar-2",
+            incident_id: "inc-saddar",
+            agent_name: "severity_agent",
+            cot_steps: "1. Parse high-density urban sector size and active heat dome size.\n2. Estimate affected population: 18,500 people.\n3. Detect active electricity grid failure.\n4. Calculate severity score: 9.2 (Extreme Threat Severity).",
+            created_at: now(),
+        },
+    ]
 };
-var MOCK_ACTIONS = {
+const MOCK_ACTIONS = {
     "inc-g10": [
         {
             id: "action-1",
@@ -249,87 +234,109 @@ var MOCK_ACTIONS = {
             updated_at: now(),
         },
     ],
+    "inc-saddar": [
+        {
+            id: "action-saddar-1",
+            incident_id: "inc-saddar",
+            type: "ESTABLISH_COOLING_STATIONS",
+            status: "COMPLETED",
+            predicted_side_effects: "Shade shelters & fans active. Hydration kits distributed.",
+            updated_at: now(),
+        },
+        {
+            id: "action-saddar-2",
+            incident_id: "inc-saddar",
+            type: "DEPLOY_WATER_TANKERS",
+            status: "COMPLETED",
+            predicted_side_effects: "Replenished local backup storage reserves.",
+            updated_at: now(),
+        },
+        {
+            id: "action-saddar-3",
+            incident_id: "inc-saddar",
+            type: "ALERT_CITIZENS",
+            status: "COMPLETED",
+            predicted_side_effects: "Extreme heat advisory sent.",
+            updated_at: now(),
+        },
+    ]
 };
+const MOCK_RESOURCES = [
+    { id: "res-1", type: "ambulance", total_count: 12, available_count: 8, location: "Sector G-9 Depot", updated_at: now() },
+    { id: "res-2", type: "rescue_team", total_count: 8, available_count: 5, location: "Saddar Headquarters", updated_at: now() },
+    { id: "res-3", type: "drainage_crew", total_count: 15, available_count: 11, location: "CDA Staging Area 2", updated_at: now() },
+    { id: "res-4", type: "police_unit", total_count: 20, available_count: 14, location: "Islamabad Traffic Base", updated_at: now() },
+];
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. PREMIUM REQUEST ORCHESTRATION ENGINE (Vibe Coder Grade)
 // ─────────────────────────────────────────────────────────────────────────────
-var DEFAULT_TIMEOUT = 10000; // 10 seconds timeout protection
-var MAX_RETRIES = 3;
-var RETRY_DELAY_BASE = 500; // milliseconds
-var sleep = function (ms) { return new Promise(function (resolve) { return setTimeout(resolve, ms); }); };
+const DEFAULT_TIMEOUT = 10000; // 10 seconds timeout protection
+const MAX_RETRIES = 3;
+const RETRY_DELAY_BASE = 500; // milliseconds
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * High-End Central Request Orchestrator
  * Supports Abort Timeouts, Silent Retries with Exponential Backoff,
  * Structured Logging, and Auto-Fallback to mock data on server death.
  */
-function makeRequest(path_1) {
-    return __awaiter(this, arguments, void 0, function (path, options, retriesLeft, delay) {
-        var url, controller, timeoutId, requestOptions, startTime, response, duration, body, _a, error_1, isTimeout, isNetworkError;
-        var _b;
-        if (options === void 0) { options = {}; }
-        if (retriesLeft === void 0) { retriesLeft = MAX_RETRIES; }
-        if (delay === void 0) { delay = RETRY_DELAY_BASE; }
-        return __generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    url = "".concat(config_1.CONFIG.API_BASE_URL).concat(path);
-                    controller = new AbortController();
-                    timeoutId = setTimeout(function () { return controller.abort(); }, DEFAULT_TIMEOUT);
-                    requestOptions = __assign(__assign({}, options), { signal: controller.signal, headers: __assign({ "Content-Type": "application/json", Accept: "application/json" }, (options.headers || {})) });
-                    startTime = Date.now();
-                    _c.label = 1;
-                case 1:
-                    _c.trys.push([1, 10, , 13]);
-                    console.log("\uD83D\uDCE1 [API CALL] ".concat(requestOptions.method || "GET", " ").concat(path, " (Attempt: ").concat(MAX_RETRIES - retriesLeft + 1, "/").concat(MAX_RETRIES, ")"));
-                    return [4 /*yield*/, fetch(url, requestOptions)];
-                case 2:
-                    response = _c.sent();
-                    clearTimeout(timeoutId);
-                    duration = Date.now() - startTime;
-                    console.log("\u2728 [API RESPONSE] ".concat(requestOptions.method || "GET", " ").concat(path, " -> HTTP ").concat(response.status, " (").concat(duration, "ms)"));
-                    if (!!response.ok) return [3 /*break*/, 8];
-                    body = null;
-                    _c.label = 3;
-                case 3:
-                    _c.trys.push([3, 5, , 7]);
-                    return [4 /*yield*/, response.json()];
-                case 4:
-                    body = _c.sent();
-                    return [3 /*break*/, 7];
-                case 5:
-                    _a = _c.sent();
-                    return [4 /*yield*/, response.text()];
-                case 6:
-                    body = _c.sent();
-                    return [3 /*break*/, 7];
-                case 7: throw new ApiError(response.status, response.statusText, body);
-                case 8: return [4 /*yield*/, response.json()];
-                case 9: 
-                // Success response parsing
-                return [2 /*return*/, (_c.sent())];
-                case 10:
-                    error_1 = _c.sent();
-                    clearTimeout(timeoutId);
-                    isTimeout = error_1.name === "AbortError";
-                    isNetworkError = error_1 instanceof TypeError || ((_b = error_1.message) === null || _b === void 0 ? void 0 : _b.includes("Network request failed"));
-                    console.warn("\u26A0\uFE0F [API FAILURE] ".concat(requestOptions.method || "GET", " ").concat(path, ": ").concat(error_1.message));
-                    if (!((isTimeout || isNetworkError) && retriesLeft > 0)) return [3 /*break*/, 12];
-                    console.log("\uD83D\uDD04 [API RETRY] Retrying in ".concat(delay, "ms... (").concat(retriesLeft, " retries remaining)"));
-                    return [4 /*yield*/, sleep(delay)];
-                case 11:
-                    _c.sent();
-                    return [2 /*return*/, makeRequest(path, options, retriesLeft - 1, delay * 2)];
-                case 12:
-                    // Rethrow standard HTTP ApiErrors (like 404, 400) to let caller handle them
-                    if (error_1 instanceof ApiError) {
-                        throw error_1;
-                    }
-                    // Wrap remaining generic exceptions
-                    throw new NetworkError(error_1.message || "Unknown communication failure");
-                case 13: return [2 /*return*/];
+async function makeRequest(path, options = {}, retriesLeft = MAX_RETRIES, delay = RETRY_DELAY_BASE) {
+    const url = `${activeApiBaseUrl}${path}`;
+    const requestOptions = {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            ...(options.headers || {}),
+        },
+    };
+    const startTime = Date.now();
+    try {
+        console.log(`📡 [API CALL] ${requestOptions.method || "GET"} ${path} (Attempt: ${MAX_RETRIES - retriesLeft + 1}/${MAX_RETRIES})`);
+        // Pure JS timeout race that works flawlessly on all mobile devices and Expo Go
+        const fetchPromise = fetch(url, requestOptions);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), DEFAULT_TIMEOUT));
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
+        const duration = Date.now() - startTime;
+        console.log(`✨ [API RESPONSE] ${requestOptions.method || "GET"} ${path} -> HTTP ${response.status} (${duration}ms)`);
+        if (!response.ok) {
+            let body = null;
+            try {
+                body = await response.json();
             }
-        });
-    });
+            catch {
+                body = await response.text();
+            }
+            throw new ApiError(response.status, response.statusText, body);
+        }
+        // Success response parsing
+        return (await response.json());
+    }
+    catch (error) {
+        const isTimeout = error.message === "Timeout";
+        const isNetworkError = error instanceof TypeError ||
+            error.message?.includes("Network request failed") ||
+            error.message?.includes("Aborted") ||
+            error.name === "AbortError";
+        console.warn(`⚠️ [API FAILURE] ${requestOptions.method || "GET"} ${path}: ${error.message}`);
+        // If it's a transient failure (network/timeout/Wi-Fi dropped packet), attempt retry
+        if ((isTimeout || isNetworkError) && retriesLeft > 0) {
+            if (retriesLeft === MAX_RETRIES) {
+                // Swap to production fallback on first failure
+                const fallback = activeApiBaseUrl === config_1.CONFIG.API_BASE_URL ? PROD_API_BASE : config_1.CONFIG.API_BASE_URL;
+                console.log(`🔄 [API FALLBACK] Switching API base to ${fallback}`);
+                activeApiBaseUrl = fallback;
+            }
+            console.log(`🔄 [API RETRY] Retrying in ${delay}ms... (${retriesLeft} retries remaining)`);
+            await sleep(delay);
+            return makeRequest(path, options, retriesLeft - 1, delay * 2);
+        }
+        // Rethrow standard HTTP ApiErrors (like 404, 400) to let caller handle them
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        // Wrap remaining generic exceptions
+        throw new NetworkError(error.message || "Unknown communication failure");
+    }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. UNIFIED HIGH-END API LAYER (With Fallback Resilience)
@@ -339,176 +346,133 @@ exports.api = {
      * Fetch all active flood incidents.
      * If remote backend is unreachable, gracefully falls back to mock Islamabad list.
      */
-    getActiveIncidents: function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var data, err_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, makeRequest("/api/v1/incidents/active")];
-                    case 1:
-                        data = _a.sent();
-                        // Map database types to frontend keys
-                        return [2 /*return*/, data.map(function (item) { return ({
-                                id: String(item.id),
-                                location: item.location,
-                                lat: item.lat,
-                                lng: item.lng,
-                                severity_score: item.severity_score || 0,
-                                confidence: item.confidence || 1.0,
-                                affected_radius_km: item.affected_radius_km || 0.5,
-                                estimated_population: item.estimated_population || 0,
-                                peak_impact_eta: item.peak_impact_eta || "NOW",
-                                status: item.status.toUpperCase(),
-                                risk_factors: item.risk_factors,
-                                created_at: item.created_at,
-                            }); })];
-                    case 2:
-                        err_1 = _a.sent();
-                        console.log("🛡️ [API FALLBACK] getActiveIncidents() -> Serving cached mock Islamabad cluster.");
-                        return [2 /*return*/, MOCK_INCIDENTS];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        });
+    async getActiveIncidents() {
+        try {
+            const data = await makeRequest("/api/v1/incidents/active");
+            // Map database types to frontend keys
+            return data.map((item) => ({
+                id: String(item.id),
+                location: item.location,
+                lat: item.lat,
+                lng: item.lng,
+                severity_score: item.severity_score || 0,
+                confidence: item.confidence || 1.0,
+                affected_radius_km: item.affected_radius_km || 0.5,
+                estimated_population: item.estimated_population || 0,
+                peak_impact_eta: item.peak_impact_eta || "NOW",
+                status: item.status.toUpperCase(),
+                risk_factors: item.risk_factors,
+                created_at: item.created_at,
+                disaster_type: item.disaster_type || "flood",
+            }));
+        }
+        catch (err) {
+            console.log("🛡️ [API FALLBACK] getActiveIncidents() -> Serving cached mock Islamabad cluster.");
+            return MOCK_INCIDENTS;
+        }
     },
     /**
      * Fetch single incident details.
      */
-    getIncident: function (id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var item, err_2;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, makeRequest("/api/v1/incidents/".concat(id))];
-                    case 1:
-                        item = _a.sent();
-                        return [2 /*return*/, {
-                                id: String(item.id),
-                                location: item.location,
-                                lat: item.lat,
-                                lng: item.lng,
-                                severity_score: item.severity_score || 0,
-                                confidence: item.confidence || 1.0,
-                                affected_radius_km: item.affected_radius_km || 0.5,
-                                estimated_population: item.estimated_population || 0,
-                                peak_impact_eta: item.peak_impact_eta || "NOW",
-                                status: item.status.toUpperCase(),
-                                risk_factors: item.risk_factors,
-                                created_at: item.created_at,
-                            }];
-                    case 2:
-                        err_2 = _a.sent();
-                        console.log("\uD83D\uDEE1\uFE0F [API FALLBACK] getIncident(".concat(id, ") -> Serving from cache."));
-                        return [2 /*return*/, MOCK_INCIDENTS.find(function (inc) { return inc.id === id; }) || MOCK_INCIDENTS[0]];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        });
+    async getIncident(id) {
+        try {
+            const item = await makeRequest(`/api/v1/incidents/${id}`);
+            return {
+                id: String(item.id),
+                location: item.location,
+                lat: item.lat,
+                lng: item.lng,
+                severity_score: item.severity_score || 0,
+                confidence: item.confidence || 1.0,
+                affected_radius_km: item.affected_radius_km || 0.5,
+                estimated_population: item.estimated_population || 0,
+                peak_impact_eta: item.peak_impact_eta || "NOW",
+                status: item.status.toUpperCase(),
+                risk_factors: item.risk_factors,
+                created_at: item.created_at,
+                disaster_type: item.disaster_type || "flood",
+            };
+        }
+        catch (err) {
+            console.log(`🛡️ [API FALLBACK] getIncident(${id}) -> Serving from cache.`);
+            return MOCK_INCIDENTS.find((inc) => inc.id === id) || MOCK_INCIDENTS[0];
+        }
     },
-    reportFlood: function (lat_1, lng_1) {
-        return __awaiter(this, arguments, void 0, function (lat, lng, source) {
-            var response, err_3;
-            if (source === void 0) { source = "user_gps"; }
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, makeRequest("/api/v1/signals/", {
-                                method: "POST",
-                                body: JSON.stringify({
-                                    source: source,
-                                    lat: lat,
-                                    lng: lng,
-                                    type: "flood",
-                                    raw_payload: {
-                                        lat: lat,
-                                        lng: lng,
-                                        type: "flood",
-                                        source: source,
-                                    },
-                                }),
-                            })];
-                    case 1:
-                        response = _a.sent();
-                        return [2 /*return*/, !!response];
-                    case 2:
-                        err_3 = _a.sent();
-                        console.log("\uD83D\uDEE1\uFE0F [API FALLBACK] reportFlood() -> Simulated successfully offline with source: ".concat(source, "."));
-                        return [2 /*return*/, true];
-                    case 3: return [2 /*return*/];
-                }
+    async reportFlood(lat, lng, source = "user_gps", type = "flood") {
+        try {
+            const response = await makeRequest("/api/v1/signals/", {
+                method: "POST",
+                body: JSON.stringify({
+                    source: source,
+                    lat: lat,
+                    lng: lng,
+                    type: type,
+                    raw_payload: {
+                        lat: lat,
+                        lng: lng,
+                        type: type,
+                        source: source,
+                    },
+                }),
             });
-        });
+            if (response && response.status === "DUPLICATE") {
+                return { signal_id: response.signal_id, status: "DUPLICATE" };
+            }
+            return { signal_id: String(response.id), status: "NEW" };
+        }
+        catch (err) {
+            console.log(`🛡️ [API FALLBACK] reportFlood() -> Simulated successfully offline with source: ${source} and type: ${type}.`);
+            return { signal_id: "sig-" + Math.random().toString(36).substr(2, 9), status: "MOCK" };
+        }
     },
     /**
      * Start actions lifecycle simulation loop.
      */
-    triggerSimulation: function (id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var response, err_4;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, makeRequest("/api/v1/simulation/trigger/".concat(id), {
-                                method: "POST",
-                            })];
-                    case 1:
-                        response = _a.sent();
-                        return [2 /*return*/, response && response.status === "success"];
-                    case 2:
-                        err_4 = _a.sent();
-                        console.log("\uD83D\uDEE1\uFE0F [API FALLBACK] triggerSimulation(".concat(id, ") -> Offline execution simulation."));
-                        return [2 /*return*/, true];
-                    case 3: return [2 /*return*/];
-                }
+    async triggerSimulation(id) {
+        try {
+            const response = await makeRequest(`/api/v1/simulation/trigger/${id}`, {
+                method: "POST",
             });
-        });
+            return response && response.status === "success";
+        }
+        catch (err) {
+            console.log(`🛡️ [API FALLBACK] triggerSimulation(${id}) -> Offline execution simulation.`);
+            return true;
+        }
     },
     /**
      * Fetch current simulation state / actions for an incident.
      */
-    getSimulationState: function (id) {
-        return __awaiter(this, void 0, void 0, function () {
-            var data, err_5;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, makeRequest("/api/v1/simulation/state/".concat(id))];
-                    case 1:
-                        data = _a.sent();
-                        if (data && data.length > 0) {
-                            return [2 /*return*/, data.map(function (item) { return ({
-                                    id: String(item.id),
-                                    incident_id: id,
-                                    type: item.type,
-                                    status: item.status.toUpperCase(),
-                                    predicted_side_effects: item.predicted_side_effects,
-                                    metadata: item.metadata,
-                                    updated_at: item.updated_at,
-                                }); })];
-                        }
-                        console.log("\uD83D\uDEE1\uFE0F [API FALLBACK] 0 actions returned from DB for incident ".concat(id, " -> Serving fallback execution list."));
-                        return [2 /*return*/, MOCK_ACTIONS[id] || this.getMockSimulationState(id)];
-                    case 2:
-                        err_5 = _a.sent();
-                        console.log("\uD83D\uDEE1\uFE0F [API FALLBACK] getSimulationState(".concat(id, ") failed -> Serving offline execution list."));
-                        return [2 /*return*/, MOCK_ACTIONS[id] || this.getMockSimulationState(id)];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        });
+    async getSimulationState(id) {
+        try {
+            const data = await makeRequest(`/api/v1/simulation/state/${id}`);
+            if (data && data.length > 0) {
+                return data.map((item) => ({
+                    id: String(item.id),
+                    incident_id: id,
+                    type: item.type,
+                    status: item.status.toUpperCase(),
+                    predicted_side_effects: item.predicted_side_effects,
+                    metadata: item.metadata,
+                    updated_at: item.updated_at,
+                }));
+            }
+            console.log(`🛡️ [API FALLBACK] 0 actions returned from DB for incident ${id} -> Serving fallback execution list.`);
+            return MOCK_ACTIONS[id] || this.getMockSimulationState(id);
+        }
+        catch (err) {
+            console.log(`🛡️ [API FALLBACK] getSimulationState(${id}) failed -> Serving offline execution list.`);
+            return MOCK_ACTIONS[id] || this.getMockSimulationState(id);
+        }
+    },
+    updateMockActions(incidentId, actions) {
+        MOCK_ACTIONS[incidentId] = actions;
     },
     /**
      * Get basic fallback timeline states.
      */
-    getMockSimulationState: function (incidentId) {
-        var timestamp = now();
+    getMockSimulationState(incidentId) {
+        const timestamp = now();
         return [
             { id: "a1", incident_id: incidentId, type: "DISPATCH_RESCUE", status: "PENDING", predicted_side_effects: "Mobilises local relief teams.", updated_at: timestamp },
             { id: "a2", incident_id: incidentId, type: "DEPLOY_DRAINAGE_CREW", status: "PENDING", predicted_side_effects: "Starts structural dewatering.", updated_at: timestamp },
@@ -519,60 +483,268 @@ exports.api = {
      * Fetch reasoning traces for an incident.
      * Leverages the newly deployed DB endpoint before subscribing to websocket.
      */
-    getReasoningLogs: function (incidentId) {
-        return __awaiter(this, void 0, void 0, function () {
-            var data, err_6;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, makeRequest("/api/v1/incidents/".concat(incidentId, "/logs"))];
-                    case 1:
-                        data = _a.sent();
-                        return [2 /*return*/, data.map(function (item) { return ({
-                                id: String(item.id),
-                                incident_id: String(item.incident_id),
-                                agent_name: item.agent_name,
-                                log_text: item.log_text,
-                                log_level: item.log_level || "INFO",
-                                created_at: item.created_at,
-                            }); })];
-                    case 2:
-                        err_6 = _a.sent();
-                        console.log("\uD83D\uDEE1\uFE0F [API FALLBACK] getReasoningLogs(".concat(incidentId, ") -> Serving mock narrative logs."));
-                        return [2 /*return*/, MOCK_REASONING_LOGS[incidentId] || []];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        });
+    async getReasoningLogs(incidentId) {
+        try {
+            const data = await makeRequest(`/api/v1/incidents/${incidentId}/logs`);
+            return data.map((item) => ({
+                id: String(item.id),
+                incident_id: String(item.incident_id),
+                agent_name: item.agent_name,
+                log_text: item.log_text,
+                log_level: item.log_level || "INFO",
+                created_at: item.created_at,
+            }));
+        }
+        catch (err) {
+            console.log(`🛡️ [API FALLBACK] getReasoningLogs(${incidentId}) -> Serving mock narrative logs.`);
+            return MOCK_REASONING_LOGS[incidentId] || [];
+        }
     },
     /**
      * Fetch detailed step-by-step Chain of Thought (CoT) logs for an incident.
      */
-    getChainOfThought: function (incidentId) {
-        return __awaiter(this, void 0, void 0, function () {
-            var data, err_7;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4 /*yield*/, makeRequest("/api/v1/incidents/".concat(incidentId, "/cot"))];
-                    case 1:
-                        data = _a.sent();
-                        return [2 /*return*/, data.map(function (item) { return ({
-                                id: String(item.id),
-                                incident_id: String(item.incident_id),
-                                agent_name: item.agent_name,
-                                cot_steps: item.cot_steps,
-                                created_at: item.created_at,
-                            }); })];
-                    case 2:
-                        err_7 = _a.sent();
-                        console.log("\uD83D\uDEE1\uFE0F [API FALLBACK] getChainOfThought(".concat(incidentId, ") -> Serving mock CoT traces."));
-                        return [2 /*return*/, MOCK_COT_LOGS[incidentId] || []];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        });
+    async getChainOfThought(incidentId) {
+        try {
+            const data = await makeRequest(`/api/v1/incidents/${incidentId}/cot`);
+            return data.map((item) => ({
+                id: String(item.id),
+                incident_id: String(item.incident_id),
+                agent_name: item.agent_name,
+                cot_steps: item.cot_steps,
+                created_at: item.created_at,
+            }));
+        }
+        catch (err) {
+            console.log(`🛡️ [API FALLBACK] getChainOfThought(${incidentId}) -> Serving mock CoT traces.`);
+            return MOCK_COT_LOGS[incidentId] || [];
+        }
     },
+    /**
+     * Fetch all actions associated with an incident using the newly implemented REST endpoint.
+     */
+    async getIncidentActions(incidentId) {
+        try {
+            const data = await makeRequest(`/api/v1/incidents/${incidentId}/actions`);
+            return data.map((item) => ({
+                id: String(item.id),
+                incident_id: incidentId,
+                type: item.type,
+                status: item.status.toUpperCase(),
+                predicted_side_effects: item.predicted_side_effects,
+                metadata: item.action_metadata,
+                updated_at: item.updated_at,
+            }));
+        }
+        catch (err) {
+            console.log(`🛡️ [API FALLBACK] getIncidentActions(${incidentId}) failed -> Falling back to simulationTimeline cache.`);
+            return this.getSimulationState(incidentId);
+        }
+    },
+    /**
+     * Fetch all emergency resources and current allocations.
+     */
+    async getResources() {
+        try {
+            const data = await makeRequest("/api/v1/resources");
+            return data.map((item) => ({
+                id: String(item.id),
+                type: item.type,
+                total_count: item.total_count,
+                available_count: item.available_count,
+                assigned_to_incident: item.assigned_to_incident,
+                location: item.location,
+                updated_at: item.updated_at,
+            }));
+        }
+        catch (err) {
+            console.log("🛡️ [API FALLBACK] getResources() failed -> serving mock resources.");
+            return MOCK_RESOURCES;
+        }
+    },
+    /**
+     * Poll multi-agent pipeline progress tracking status.
+     */
+    async getPipelineStatus(signalId) {
+        try {
+            const data = await makeRequest(`/api/v1/signals/${signalId}/status`);
+            return {
+                signal_id: String(data.signal_id),
+                incident_id: data.incident_id ? String(data.incident_id) : null,
+                status: data.status,
+                stage: data.stage,
+                stage_index: data.stage_index,
+                stage_status: data.stage_status,
+                message: data.message,
+                updated_at: data.updated_at,
+            };
+        }
+        catch (err) {
+            console.log(`🛡️ [API FALLBACK] getPipelineStatus(${signalId}) failed -> serving local simulated progress.`);
+            // Mock step-by-step telemetry progress offline
+            return {
+                signal_id: signalId,
+                incident_id: "inc-g10",
+                status: "CONFIRMED",
+                stage: "notification_agent",
+                stage_index: 6,
+                stage_status: "COMPLETED",
+                message: "Tactical plan complete. Public and local teams notified! (Mocked Confirmed)",
+                updated_at: now()
+            };
+        }
+    },
+    /**
+     * Fetch Web Dashboard stats
+     */
+    async getDashboardStats() {
+        try {
+            return await makeRequest("/api/v1/dashboard/stats");
+        }
+        catch (err) {
+            console.log("🛡️ [API FALLBACK] getDashboardStats() -> serving fallback counters.");
+            return {
+                total_signals: 14,
+                active_crisis_sectors: MOCK_INCIDENTS.length,
+                total_agent_decisions: 48,
+                allocated_ambulances: 4,
+                allocated_rescue_crews: 3,
+            };
+        }
+    },
+    /**
+     * Fetch live agent workforce state
+     */
+    async getAgentWorkforce() {
+        try {
+            return await makeRequest("/api/v1/dashboard/agent-workforce");
+        }
+        catch (err) {
+            console.log("🛡️ [API FALLBACK] getAgentWorkforce() -> serving mock agent workforce.");
+            return [
+                { agent: "Signal Agent", status: "IDLE", active_incident: null },
+                { agent: "Detection Agent", status: "IDLE", active_incident: null },
+                { agent: "Severity Agent", status: "IDLE", active_incident: null },
+                { agent: "Verification Agent", status: "IDLE", active_incident: null },
+                { agent: "Logging Agent", status: "IDLE", active_incident: null },
+                { agent: "Resource Allocation Agent", status: "IDLE", active_incident: null },
+                { agent: "Planning Agent", status: "IDLE", active_incident: null },
+                { agent: "Notification Agent", status: "IDLE", active_incident: null },
+            ];
+        }
+    },
+    /**
+     * Fetch global timeline activity
+     */
+    async getGlobalTimeline() {
+        try {
+            return await makeRequest("/api/v1/dashboard/global-timeline");
+        }
+        catch (err) {
+            console.log("🛡️ [API FALLBACK] getGlobalTimeline() -> serving mock global activity.");
+            return [
+                { id: "1", incident_id: "inc-g10", agent_name: "signal_agent", log_text: "System initialized signal trace verification", log_level: "INFO", created_at: now() },
+                { id: "2", incident_id: "inc-g10", agent_name: "severity_agent", log_text: "Assessed G-10 Markaz rainfall severity to 8.9", log_level: "WARNING", created_at: now() },
+                { id: "3", incident_id: "inc-g13", agent_name: "resource_allocation_agent", log_text: "Standby rescue assets allocated for sector G-13", log_level: "INFO", created_at: now() },
+            ];
+        }
+    },
+    /**
+     * Trigger a random simulated mock telemetry signal in Islamabad
+     */
+    async triggerMockSignal() {
+        try {
+            const response = await makeRequest("/api/v1/signals/mock", {
+                method: "POST",
+            });
+            if (response && response.status === "DUPLICATE") {
+                return { signal_id: response.signal_id, status: "DUPLICATE" };
+            }
+            return { signal_id: String(response.id), status: "NEW" };
+        }
+        catch (err) {
+            console.log("🛡️ [API FALLBACK] triggerMockSignal() -> generated simulated signal locally offline.");
+            return { signal_id: "sig-" + Math.random().toString(36).substr(2, 9), status: "MOCK" };
+        }
+    },
+    /**
+     * Submit citizen vote (confirm/refute) on an incident.
+     */
+    async verifyIncident(incidentId, vote) {
+        try {
+            return await makeRequest(`/api/v1/incidents/${incidentId}/verify`, {
+                method: "POST",
+                body: JSON.stringify({ vote }),
+            });
+        }
+        catch (err) {
+            console.log(`🛡️ [API FALLBACK] verifyIncident(${incidentId}, ${vote}) failed.`, err);
+            throw err;
+        }
+    },
+    /**
+     * Retrieve real-time vehicle locations (fleet telemetry).
+     */
+    async getFleetLocations() {
+        try {
+            return await makeRequest("/api/v1/resources/fleet");
+        }
+        catch (err) {
+            console.log("🛡️ [API FALLBACK] getFleetLocations() failed.", err);
+            return [];
+        }
+    },
+    /**
+     * Retrieve all municipal shelters.
+     */
+    async getSafeHavens() {
+        try {
+            return await makeRequest("/api/v1/safe-havens");
+        }
+        catch (err) {
+            console.log("🛡️ [API FALLBACK] getSafeHavens() failed -> serving mock shelters.");
+            return [
+                { id: "sh-g10", name: "G-10 Community Center", lat: 33.6650, lng: 73.0320, capacity: 500, current_occupancy: 420, created_at: now() },
+                { id: "sh-f8", name: "F-8 Markaz Shelter", lat: 33.7120, lng: 73.0420, capacity: 600, current_occupancy: 240, created_at: now() },
+                { id: "sh-cantt", name: "Karachi Cantonment Station", lat: 24.8465, lng: 67.0325, capacity: 1000, current_occupancy: 650, created_at: now() },
+                { id: "sh-gulshan", name: "Gulshan-e-Iqbal Town Office", lat: 24.9180, lng: 67.0970, capacity: 400, current_occupancy: 310, created_at: now() }
+            ];
+        }
+    },
+    /**
+     * Get dynamic evacuation route to the closest shelter.
+     */
+    async getEvacuationRoute(lat, lng) {
+        try {
+            return await makeRequest(`/api/v1/safe-havens/route?lat=${lat}&lng=${lng}`);
+        }
+        catch (err) {
+            console.log("🛡️ [API FALLBACK] getEvacuationRoute() failed -> generating mock path.");
+            const mockHavens = [
+                { id: "sh-g10", name: "G-10 Community Center", lat: 33.6650, lng: 73.0320, capacity: 500, current_occupancy: 420, created_at: now() },
+                { id: "sh-f8", name: "F-8 Markaz Shelter", lat: 33.7120, lng: 73.0420, capacity: 600, current_occupancy: 240, created_at: now() },
+                { id: "sh-cantt", name: "Karachi Cantonment Station", lat: 24.8465, lng: 67.0325, capacity: 1000, current_occupancy: 650, created_at: now() },
+                { id: "sh-gulshan", name: "Gulshan-e-Iqbal Town Office", lat: 24.9180, lng: 67.0970, capacity: 400, current_occupancy: 310, created_at: now() }
+            ];
+            const closest = mockHavens.reduce((prev, curr) => {
+                const prevDist = Math.hypot(prev.lat - lat, prev.lng - lng);
+                const currDist = Math.hypot(curr.lat - lat, curr.lng - lng);
+                return currDist < prevDist ? prev : prev;
+            });
+            const path = [];
+            const N = 15;
+            for (let i = 0; i <= N; i++) {
+                const t = i / N;
+                path.push({
+                    lat: lat + t * (closest.lat - lat),
+                    lng: lng + t * (closest.lng - lng)
+                });
+            }
+            return {
+                safe_haven: closest,
+                path,
+                distance_km: Math.hypot(closest.lat - lat, closest.lng - lng) * 111.0,
+                avoided_flooded_zones_count: 0
+            };
+        }
+    }
 };
