@@ -9,7 +9,7 @@ import EventsPanel from "@/components/dashboard/EventsPanel";
 import CTECCPanel from "@/components/dashboard/CTECCPanel";
 import SafeHavensPanel from "@/components/dashboard/SafeHavensPanel";
 import { Incident } from "@/lib/api";
-import { X, Navigation } from "lucide-react";
+import { X, Navigation, Smartphone } from "lucide-react";
 
 interface MapPanelProps {
   selectedIncident: Incident | null;
@@ -335,6 +335,36 @@ export default function DashboardPage() {
 
           {/* Right scrollable content */}
           <div className="flex-1 overflow-y-auto bg-slate-50/50 bg-grid-pattern p-4 md:p-6 space-y-6 min-w-0">
+            
+            {/* Judges Expo Build Banner */}
+            <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 rounded-2xl p-5 md:p-6 backdrop-blur-sm relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg shadow-amber-500/5 border-l-4 border-l-amber-500 animate-fade-in">
+              {/* Subtle background glow */}
+              <div className="absolute -left-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="flex-1 space-y-1 relative z-10">
+                <div className="flex items-center gap-2 text-amber-700 font-semibold tracking-wide text-xs uppercase font-mono">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                  </span>
+                  🚨 Attention Judges: Updated Expo Build Link
+                </div>
+                <p className="text-gray-600 text-xs md:text-sm leading-relaxed max-w-3xl font-sans">
+                  Due to a last-minute environment variable typo in the submission form build, please use the following corrected link to download and test the mobile app:
+                </p>
+              </div>
+
+              <a
+                href="https://expo.dev/accounts/devabdullah90/projects/resq-by-aqua/builds/cb35f2ee-d354-4c87-96a8-0a17ed8c7253"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative z-10 shrink-0 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-xs font-semibold py-3 px-5 rounded-xl flex items-center gap-2 transition-all duration-300 shadow-md hover:shadow-amber-500/20 active:scale-95 group font-mono uppercase tracking-wider"
+              >
+                <Smartphone className="w-4 h-4 transition-transform group-hover:scale-110" />
+                Download Mobile App
+              </a>
+            </div>
+
             <div className="fade-in" style={{ animationDelay: "0ms" }}>
               <MetricsGrid selectedIncident={selectedIncident} />
             </div>
