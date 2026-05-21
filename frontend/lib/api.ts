@@ -426,9 +426,10 @@ async function makeRequest<T>(
   path: string,
   options: RequestInit = {},
   retriesLeft = MAX_RETRIES,
-  delay = RETRY_DELAY_BASE
+  delay = RETRY_DELAY_BASE,
+  requestBaseUrl = activeApiBaseUrl
 ): Promise<T> {
-  const url = `${activeApiBaseUrl}${path}`;
+  const url = `${requestBaseUrl}${path}`;
 
   const requestOptions: RequestInit = {
     ...options,
@@ -480,14 +481,16 @@ async function makeRequest<T>(
     // If it's a transient failure (network/timeout/Wi-Fi dropped packet), attempt retry
     if ((isTimeout || isNetworkError) && retriesLeft > 0) {
       if (retriesLeft === MAX_RETRIES) {
-        // Swap to production fallback on first failure
-        const fallback = activeApiBaseUrl === CONFIG.API_BASE_URL ? PROD_API_BASE : CONFIG.API_BASE_URL;
-        console.log(`🔄 [API FALLBACK] Switching API base to ${fallback}`);
-        activeApiBaseUrl = fallback;
+        // Swap to production fallback on first failure, only if it hasn't changed
+        if (activeApiBaseUrl === requestBaseUrl) {
+          const fallback = activeApiBaseUrl === CONFIG.API_BASE_URL ? PROD_API_BASE : CONFIG.API_BASE_URL;
+          console.log(`🔄 [API FALLBACK] Switching API base to ${fallback}`);
+          activeApiBaseUrl = fallback;
+        }
       }
       console.log(`🔄 [API RETRY] Retrying in ${delay}ms... (${retriesLeft} retries remaining)`);
       await sleep(delay);
-      return makeRequest<T>(path, options, retriesLeft - 1, delay * 2);
+      return makeRequest<T>(path, options, retriesLeft - 1, delay * 2, activeApiBaseUrl);
     }
 
     // Rethrow standard HTTP ApiErrors (like 404, 400) to let caller handle them
@@ -505,6 +508,14 @@ async function makeRequest<T>(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const api = {
+  /**
+   * Get active WebSocket connection URL dynamically based on activeApiBaseUrl
+   */
+  getActiveWsUrl(path: string): string {
+    const wsBase = activeApiBaseUrl.replace(/^http/, "ws");
+    return `${wsBase}${path}`;
+  },
+
   /**
    * Fetch all active flood incidents.
    * If remote backend is unreachable, gracefully falls back to mock Islamabad list.

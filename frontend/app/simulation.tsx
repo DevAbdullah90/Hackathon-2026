@@ -269,15 +269,14 @@ export default function SimView({ route, navigation }: any) {
 
   // Connect to incident WebSocket for live simulation events
   useEffect(() => {
-    const wsUrl = `${CONFIG.WS_BASE_URL.replace("http", "ws").replace("https", "wss")}/api/v1/ws/${incidentId}`;
-    console.log(`🔌 [SimView] Connecting to incident WebSocket: ${wsUrl}`);
-
     let socket: WebSocket | null = null;
     let reconnectTimeout: any = null;
     let isMounted = true;
 
     const connect = () => {
       if (!isMounted) return;
+      const wsUrl = api.getActiveWsUrl(`/api/v1/ws/${incidentId}`);
+      console.log(`🔌 [SimView] Connecting to incident WebSocket: ${wsUrl}`);
       socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

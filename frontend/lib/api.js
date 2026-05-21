@@ -8,6 +8,9 @@ const PROD_API_BASE = "https://hackathon-2026-production-ff6c.up.railway.app";
 // 2. ERROR STRUCTURES & HANDLERS
 // ─────────────────────────────────────────────────────────────────────────────
 class ApiError extends Error {
+    status;
+    statusText;
+    body;
     constructor(status, statusText, body) {
         super(`[API HTTP ${status}] ${statusText}`);
         this.name = "ApiError";
@@ -279,8 +282,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * Supports Abort Timeouts, Silent Retries with Exponential Backoff,
  * Structured Logging, and Auto-Fallback to mock data on server death.
  */
-async function makeRequest(path, options = {}, retriesLeft = MAX_RETRIES, delay = RETRY_DELAY_BASE) {
-    const url = `${activeApiBaseUrl}${path}`;
+async function makeRequest(path, options = {}, retriesLeft = MAX_RETRIES, delay = RETRY_DELAY_BASE, requestBaseUrl = activeApiBaseUrl) {
+    const url = `${requestBaseUrl}${path}`;
     const requestOptions = {
         ...options,
         headers: {
@@ -321,14 +324,16 @@ async function makeRequest(path, options = {}, retriesLeft = MAX_RETRIES, delay 
         // If it's a transient failure (network/timeout/Wi-Fi dropped packet), attempt retry
         if ((isTimeout || isNetworkError) && retriesLeft > 0) {
             if (retriesLeft === MAX_RETRIES) {
-                // Swap to production fallback on first failure
-                const fallback = activeApiBaseUrl === config_1.CONFIG.API_BASE_URL ? PROD_API_BASE : config_1.CONFIG.API_BASE_URL;
-                console.log(`🔄 [API FALLBACK] Switching API base to ${fallback}`);
-                activeApiBaseUrl = fallback;
+                // Swap to production fallback on first failure, only if it hasn't changed
+                if (activeApiBaseUrl === requestBaseUrl) {
+                    const fallback = activeApiBaseUrl === config_1.CONFIG.API_BASE_URL ? PROD_API_BASE : config_1.CONFIG.API_BASE_URL;
+                    console.log(`🔄 [API FALLBACK] Switching API base to ${fallback}`);
+                    activeApiBaseUrl = fallback;
+                }
             }
             console.log(`🔄 [API RETRY] Retrying in ${delay}ms... (${retriesLeft} retries remaining)`);
             await sleep(delay);
-            return makeRequest(path, options, retriesLeft - 1, delay * 2);
+            return makeRequest(path, options, retriesLeft - 1, delay * 2, activeApiBaseUrl);
         }
         // Rethrow standard HTTP ApiErrors (like 404, 400) to let caller handle them
         if (error instanceof ApiError) {
@@ -342,6 +347,13 @@ async function makeRequest(path, options = {}, retriesLeft = MAX_RETRIES, delay 
 // 5. UNIFIED HIGH-END API LAYER (With Fallback Resilience)
 // ─────────────────────────────────────────────────────────────────────────────
 exports.api = {
+    /**
+     * Get active WebSocket connection URL dynamically based on activeApiBaseUrl
+     */
+    getActiveWsUrl(path) {
+        const wsBase = activeApiBaseUrl.replace(/^http/, "ws");
+        return `${wsBase}${path}`;
+    },
     /**
      * Fetch all active flood incidents.
      * If remote backend is unreachable, gracefully falls back to mock Islamabad list.

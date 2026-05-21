@@ -257,13 +257,17 @@ async function makeRequest<T>(path: string, options: RequestInit = {}): Promise<
     return await res.json();
   };
 
+  const currentBaseUrl = API_BASE_URL;
   try {
-    return await tryFetch(API_BASE_URL);
+    return await tryFetch(currentBaseUrl);
   } catch (err: any) {
     if (err.name === "TypeError" || (err.message && err.message.includes("Failed to fetch"))) {
-      const fallbackUrl = API_BASE_URL === LOCAL_API_BASE ? PROD_API_BASE : LOCAL_API_BASE;
-      console.warn(`[API] Connection to ${API_BASE_URL} failed. Switching to ${fallbackUrl}`);
-      API_BASE_URL = fallbackUrl;
+      // Only switch global API_BASE_URL if another request hasn't already switched it.
+      if (API_BASE_URL === currentBaseUrl) {
+        const fallbackUrl = currentBaseUrl === LOCAL_API_BASE ? PROD_API_BASE : LOCAL_API_BASE;
+        console.warn(`[API] Connection to ${currentBaseUrl} failed. Switching to ${fallbackUrl}`);
+        API_BASE_URL = fallbackUrl;
+      }
       try {
         return await tryFetch(API_BASE_URL);
       } catch (fallbackErr) {
@@ -273,6 +277,7 @@ async function makeRequest<T>(path: string, options: RequestInit = {}): Promise<
     throw err;
   }
 }
+
 
 export const api = {
   /**

@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("/trigger/{incident_id}", response_model=Dict[str, Any])
 async def trigger_simulation(
-    incident_id: uuid.UUID,
+    incident_id: str,
     background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session)
 ):
@@ -20,8 +20,13 @@ async def trigger_simulation(
     Trigger the lifecycle simulation for all actions associated with an incident.
     This simulates real-world execution by advancing action states over time.
     """
+    try:
+        uuid_id = uuid.UUID(incident_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="No actions found for this incident.")
+
     # Verify the incident has pending actions
-    query = select(Action).where(Action.incident_id == incident_id)
+    query = select(Action).where(Action.incident_id == uuid_id)
     result = await session.execute(query)
     actions = result.scalars().all()
     
@@ -29,7 +34,7 @@ async def trigger_simulation(
         raise HTTPException(status_code=404, detail="No actions found for this incident.")
         
     # Start the simulation loop in the background
-    background_tasks.add_task(run_simulation_loop, incident_id=incident_id)
+    background_tasks.add_task(run_simulation_loop, incident_id=uuid_id)
     
     return {
         "status": "success",
@@ -39,13 +44,19 @@ async def trigger_simulation(
 
 @router.get("/state/{incident_id}", response_model=List[Dict[str, Any]])
 async def get_simulation_state(
-    incident_id: uuid.UUID,
+    incident_id: str,
     session: AsyncSession = Depends(get_session)
 ):
     """
     Get the current status of all actions for a specific incident.
     """
-    query = select(Action).where(Action.incident_id == incident_id)
+    try:
+        uuid_id = uuid.UUID(incident_id)
+    except ValueError:
+        # Invalid UUID cannot have any database actions, return empty list
+        return []
+
+    query = select(Action).where(Action.incident_id == uuid_id)
     result = await session.execute(query)
     actions = result.scalars().all()
     
@@ -59,3 +70,4 @@ async def get_simulation_state(
         }
         for action in actions
     ]
+
