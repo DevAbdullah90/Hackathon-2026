@@ -7,7 +7,7 @@
 > [!IMPORTANT]
 > ### 🚨 ATTENTION JUDGES: UPDATED EXPO BUILD LINK 🚨
 > Due to a last-minute environment variable typo in the submission form build, please use the following corrected link to download and test the mobile app:
-> 👉 **[Download & Test the Mobile App on Expo](https://expo.dev/)** *(Please replace this with your actual Expo project/build URL if different!)*
+> 👉 **[Download & Test the Mobile App on Expo](https://expo.dev/accounts/devabdullah90/projects/resq-by-aqua/builds/336f2151-76f1-43aa-ac56-890d37ed78d5)**
 
 ---
 
