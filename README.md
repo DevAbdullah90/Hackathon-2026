@@ -1,6 +1,13 @@
+![CIRO by AQUA Banner](./assets/ciro_by_aqua_banner.png)
+
 # 🌊 Urban Crisis Intelligence & Response Orchestrator (CIRO)
 ### End-to-End Multi-Agent Crisis Management Platform
 **Built for the Google Antigravity Hackathon — Challenge 3**
+
+> [!IMPORTANT]
+> ### 🚨 ATTENTION JUDGES: UPDATED EXPO BUILD LINK 🚨
+> Due to a last-minute environment variable typo in the submission form build, please use the following corrected link to download and test the mobile app:
+> 👉 **[Download & Test the Mobile App on Expo](https://expo.dev/)** *(Please replace this with your actual Expo project/build URL if different!)*
 
 ---
 
@@ -11,6 +18,7 @@ CIRO (Crisis Intelligence & Response Orchestrator) is a next-generation crisis m
 ### Core Design Philosophy & Decisions:
 - **Decentralized Specialist Agents (Star Topology)**: Instead of a single complex LLM prompt, CIRO uses a **Triage-and-Handoff pattern** (via the OpenAI Agents SDK). A central Triage Agent orchestrates eight specialist agents. The Triage Agent delegates task execution to specialists, who automatically hand back control to the Triage Agent once finished. This design avoids agent loops and keeps prompts focused and modular.
 - **Asymmetric Multi-Model Tiering**: Agent roles are split into **Reasoning Tasks** (handled by advanced models like Gemini 2.0 Flash / GPT-4o-mini) and **Extraction/Formatting Tasks** (handled by fast models like Llama 3 via Groq). This optimizes performance, reduces LLM token costs, and keeps WebSocket stream latencies low.
+- **Multi-Provider & Model Agnostic**: The architecture is fully decoupled from any single LLM provider. By leveraging the OpenAI Agents SDK compatibility layer, operators can swap between providers (Google Gemini, OpenAI, Anthropic, Groq) and any model instantly via environment variables, requiring absolutely zero code changes to the underlying logic.
 - **Offline Resiliency & Graceful Degradation**: Real-world crises disrupt network infrastructure. CIRO is designed to work offline or in restricted-connectivity environments through an automatic API key checker, a Nominatim OpenStreetMap reverse geocoding fallback, and local in-memory fallback state machines (`api.updateMockActions`) for the mobile client.
 - **Aesthetic Visual Performance**: The web and mobile frontends utilize premium designs (e.g., Tailwind CSS v4, Aceternity Spotlight, and 3D Spline interactive models on the landing page). Heavy assets like 3D Spline models are loaded via a **"Placeholder Trick"**—instantly displaying a lightweight static image while lazy-loading the 3D model in the background to eliminate perceived load delay.
 
@@ -153,14 +161,47 @@ CIRO unites complex backend modules, real-time channels, persistent stores, and 
   - Connects to the backend via WebSocket/HTTP.
   - Implements a static authentication gate (credentials are verified without persistent local storage).
   - Features an interactive map showing crisis boundaries (impact circles) and a live triage timeline displaying specialist agents' thinking processes.
+
 - **Command Center Dashboard (Next.js)**:
   - Built with modern styling and responsive grid layouts.
   - Provides a **Signal Injector** tool that lets operators run raw telemetry scripts to test the multi-agent system.
   - Displays real-time city metrics, fleet maps, and manual overrides.
 
+#### 🖥️ Dashboard Overview & Live Operations
+![CIRO Command Center Dashboard](./dashboard_screenshot.png)
+
+*The CIRO Web Dashboard serves as the central nervous system for emergency operators, driven entirely by real-time WebSocket streams from the AI agents. Here is how it works:*
+- **Live Fleet & Incident Map**: Displays dynamically generated crisis clusters (red zones) and tracks the live movement of dispatched vehicles (ambulances, rescue crews) across the city grid.
+- **Global AI Timeline**: A live-scrolling terminal that exposes the "Chain of Thought" from the 8 specialist agents as they detect signals, calculate severity, and execute plans.
+- **Top-Level Metrics**: Instantly shows the total number of Active Crisis Sectors and the current status of fleet resource allocations.
+- **Signal Injector**: Allows operators to manually trigger mock signals (e.g., "Flood at Jauhar") to simulate a crisis and watch the autonomous agents spring into action.
+
 ---
 
-## ⚙️ 6. Local Setup & Deployed Environments
+## 🚀 6. AI-Native Development: The Antigravity Workflow (Our Process)
+
+To build this complex platform within the hackathon timeframe, our team of 4 fully embraced the **AI Native Software Development** paradigm. We utilized the **Google Antigravity AI Assistant** as our core development engine, mapping perfectly to the hackathon's evaluation criteria:
+
+### 1. Core Orchestration Handled via Antigravity
+We acted as "System Architects" and delegated the actual codebase generation to Antigravity. We didn't just use one AI chat; we utilized Antigravity's **Subagents** to handle multiple domains of the project concurrently. 
+- **The Database Agent**: Tasked with defining the SQLModel schemas and asynchronous persistence logic (`async-database-migrations` skill).
+- **The Frontend Agent**: Instructed to consume Aceternity UI to build our Next.js dashboard and React Native app (`generating-reusable-components` skill).
+- **The Testing Agent**: Constantly running in the background to verify our robust CIRO pipeline (`automated-testing` skill).
+
+### 2. Multi-Agent Planning + Execution (The CIRO Pipeline)
+We dedicated a specialized **OpenAI Orchestration Agent** exclusively to architecting the logic for the CIRO application itself. Using the `orchestrating-openai-agents` skill, Antigravity planned and executed the complex **Triage-and-Handoff pattern**, defining the system prompts, fallback logic, and strict routing rules for our 8 internal AI agents.
+
+### 3. Tool Integration
+To make our CIRO agents interact with the real world, we used Antigravity's `sdk-function-tool-integration` skill to generate robust, error-handled Python tool functions. Antigravity successfully integrated:
+- **Google Maps Distance Matrix API** (for Severity Agent traffic analysis)
+- **SerpApi Google News** (for Verification Agent rumor checking)
+- **OpenWeatherMap API** (for environmental constraints)
+
+By treating Antigravity as a scalable team of developers, we focused purely on architectural design and prompt tuning. All raw Antigravity execution logs (reasoning steps, tool executions, and file modifications) generated during this process can be found in the repository's `.antigravity/` directories (e.g., `uneeza_logs`, `abdullah_logs`). These logs serve as our comprehensive **Agent Trace** for Deliverable 3.
+
+---
+
+## ⚙️ 7. Local Setup & Deployed Environments
 
 ### Prerequisites
 - Python 3.13+ (Backend)
@@ -190,9 +231,9 @@ cd backend
 python -m venv .venv
 # Activate: .venv\Scripts\activate (Windows) or source .venv/bin/activate (macOS/Linux)
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 7860
+uvicorn app.main:app --reload --port 8000
 ```
-API docs are available at `http://localhost:7860/docs`.
+API docs are available at `http://localhost:8000/docs`.
 
 ### 3. Run the Next.js Command Dashboard
 ```bash
