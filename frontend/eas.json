@@ -9,10 +9,16 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyD7eHW3unQR6JzKenboiwxB9T-CMYtTIUo"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyD7eHW3unQR6JzKenboiwxB9T-CMYtTIUo"
+      }
     }
   },
   "submit": {
