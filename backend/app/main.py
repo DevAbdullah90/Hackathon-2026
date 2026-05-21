@@ -31,13 +31,18 @@ app = FastAPI(
 # ---------------------------------------------------------------------------
 # CORS — Allow Expo / React Native frontend during development
 # ---------------------------------------------------------------------------
+# Filter out "*" from allow_origins when allow_credentials is True to avoid Starlette/browser exceptions,
+# and use allow_origin_regex to support dynamic origins safely with credentials.
+origins = [origin for origin in settings.BACKEND_CORS_ORIGINS if origin != "*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=origins,
+    allow_origin_regex="https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # ---------------------------------------------------------------------------
 # API Router — All versioned routes mounted here

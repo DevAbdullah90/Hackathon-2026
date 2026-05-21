@@ -153,15 +153,14 @@ export default function FloodMap({ route, navigation }: any) {
   };
 
   useEffect(() => {
-    const wsUrl = `${CONFIG.WS_BASE_URL.replace("http", "ws").replace("https", "wss")}/api/v1/ws/global/stream`;
-    console.log(`🔌 [FloodMap] Connecting to global WebSocket: ${wsUrl}`);
-    
     let socket: WebSocket | null = null;
     let reconnectTimeout: any = null;
     let isMounted = true;
 
     const connect = () => {
       if (!isMounted) return;
+      const wsUrl = api.getActiveWsUrl("/api/v1/ws/global/stream");
+      console.log(`🔌 [FloodMap] Connecting to global WebSocket: ${wsUrl}`);
       socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

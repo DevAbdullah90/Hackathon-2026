@@ -54,12 +54,19 @@ async def read_active_incidents(
 async def read_incident(
     *,
     session: AsyncSession = Depends(get_session),
-    incident_id: UUID
+    incident_id: str
 ):
     """
     Get detailed information for a specific incident.
     """
-    incident = await session.get(Incident, incident_id)
+    try:
+        uuid_id = UUID(incident_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Incident not found"
+        )
+    incident = await session.get(Incident, uuid_id)
     if not incident:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
@@ -72,14 +79,21 @@ async def read_incident(
 async def read_incident_logs(
     *,
     session: AsyncSession = Depends(get_session),
-    incident_id: UUID
+    incident_id: str
 ):
     """
     Retrieve all AI reasoning logs associated with a specific incident.
     """
+    try:
+        uuid_id = UUID(incident_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incident not found"
+        )
     query = (
         select(ReasoningLog)
-        .where(ReasoningLog.incident_id == incident_id)
+        .where(ReasoningLog.incident_id == uuid_id)
         .order_by(ReasoningLog.created_at.asc())
     )
     result = await session.execute(query)
@@ -91,14 +105,21 @@ async def read_incident_logs(
 async def read_incident_cot(
     *,
     session: AsyncSession = Depends(get_session),
-    incident_id: UUID
+    incident_id: str
 ):
     """
     Retrieve all detailed AI Chain of Thought (CoT) steps associated with a specific incident.
     """
+    try:
+        uuid_id = UUID(incident_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incident not found"
+        )
     query = (
         select(ChainOfThought)
-        .where(ChainOfThought.incident_id == incident_id)
+        .where(ChainOfThought.incident_id == uuid_id)
         .order_by(ChainOfThought.created_at.asc())
     )
     result = await session.execute(query)
@@ -110,13 +131,20 @@ async def read_incident_cot(
 async def read_incident_actions(
     *,
     session: AsyncSession = Depends(get_session),
-    incident_id: UUID
+    incident_id: str
 ):
     """
     Retrieve all emergency actions planned for a specific incident.
     """
+    try:
+        uuid_id = UUID(incident_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incident not found"
+        )
     # Check if the incident exists first
-    incident = await session.get(Incident, incident_id)
+    incident = await session.get(Incident, uuid_id)
     if not incident:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -125,7 +153,7 @@ async def read_incident_actions(
 
     query = (
         select(Action)
-        .where(Action.incident_id == incident_id)
+        .where(Action.incident_id == uuid_id)
         .order_by(Action.updated_at.asc())
     )
     result = await session.execute(query)
@@ -137,12 +165,19 @@ async def read_incident_actions(
 async def read_incident_notifications(
     *,
     session: AsyncSession = Depends(get_session),
-    incident_id: UUID
+    incident_id: str
 ):
     """
     Retrieve all stakeholder notifications generated for a specific incident.
     """
-    incident = await session.get(Incident, incident_id)
+    try:
+        uuid_id = UUID(incident_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incident not found"
+        )
+    incident = await session.get(Incident, uuid_id)
     if not incident:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -151,7 +186,7 @@ async def read_incident_notifications(
 
     query = (
         select(Notification)
-        .where(Notification.incident_id == incident_id)
+        .where(Notification.incident_id == uuid_id)
         .order_by(Notification.sent_at.asc())
     )
     result = await session.execute(query)
@@ -163,14 +198,21 @@ async def read_incident_notifications(
 async def verify_incident(
     *,
     session: AsyncSession = Depends(get_session),
-    incident_id: UUID,
+    incident_id: str,
     payload: VerificationRequest
 ):
     """
     Submit a citizen confirmation or refutation (crowdsourced vote) for an incident.
     If refutations exceed confirmations + 3, the status is set to 'retracted' and resources are freed.
     """
-    incident = await session.get(Incident, incident_id)
+    try:
+        uuid_id = UUID(incident_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Incident not found"
+        )
+    incident = await session.get(Incident, uuid_id)
     if not incident:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -191,7 +233,7 @@ async def verify_incident(
     if (incident.refutations_count or 0) > (incident.confirmations_count or 0) + 3:
         incident.status = "retracted"
         # Free up resources allocated to this incident by deleting them
-        resource_query = select(Resource).where(Resource.assigned_to_incident == incident_id)
+        resource_query = select(Resource).where(Resource.assigned_to_incident == uuid_id)
         resource_res = await session.execute(resource_query)
         resources_to_free = resource_res.scalars().all()
         for r in resources_to_free:
@@ -201,6 +243,7 @@ async def verify_incident(
     await session.commit()
     await session.refresh(incident)
     return incident
+
 
 
 

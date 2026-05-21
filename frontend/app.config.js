@@ -6,7 +6,7 @@ module.exports = {
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
-    newArchEnabled: false,
+    newArchEnabled: true,
     updates: {
       enabled: false,
     },
@@ -17,8 +17,10 @@ module.exports = {
     },
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.devabdullah90.resqbyaqua",
     },
     android: {
+      package: "com.devabdullah90.resqbyaqua",
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#ffffff",
@@ -30,5 +32,10 @@ module.exports = {
       favicon: "./assets/favicon.png",
     },
     plugins: ["expo-router"],
+    extra: {
+      eas: {
+        projectId: "4a2d5262-9496-4463-8ba5-596a4c8b0892",
+      },
+    },
   },
 };

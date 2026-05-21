@@ -9,11 +9,15 @@ const getDevMachineIp = (): string => {
   return "localhost"; // Fallback
 };
 
+const isDev = typeof __DEV__ !== "undefined" ? __DEV__ : false;
 const devIp = getDevMachineIp();
 
+const PROD_API_BASE = "https://hackathon-2026-production-ff6c.up.railway.app";
+const PROD_WS_BASE = "wss://hackathon-2026-production-ff6c.up.railway.app";
+
 export const CONFIG = {
-  API_BASE_URL: `http://${devIp}:8000`,
-  WS_BASE_URL: `ws://${devIp}:8000`,
+  API_BASE_URL: isDev ? `http://${devIp}:8000` : PROD_API_BASE,
+  WS_BASE_URL: isDev ? `ws://${devIp}:8000` : PROD_WS_BASE,
 
   GOOGLE_MAPS_KEY: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "YOUR_GOOGLE_MAPS_KEY_HERE",
 
@@ -32,4 +36,5 @@ export const CONFIG = {
     latitudeDelta: 0.08,
     longitudeDelta: 0.08,
   },
-};
+};
+

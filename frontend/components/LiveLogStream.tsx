@@ -105,7 +105,7 @@ const LiveLogStream: React.FC<{ incidentId: string }> = ({ incidentId }) => {
 
     const connectWebSocket = () => {
       const targetId = incidentId || "triage";
-      const wsUrl = `${CONFIG.WS_BASE_URL}/api/v1/ws/${targetId}`;
+      const wsUrl = api.getActiveWsUrl(`/api/v1/ws/${targetId}`);
       const socket = new WebSocket(wsUrl);
       wsRef.current = socket;
 
