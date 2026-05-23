@@ -112,7 +112,7 @@ const playFocusSonarSound = () => {
 
     osc.start();
     osc.stop(ctx.currentTime + 0.3);
-  } catch (err) {}
+  } catch (err) { }
 };
 
 export default function DashboardPage() {
@@ -120,7 +120,7 @@ export default function DashboardPage() {
   const [activePage, setActivePage] = useState("Dashboard");
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [viewIncidentReportId, setViewIncidentReportId] = useState<string | null>(null);
-  
+
   // Real-Time Sonar Alerts State
   const [activeAlert, setActiveAlert] = useState<AlertData | null>(null);
   const seenIncidentIdsRef = useRef<Set<string>>(new Set());
@@ -150,7 +150,7 @@ export default function DashboardPage() {
         const { API_BASE_URL } = await import("@/lib/api");
         const wsUrl = `${API_BASE_URL.replace("http", "ws").replace("https", "wss")}/ws/global/stream`;
         console.log(`🔌 [Dashboard] Connecting to global WebSocket stream: ${wsUrl}`);
-        
+
         if (!isMounted) return;
         socket = new WebSocket(wsUrl);
 
@@ -162,7 +162,7 @@ export default function DashboardPage() {
           try {
             const data = JSON.parse(event.data);
             console.log(`📡 [Dashboard] Received global websocket event:`, data.event);
-            
+
             if (data.event === "new_incident") {
               const newIncident = data.incident;
               if (newIncident && !seenIncidentIdsRef.current.has(String(newIncident.id))) {
@@ -238,10 +238,10 @@ export default function DashboardPage() {
       {activeAlert && (
         <div className="fixed top-4 right-4 z-[9999] max-w-sm w-full animate-slide-in">
           <div className="relative overflow-hidden rounded-xl border border-red-500/30 bg-gray-950/95 p-4 text-white shadow-2xl backdrop-blur-md">
-            
+
             {/* Pulsing hazard border accent */}
             <div className="absolute inset-0 border border-red-500/50 rounded-xl animate-pulse pointer-events-none" />
-            
+
             {/* Top alert info */}
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -253,7 +253,7 @@ export default function DashboardPage() {
                   🚨 CRITICAL HAZARD TRIGGERED
                 </span>
               </div>
-              <button 
+              <button
                 onClick={() => setActiveAlert(null)}
                 className="text-gray-400 hover:text-white transition-colors p-1"
               >
@@ -316,7 +316,7 @@ export default function DashboardPage() {
       <div className="flex flex-col flex-1 overflow-hidden min-w-0">
 
         {/* TopBar */}
-        <TopBar 
+        <TopBar
           onPipelineComplete={handlePipelineComplete}
           viewIncidentReportId={viewIncidentReportId}
           onCloseIncidentReport={() => setViewIncidentReportId(null)}
@@ -327,20 +327,20 @@ export default function DashboardPage() {
 
           {/* Map Panel - hidden on mobile/tablet */}
           <div className="hidden xl:block flex-shrink-0">
-            <MapPanel 
-              selectedIncident={selectedIncident} 
-              onSelectIncident={setSelectedIncident} 
+            <MapPanel
+              selectedIncident={selectedIncident}
+              onSelectIncident={setSelectedIncident}
             />
           </div>
 
           {/* Right scrollable content */}
           <div className="flex-1 overflow-y-auto bg-slate-50/50 bg-grid-pattern p-4 md:p-6 space-y-6 min-w-0">
-            
+
             {/* Judges Expo Build Banner */}
             <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 rounded-2xl p-5 md:p-6 backdrop-blur-sm relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg shadow-amber-500/5 border-l-4 border-l-amber-500 animate-fade-in">
               {/* Subtle background glow */}
               <div className="absolute -left-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-              
+
               <div className="flex-1 space-y-1 relative z-10">
                 <div className="flex items-center gap-2 text-amber-700 font-semibold tracking-wide text-xs uppercase font-mono">
                   <span className="relative flex h-2 w-2">
@@ -371,9 +371,9 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 pb-4 fade-in" style={{ animationDelay: "200ms" }}>
               <div className="lg:col-span-3">
-                <EventsPanel 
-                  selectedIncident={selectedIncident} 
-                  onSelectIncident={setSelectedIncident} 
+                <EventsPanel
+                  selectedIncident={selectedIncident}
+                  onSelectIncident={setSelectedIncident}
                   onViewReport={setViewIncidentReportId}
                 />
               </div>
